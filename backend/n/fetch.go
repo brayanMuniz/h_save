@@ -10,19 +10,18 @@ import (
 	"strings"
 )
 
-// NOTE: not currently used
 type HTTPConfig struct {
-	sessionId       string
-	csrfToken       string
-	userAgentString string
+	SessionId       string
+	CsrfToken       string
+	UserAgentString string
 }
 
 const saveTorrentsFolder = "download_me_senpai"
 
-func GetPageHTML(route, csrfToken, sessionId string) (string, error) {
+func GetPageHTML(route string, http_config HTTPConfig) (string, error) {
 	req, _ := http.NewRequest("GET", route, nil)
-	req.AddCookie(&http.Cookie{Name: "sessionid", Value: sessionId})
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: csrfToken})
+	req.AddCookie(&http.Cookie{Name: "sessionid", Value: http_config.SessionId})
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: http_config.CsrfToken})
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -47,10 +46,10 @@ func GetPageHTML(route, csrfToken, sessionId string) (string, error) {
 }
 
 // Download the .torrent file in the ./download_me_senpai folder
-func DownloadTorrentFile(downloadRoute, titleName, csrfToken, sessionId string) error {
+func DownloadTorrentFile(downloadRoute, titleName string, http_config HTTPConfig) error {
 	req, _ := http.NewRequest("GET", downloadRoute, nil)
-	req.AddCookie(&http.Cookie{Name: "sessionid", Value: sessionId})
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: csrfToken})
+	req.AddCookie(&http.Cookie{Name: "sessionid", Value: http_config.SessionId})
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: http_config.CsrfToken})
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
