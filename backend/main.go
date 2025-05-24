@@ -2,15 +2,26 @@ package main
 
 import (
 	"fmt"
+	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/brayanMuniz/h_save/routes"
 	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 )
 
 func main() {
-	err := godotenv.Load()
+	fmt.Println("Creating daatabase ... ")
+	database, err := db.InitDB("./h_save.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer database.Close()
+	fmt.Println("Database created!")
+
+	fmt.Println("Getting .env file ...")
+	err = godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
