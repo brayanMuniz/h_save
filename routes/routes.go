@@ -1,25 +1,34 @@
 package routes
 
 import (
+	"database/sql"
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func SetupRouter(rootURL string, http_config n.HTTPConfig) *gin.Engine {
+func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gin.Engine {
 	r := gin.Default()
 
-	// API group: serves from local database to client
+	// /api group: serves from local database to client
 	api := r.Group("/api")
 	{
 		api.GET("/doujinshi", GetDoujinshi)
+
+		api.GET("/sync", func(ctx *gin.Context) {
+			SyncDoujinshi(ctx, database)
+		})
 	}
 
-	// N group: fetches from external source to fill up database
+	// /n group: fetches from external source to fill up database
 	n := r.Group("/n")
 	{
-		// This ONLY downloads them, NOT the prefered method since we can also get metadata
-		n.GET("/downloadFavorites", func(ctx *gin.Context) {
-			DownloadFavorites(ctx, rootURL, "1", http_config)
+		n.GET("/favorites/download", func(ctx *gin.Context) {
+			saveMetadata := ctx.DefaultQuery("save_metadata", "true")
+			skipOrganized := ctx.DefaultQuery("skip_organized", "true")
+			DownloadFavorites(ctx, rootURL, "1", http_config, database,
+				saveMetadata == "true",
+				skipOrganized == "true")
 		})
 
 	}
