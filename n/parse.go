@@ -14,17 +14,17 @@ type FavoriteData struct {
 }
 
 type PageMetaData struct {
-	title      string
-	galleryId  string
-	characters []string
-	parodies   []string
-	tags       []string
-	artists    []string
-	groups     []string
-	languages  []string
-	categories []string
-	pages      string
-	uploaded   time.Time
+	Title      string
+	GalleryId  string
+	Characters []string
+	Parodies   []string
+	Tags       []string
+	Artists    []string
+	Groups     []string
+	Languages  []string
+	Categories []string
+	Pages      string
+	Uploaded   time.Time
 }
 
 func GetListOfFavoritesFromHTML(html_page string) ([]FavoriteData, error) {
@@ -171,17 +171,17 @@ func GetMetaDataFromPage(html_page string) (PageMetaData, error) {
 	})
 
 	return PageMetaData{
-		title:      strings.TrimSpace(fullTitle),
-		galleryId:  strings.TrimSpace(galleryId),
-		parodies:   trimSlice(parodiesList),
-		characters: trimSlice(charactersList),
-		tags:       trimSlice(tagsList),
-		artists:    trimSlice(artistList),
-		groups:     trimSlice(groupsList),
-		languages:  trimSlice(languagesList),
-		categories: trimSlice(categoriesList),
-		pages:      strings.TrimSpace(pages),
-		uploaded:   uploaded,
+		Title:      strings.TrimSpace(fullTitle),
+		GalleryId:  strings.TrimSpace(galleryId),
+		Parodies:   trimSlice(parodiesList),
+		Characters: trimSlice(charactersList),
+		Tags:       trimSlice(tagsList),
+		Artists:    trimSlice(artistList),
+		Groups:     trimSlice(groupsList),
+		Languages:  trimSlice(languagesList),
+		Categories: trimSlice(categoriesList),
+		Pages:      strings.TrimSpace(pages),
+		Uploaded:   uploaded,
 	}, nil
 
 }
@@ -198,10 +198,10 @@ func trimSlice(slice []string) []string {
 }
 
 func PrintPageMetaData(meta PageMetaData) {
-	fmt.Println("Title:      ", meta.title)
-	fmt.Println("Gallery ID: ", meta.galleryId)
-	fmt.Println("Pages:      ", meta.pages)
-	fmt.Println("Uploaded:   ", meta.uploaded.Format(time.RFC3339))
+	fmt.Println("Title:      ", meta.Title)
+	fmt.Println("Gallery ID: ", meta.GalleryId)
+	fmt.Println("Pages:      ", meta.Pages)
+	fmt.Println("Uploaded:   ", meta.Uploaded.Format(time.RFC3339))
 
 	printList := func(label string, items []string) {
 		if len(items) == 0 {
@@ -214,11 +214,11 @@ func PrintPageMetaData(meta PageMetaData) {
 		}
 	}
 
-	printList("Characters", meta.characters)
-	printList("Parodies", meta.parodies)
-	printList("Tags", meta.tags)
-	printList("Artists", meta.artists)
-	printList("Groups", meta.groups)
-	printList("Languages", meta.languages)
-	printList("Categories", meta.categories)
+	printList("Characters", meta.Characters)
+	printList("Parodies", meta.Parodies)
+	printList("Tags", meta.Tags)
+	printList("Artists", meta.Artists)
+	printList("Groups", meta.Groups)
+	printList("Languages", meta.Languages)
+	printList("Categories", meta.Categories)
 }

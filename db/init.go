@@ -15,7 +15,7 @@ func InitDB(filepath string) (*sql.DB, error) {
 	CREATE TABLE IF NOT EXISTS doujinshi (
 	    id INTEGER PRIMARY KEY AUTOINCREMENT,
 	    title TEXT,
-	    gallery_id TEXT,
+	    gallery_id TEXT UNIQUE,  
 	    pages TEXT,
 	    uploaded DATETIME,
 	    pending INTEGER
