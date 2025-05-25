@@ -59,6 +59,50 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 	return names, nil
 }
 
+func DoujinshiExistsByGalleryID(db *sql.DB, galleryID string) (bool, error) {
+	var exists bool
+	err := db.QueryRow(
+		`SELECT EXISTS(SELECT 1 FROM doujinshi WHERE gallery_id = ?)`, galleryID,
+	).Scan(&exists)
+	return exists, err
+}
+
+func DoujinshiOrganizedByGalleryID(db *sql.DB, galleryID string) (bool, error) {
+	var exists bool
+	err := db.QueryRow(
+		`SELECT EXISTS(
+			SELECT 1 FROM doujinshi WHERE gallery_id = ? AND pending = 0
+		)`, galleryID,
+	).Scan(&exists)
+	return exists, err
+}
+
+func GetPendingDoujinshi(db *sql.DB) ([]Doujinshi, error) {
+	rows, err := db.Query(`SELECT id, title, gallery_id FROM doujinshi WHERE pending = 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []Doujinshi
+	for rows.Next() {
+		var d Doujinshi
+		if err := rows.Scan(&d.ID, &d.Title, &d.GalleryID); err != nil {
+			return nil, err
+		}
+		results = append(results, d)
+	}
+	return results, nil
+}
+
+func UpdatePendingState(db *sql.DB, galleryID string, pending int) error {
+	_, err := db.Exec(
+		`UPDATE doujinshi SET pending = ? WHERE gallery_id = ?`,
+		pending, galleryID,
+	)
+	return err
+}
+
 func InsertDoujinshiWithMetadata(db *sql.DB, meta n.PageMetaData, pending int) error {
 	tx, err := db.Begin()
 	if err != nil {
