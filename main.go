@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
-	"github.com/brayanMuniz/h_save/routes"
+	"regexp"
+	"strings"
+	// "github.com/brayanMuniz/h_save/routes"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
@@ -51,7 +53,19 @@ func main() {
 		fmt.Println("testfile loaded")
 	}
 
-	favoritesRoute := rootURL + "/favorites"
+	fmt.Println()
+
+	entries, err := os.ReadDir("./doujinshi")
+	if err != nil {
+		fmt.Println("Error reading ./doujinshi directory:", err)
+		return
+	}
+
+	downloaded := make(map[string]bool)
+	for _, entry := range entries {
+		fmt.Println(entry.Name())
+		downloaded[entry.Name()] = true
+	}
 
 	http_config := n.HTTPConfig{
 		CsrfToken:       csrftoken,
@@ -59,16 +73,58 @@ func main() {
 		UserAgentString: userAgentString,
 	}
 
+	favoritesRoute := rootURL + "/favorites"
 	html_page, err := n.GetPageHTML(favoritesRoute, http_config)
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
 
-	_, err = n.GetListOfFavoritesFromHTML(html_page)
+	list_of_favorites, err := n.GetListOfFavoritesFromHTML(html_page)
 	if err != nil {
 		fmt.Print(err)
 		return
+	}
+
+	// 1. fetch the metadata from the first entry in the favorites page
+	// 2. add that to the database and set pending depending if you have it downloaded
+	if len(list_of_favorites) > 0 {
+		holyN := list_of_favorites[0].HolyNumbers
+		tempTitle := list_of_favorites[0].Title
+
+		pageRoute := rootURL + "/g/" + holyN + "/"
+		html_page, err := n.GetPageHTML(pageRoute, http_config)
+		if err != nil {
+			fmt.Println("Failed to get html page for ", tempTitle, holyN)
+			return
+		}
+
+		metaData, err := n.GetMetaDataFromPage(html_page)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		pending := 1
+		if downloaded[sanitizeToFilename(metaData.Title)] {
+			pending = 0
+		}
+
+		err = db.InsertDoujinshiWithMetadata(database, metaData, pending)
+		if err != nil {
+			fmt.Println("Failed to insert metadata for", tempTitle, ":", err)
+		}
+
+	}
+
+	fmt.Println()
+	fmt.Println("All data from database")
+	doujinshiList, err := db.GetAllDoujinshi(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, d := range doujinshiList {
+		fmt.Printf("%+v\n", d)
 	}
 
 	// if there is any data that I need that matches the favorites, get the data
@@ -76,7 +132,7 @@ func main() {
 	// 	if v.Title == testFile {
 	//
 	// 		pageRoute := rootURL + "/g/" + v.HolyNumbers + "/"
-	// 		html_page, err := n.GetPageHTML(pageRoute, csrftoken, sessionid)
+	// 		html_page, err := n.GetPageHTML(pageRoute, http_config)
 	// 		if err != nil {
 	// 			fmt.Println("Failed to get html page for ", v.Title, v.HolyNumbers)
 	// 			return
@@ -94,8 +150,17 @@ func main() {
 	//
 	// }
 
-	r := routes.SetupRouter(rootURL, http_config)
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
+	// r := routes.SetupRouter(rootURL, http_config)
+	// if err := r.Run(":8080"); err != nil {
+	// 	log.Fatal("Failed to start server:", err)
+	// }
+}
+
+// The downloaded file does not allow things like ? in them
+func sanitizeToFilename(name string) string {
+	re := regexp.MustCompile(`[<>:"/\\|?*]`)
+	sanitized := re.ReplaceAllString(name, " ")
+	sanitized = strings.TrimSpace(sanitized)
+	sanitized = regexp.MustCompile(`_+`).ReplaceAllString(sanitized, "_")
+	return sanitized
 }
