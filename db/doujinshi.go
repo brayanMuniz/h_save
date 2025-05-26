@@ -59,6 +59,15 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 	return names, nil
 }
 
+func GetNameFromGalleryId(db *sql.DB, galleryID string) (string, error) {
+	var title string
+	err := db.QueryRow(`SELECT title FROM doujinshi WHERE gallery_id = ?`, galleryID).Scan(&title)
+	if err != nil {
+		return "", err
+	}
+	return title, nil
+}
+
 func DoujinshiExistsByGalleryID(db *sql.DB, galleryID string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(

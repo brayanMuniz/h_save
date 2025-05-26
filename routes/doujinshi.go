@@ -3,21 +3,119 @@ package routes
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
-	"os"
-	"regexp"
-	"strings"
-	"time"
-	"unicode"
-
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
+	"unicode"
 )
 
-func GetDoujinshi(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"doujinshi": []string{}})
+type DoujinshiWithThumb struct {
+	db.Doujinshi
+	ThumbnailURL string `json:"thumbnail_url"`
+}
+
+func GetDoujinshi(c *gin.Context, database *sql.DB) {
+	doujinshi, err := db.GetAllDoujinshi(database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to fetch doujinshi from the database"})
+		return
+	}
+
+	entries, err := os.ReadDir("./doujinshi")
+	if err != nil || len(entries) == 0 {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to read the doujinshi folder"})
+		return
+	}
+
+	var result []DoujinshiWithThumb
+	for _, d := range doujinshi {
+		if d.Pending == 0 {
+			folderName := ""
+			for _, entry := range entries {
+				if sanitizeToFilename(d.Title) == sanitizeToFilename(entry.Name()) {
+					folderName = entry.Name()
+					break
+				}
+			}
+			if folderName != "" {
+				result = append(result, DoujinshiWithThumb{
+					Doujinshi:    d,
+					ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+				})
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"doujinshi": result})
+}
+
+func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
+	galleryId := c.Param("galleryId")
+	title, err := db.GetNameFromGalleryId(database, galleryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to read the database"})
+
+	}
+
+	entries, err := os.ReadDir("./doujinshi")
+	if err != nil || len(entries) == 0 {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to read the doujinshi folder"})
+		return
+	}
+
+	folderName := ""
+	for _, entry := range entries {
+		if sanitizeToFilename(title) == sanitizeToFilename(entry.Name()) {
+			folderName = entry.Name()
+			break
+		}
+	}
+
+	if folderName == "" {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to find matching title in doujins folders"})
+		return
+	}
+
+	dir := filepath.Join("doujinshi", folderName)
+	files, err := os.ReadDir(dir)
+	if err != nil || len(files) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	var imageFiles []string
+	for _, f := range files {
+		if !f.IsDir() && isImageFile(f.Name()) {
+			imageFiles = append(imageFiles, f.Name())
+		}
+	}
+
+	sort.Strings(imageFiles)
+	if len(imageFiles) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	thumbnailPath := filepath.Join(dir, imageFiles[0])
+	c.File(thumbnailPath)
+}
+
+func isImageFile(name string) bool {
+	ext := strings.ToLower(filepath.Ext(name))
+	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp"
 }
 
 func DownloadFavorites(
@@ -150,7 +248,7 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 }
 
 // The downloaded file != title, need to sanatize it
-// NOTE: Pure LLM:
+// This is how to map the title to the sanatized file that is stored in the doujins directory
 func sanitizeToFilename(s string) string {
 	// Convert to lowercase
 	s = strings.ToLower(s)
