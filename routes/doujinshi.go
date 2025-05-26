@@ -7,6 +7,7 @@ import (
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -61,26 +62,10 @@ func GetDoujinshi(c *gin.Context, database *sql.DB) {
 
 func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
 	galleryId := c.Param("galleryId")
-	title, err := db.GetNameFromGalleryId(database, galleryId)
+	folderName, err := getFolderNameFromGalleryID(database, galleryId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to read the database"})
-
-	}
-
-	entries, err := os.ReadDir("./doujinshi")
-	if err != nil || len(entries) == 0 {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to read the doujinshi folder"})
-		return
-	}
-
-	folderName := ""
-	for _, entry := range entries {
-		if sanitizeToFilename(title) == sanitizeToFilename(entry.Name()) {
-			folderName = entry.Name()
-			break
-		}
+			gin.H{"error": err})
 	}
 
 	if folderName == "" {
@@ -116,6 +101,55 @@ func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
 func isImageFile(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp"
+}
+
+func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
+	galleryId := c.Param("galleryId")
+	folderName, err := getFolderNameFromGalleryID(database, galleryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": err})
+		return
+	}
+
+	dir := filepath.Join("doujinshi", folderName)
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		return
+	}
+
+	var imageFiles []string
+	for _, f := range files {
+		if !f.IsDir() && isImageFile(f.Name()) {
+			imageFiles = append(imageFiles, "/api/doujinshi/"+galleryId+"/page/"+f.Name())
+		}
+	}
+
+	sort.Strings(imageFiles)
+	c.JSON(http.StatusOK, gin.H{"pages": imageFiles})
+}
+
+func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
+	galleryId := c.Param("galleryId")
+	pageNumber := c.Param("pageNumber")
+
+	if !isImageFile(pageNumber) {
+		c.JSON(http.StatusBadRequest,
+			gin.H{"error": "provide a valid file type"})
+		return
+	}
+
+	log.Print(galleryId, pageNumber)
+	folderName, err := getFolderNameFromGalleryID(database, galleryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": err})
+		return
+	}
+	path := filepath.Join("doujinshi", folderName, pageNumber)
+	log.Print(path)
+	c.File(path)
 }
 
 func DownloadFavorites(
@@ -268,4 +302,31 @@ func sanitizeToFilename(s string) string {
 	// Trim leading/trailing underscores
 	s = strings.Trim(s, "_")
 	return s
+}
+
+func getFolderNameFromGalleryID(database *sql.DB, galleryId string) (string, error) {
+	fullTitle, err := db.GetNameFromGalleryId(database, galleryId)
+	if err != nil {
+		return "", fmt.Errorf("Failed to read the database")
+	}
+
+	entries, err := os.ReadDir("./doujinshi")
+	if err != nil || len(entries) == 0 {
+		return "", fmt.Errorf("Failed to read the doujinshi folder")
+	}
+
+	folderName := ""
+	for _, entry := range entries {
+		if sanitizeToFilename(fullTitle) == sanitizeToFilename(entry.Name()) {
+			folderName = entry.Name()
+			break
+		}
+	}
+
+	if folderName == "" {
+		return "", fmt.Errorf("Failed to find matching title in doujins folders")
+	}
+
+	return folderName, nil
+
 }
