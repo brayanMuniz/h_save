@@ -10,17 +10,23 @@ import (
 func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gin.Engine {
 	r := gin.Default()
 
-	// /api group: serves from local database to client
+	// serves from local database to client
 	api := r.Group("/api")
 	{
-		api.GET("/doujinshi", GetDoujinshi)
+		api.GET("/doujinshi", func(ctx *gin.Context) {
+			GetDoujinshi(ctx, database)
+		})
+
+		api.GET("/doujinshi/:galleryId/thumbnail", func(ctx *gin.Context) {
+			GetDoujinshiThumbnail(ctx, database)
+		})
 
 		api.GET("/sync", func(ctx *gin.Context) {
 			SyncDoujinshi(ctx, database)
 		})
 	}
 
-	// /n group: fetches from external source to fill up database
+	// fetches from external source to fill up database
 	n := r.Group("/n")
 	{
 		n.GET("/favorites/download", func(ctx *gin.Context) {
