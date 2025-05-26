@@ -68,4 +68,3 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 };
 
 export default DoujinshiCard;
-
