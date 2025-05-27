@@ -1,5 +1,6 @@
 import React from "react";
 import type { Doujinshi } from "../types";
+import { Link } from 'react-router-dom';
 
 function getLanguageFlag(languages: string[]) {
   if (!languages || languages.length === 0) return "🏳️";
@@ -15,11 +16,16 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
   return (
     <div className="flex bg-gray-900 rounded-xl shadow-lg p-4 mb-6 w-full max-w-3xl mx-auto">
       <div className="flex flex-col items-center mr-6">
-        <img
-          src={doujinshi.thumbnail_url} // src={null}
-          alt={doujinshi.Title}
-          className="w-40 h-56 object-cover rounded-lg bg-gray-700 mb-4"
-        />
+
+
+        <Link to={`/doujinshi/${doujinshi.GalleryID}`}>
+          <img
+            src={doujinshi.thumbnail_url} // src={null}
+            alt={doujinshi.Title}
+            className="w-40 h-56 object-cover rounded-lg bg-gray-700 mb-4"
+          />
+        </Link>
+
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{languageFlag}</span>
           <div className="flex space-x-1">
@@ -56,12 +62,14 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
             <span className="font-semibold">Groups:</span> {(doujinshi.Groups ?? []).join(", ")}
           </div>
         </div>
+
         <div className="flex items-center justify-between mt-4">
           <div></div>
           <span className="text-gray-400 text-xs">
             {new Date(doujinshi.Uploaded).toLocaleDateString()}
           </span>
         </div>
+
       </div>
     </div>
   );

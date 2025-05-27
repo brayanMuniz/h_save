@@ -23,7 +23,7 @@ type DoujinshiWithThumb struct {
 	ThumbnailURL string `json:"thumbnail_url"`
 }
 
-func GetDoujinshi(c *gin.Context, database *sql.DB) {
+func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 	doujinshi, err := db.GetAllDoujinshi(database)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
@@ -60,12 +60,29 @@ func GetDoujinshi(c *gin.Context, database *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"doujinshi": result})
 }
 
+func GetDoujinshi(c *gin.Context, database *sql.DB) {
+	galleryId := c.Param("galleryId")
+	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": err})
+		return
+	}
+
+	var result DoujinshiWithThumb
+	result.Doujinshi = doujinshiData
+	result.ThumbnailURL = "/api/doujinshi/" + doujinshiData.GalleryID + "/thumbnail"
+
+	c.JSON(http.StatusOK, gin.H{"doujinshiData": result})
+}
+
 func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
 	galleryId := c.Param("galleryId")
 	folderName, err := getFolderNameFromGalleryID(database, galleryId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
+		return
 	}
 
 	if folderName == "" {

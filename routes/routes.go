@@ -14,6 +14,10 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 	api := r.Group("/api")
 	{
 		api.GET("/doujinshi", func(ctx *gin.Context) {
+			GetAllDoujinshi(ctx, database)
+		})
+
+		api.GET("/doujinshi/:galleryId", func(ctx *gin.Context) {
 			GetDoujinshi(ctx, database)
 		})
 
