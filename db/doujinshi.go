@@ -59,6 +59,28 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 	return names, nil
 }
 
+func GetDoujinshi(db *sql.DB, galleryID string) (Doujinshi, error) {
+	var d Doujinshi
+	err := db.QueryRow(
+		`SELECT id, title, gallery_id, pages, uploaded, pending FROM doujinshi WHERE gallery_id = ?`,
+		galleryID,
+	).Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.Pending)
+	if err != nil {
+		return d, err
+	}
+
+	// Fetch related data
+	d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
+	d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
+	d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
+	d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
+	d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
+	d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
+	d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+
+	return d, nil
+}
+
 func GetNameFromGalleryId(db *sql.DB, galleryID string) (string, error) {
 	var title string
 	err := db.QueryRow(`SELECT title FROM doujinshi WHERE gallery_id = ?`, galleryID).Scan(&title)
