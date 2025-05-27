@@ -6,30 +6,26 @@ import DoujinshiOverview from "./components/DoujinshiOverview";
 
 function App() {
   return (
-    <div className="min-h-screen">
-
+    <div className="min-h-screen bg-gray-900">
       <Routes>
-        <Route
-          path="/doujinshi/:galleryId/page/:pageNumber"
-          element={<DoujinshiReader />}
-        />
 
         <Route
           path="/"
           element={
-            <main className="max-w-7xl mx-auto px-4 py-10">
-              <Home />
-            </main>
+            <Home />
           }
         />
 
         <Route
           path="/doujinshi/:galleryId"
           element={
-            <main className="max-w-7xl mx-auto px-4 py-10">
-              <DoujinshiOverview />
-            </main>
+            <DoujinshiOverview />
           }
+        />
+
+        <Route
+          path="/doujinshi/:galleryId/page/:pageNumber"
+          element={<DoujinshiReader />}
         />
 
       </Routes>
