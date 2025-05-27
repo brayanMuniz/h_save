@@ -14,7 +14,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
   const languageFlag = getLanguageFlag(doujinshi.Languages);
 
   return (
-    <div className="flex bg-gray-900 rounded-xl shadow-lg p-4 mb-6 w-full max-w-3xl mx-auto">
+    <div className="flex bg-gray-900 rounded-xl shadow-lg p-4 mb-2 w-full max-w-3xl mx-auto">
       <div className="flex flex-col items-center mr-6">
 
 
