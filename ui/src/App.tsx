@@ -7,13 +7,32 @@ import DoujinshiOverview from "./components/DoujinshiOverview";
 function App() {
   return (
     <div className="min-h-screen">
-      <main className="max-w-7xl mx-auto px-4 py-10">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/doujinshi/:galleryId" element={<DoujinshiOverview />} />
-          <Route path="/doujinshi/:galleryId/page/:pageNumber" element={<DoujinshiReader />} />
-        </Routes>
-      </main>
+
+      <Routes>
+        <Route
+          path="/doujinshi/:galleryId/page/:pageNumber"
+          element={<DoujinshiReader />}
+        />
+
+        <Route
+          path="/"
+          element={
+            <main className="max-w-7xl mx-auto px-4 py-10">
+              <Home />
+            </main>
+          }
+        />
+
+        <Route
+          path="/doujinshi/:galleryId"
+          element={
+            <main className="max-w-7xl mx-auto px-4 py-10">
+              <DoujinshiOverview />
+            </main>
+          }
+        />
+
+      </Routes>
     </div>
   );
 }

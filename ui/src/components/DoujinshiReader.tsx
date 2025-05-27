@@ -1,4 +1,4 @@
-import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const DoujinshiReader = () => {
@@ -6,36 +6,24 @@ const DoujinshiReader = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // State for pages and current index
-  const [pages, setPages] = useState<string[] | null>(
-    location.state?.pages || null
-  );
-  const [currentIdx, setCurrentIdx] = useState<number | null>(
-    location.state?.currentIdx ?? null
-  );
+  const [pages, setPages] = useState<string[] | null>(location.state?.pages || null);
+  const [currentIdx, setCurrentIdx] = useState<number | null>(location.state?.currentIdx ?? null);
   const [loading, setLoading] = useState(!pages);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch pages if not provided
   useEffect(() => {
     if (pages && currentIdx !== null) return;
-
     if (!galleryId || !pageNumber) {
       setError("No page data provided.");
       return;
     }
-
     setLoading(true);
     fetch(`/api/doujinshi/${galleryId}/pages`)
       .then((res) => res.json())
       .then((data) => {
         const pageList: string[] = data.pages || [];
         setPages(pageList);
-
-        // Find the index of the current pageNumber in the filenames
-        const idx = pageList.findIndex((url) =>
-          url.endsWith(`/page/${pageNumber}`)
-        );
+        const idx = pageList.findIndex((url) => url.endsWith(`/page/${pageNumber}`));
         if (idx === -1) {
           setError("Page not found.");
         } else {
@@ -58,7 +46,6 @@ const DoujinshiReader = () => {
 
   const totalPages = pages.length;
 
-  // Navigation handlers
   const goToPage = (idx: number) => {
     if (idx < 0 || idx >= totalPages) return;
     const match = pages[idx].match(/page\/([^/]+)$/);
@@ -69,31 +56,56 @@ const DoujinshiReader = () => {
     setCurrentIdx(idx);
   };
 
+  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, currentTarget } = e;
+    const { width, left } = currentTarget.getBoundingClientRect();
+    const x = clientX - left;
+    if (x < width / 2) {
+      goToPage(currentIdx - 1);
+    } else {
+      goToPage(currentIdx + 1);
+    }
+  };
+
   return (
-    <div className="w-screen h-screen bg-black flex flex-col items-center justify-center overflow-auto">
-      <div className="flex items-center justify-between w-full px-8 py-4">
-        <button
-          onClick={() => goToPage(currentIdx - 1)}
-          disabled={currentIdx === 0}
-          className="text-white px-4 py-2 rounded bg-gray-700 disabled:opacity-50"
+    <div
+      className="fixed inset-0 bg-black flex items-center justify-center select-none"
+      onClick={handleImageClick}
+      style={{ cursor: "pointer" }}
+    >
+      {/* Back to overview icon */}
+      <Link
+        to={`/doujinshi/${galleryId}`}
+        className="absolute top-6 left-8 bg-black/60 rounded p-2 hover:bg-black/80 transition"
+        style={{ zIndex: 10 }}
+        aria-label="Back to overview"
+        onClick={e => e.stopPropagation()} // Prevents click from triggering page nav
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
         >
-          Prev
-        </button>
-        <span className="text-gray-300">
-          Page {currentIdx + 1} / {totalPages}
-        </span>
-        <button
-          onClick={() => goToPage(currentIdx + 1)}
-          disabled={currentIdx === totalPages - 1}
-          className="text-white px-4 py-2 rounded bg-gray-700 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </Link>
+
+      {/* Page counter in top right */}
+      <span
+        className="absolute top-6 right-8 text-white bg-black/60 px-4 py-2 rounded text-lg"
+        style={{ pointerEvents: "none" }}
+      >
+        Page {currentIdx + 1} / {totalPages}
+      </span>
+
       <img
         src={pages[currentIdx]}
         alt={`Page ${currentIdx + 1}`}
         className="w-screen h-screen object-contain"
+        draggable={false}
       />
     </div>
   );
