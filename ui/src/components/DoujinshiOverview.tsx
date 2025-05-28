@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import DoujinshiCard from "./DoujinshiCard";
 import type { Doujinshi } from "../types";
+
+import DoujinshiCard from "./DoujinshiCard";
+import SimilarDoujinshi from "./SimilarDoujinshi";
 
 // Helper: limit preview pages
 const PREVIEW_LIMIT = 6;
-const SUGGESTIONS_LIMIT = 8;
-const ARTIST_WORKS_LIMIT = 6;
 
 const DoujinshiOverview: React.FC = () => {
   const { galleryId } = useParams();
   const [doujinshi, setDoujinshi] = useState<Doujinshi | null>(null);
   const [pages, setPages] = useState<string[]>([]);
-  const [suggestions, setSuggestions] = useState<Doujinshi[]>([]);
   const [artistWorks, setArtistWorks] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,12 +29,6 @@ const DoujinshiOverview: React.FC = () => {
       setLoading(false);
 
       if (data.doujinshiData) {
-        // Suggestions: based on tags/characters
-        fetch(
-          `/api/doujinshi/${galleryId}/similar/metadata`
-        )
-          .then((res) => res.json())
-          .then((d) => setSuggestions(d.similarDoujins || []));
 
         // Artist other works
         const artist = (data.doujinshiData.Artists || [])[0];
@@ -98,28 +91,14 @@ const DoujinshiOverview: React.FC = () => {
         </section>
 
         {/* Suggestions Row */}
-        <section>
-          <div className="flex gap-2 overflow-x-auto">
-            {suggestions.map((d) => (
-              <Link
-                key={d.GalleryID}
-                to={`/doujinshi/${d.GalleryID}`}
-                className="block"
-              >
-                <img
-                  src={d.thumbnail_url}
-                  alt={d.Title}
-                  className="w-20 h-28 object-cover rounded bg-gray-700 
-                  hover:ring-2 hover:ring-indigo-400 transition"
-                />
-                <div className="text-xs text-gray-300 truncate w-20">{d.Title}</div>
-              </Link>
-            ))}
-            {suggestions.length === 0 && (
-              <span className="text-gray-400">No suggestions found.</span>
-            )}
-          </div>
-        </section>
+        <SimilarDoujinshi
+          galleryId={galleryId!}
+          characters={doujinshi.Characters ?? []}
+          parodies={doujinshi.Parodies ?? []}
+          tags={doujinshi.Tags ?? []}
+        />
+
+
       </div>
 
       {/* Sidebar: Artist Other Works */}
