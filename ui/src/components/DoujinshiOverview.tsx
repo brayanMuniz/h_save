@@ -32,7 +32,7 @@ const DoujinshiOverview: React.FC = () => {
       if (data.doujinshiData) {
         // Suggestions: based on tags/characters
         fetch(
-          `/api/doujinshi/${galleryId}/similar`
+          `/api/doujinshi/${galleryId}/similar/metadata`
         )
           .then((res) => res.json())
           .then((d) => setSuggestions(d.similarDoujins || []));
@@ -41,9 +41,7 @@ const DoujinshiOverview: React.FC = () => {
         const artist = (data.doujinshiData.Artists || [])[0];
         if (artist) {
           fetch(
-            `/api/doujinshi/by-artist?artist=${encodeURIComponent(
-              artist
-            )}&exclude=${galleryId}&limit=${ARTIST_WORKS_LIMIT}`
+            `/api/artist/${artist}`
           )
             .then((res) => res.json())
             .then((d) => setArtistWorks(d.doujinshi || []));
