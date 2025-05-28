@@ -83,7 +83,7 @@ func GetDoujinshi(db *sql.DB, galleryID string) (Doujinshi, error) {
 	return d, nil
 }
 
-func GetSimilarDoujinshiByCharactersOrTags(
+func GetSimilarDoujinshiByMetaData(
 	db *sql.DB,
 	excludeGalleryID string,
 	characters []string,
@@ -146,7 +146,7 @@ func GetSimilarDoujinshiByCharactersOrTags(
         SELECT d.id, d.title, d.gallery_id, d.pages, d.uploaded, d.folder_name
         FROM doujinshi d
         WHERE (` + strings.Join(conditions, " OR ") + `)
-        AND d.gallery_id != ?
+        AND d.gallery_id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
         LIMIT 100
     `
 
@@ -171,6 +171,38 @@ func GetSimilarDoujinshiByCharactersOrTags(
 		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
 
+		results = append(results, d)
+	}
+	return results, nil
+}
+
+func GetDoujinshiByArtist(db *sql.DB, artistName string) ([]Doujinshi, error) {
+	query := `
+		SELECT d.id, d.title, d.gallery_id, d.pages, d.uploaded, d.folder_name
+		FROM doujinshi d
+		JOIN doujinshi_artists da ON d.id = da.doujinshi_id
+		JOIN artists a ON da.artist_id = a.id
+		WHERE a.name = ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
+	`
+	rows, err := db.Query(query, artistName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []Doujinshi
+	for rows.Next() {
+		var d Doujinshi
+		if err := rows.Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
+			return nil, err
+		}
+		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
+		d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
+		d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
+		d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
+		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
+		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
+		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
 		results = append(results, d)
 	}
 	return results, nil
