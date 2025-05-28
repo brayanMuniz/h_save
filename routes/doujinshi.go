@@ -40,20 +40,11 @@ func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 
 	var result []DoujinshiWithThumb
 	for _, d := range doujinshi {
-		if d.Pending == 0 {
-			folderName := ""
-			for _, entry := range entries {
-				if sanitizeToFilename(d.Title) == sanitizeToFilename(entry.Name()) {
-					folderName = entry.Name()
-					break
-				}
-			}
-			if folderName != "" {
-				result = append(result, DoujinshiWithThumb{
-					Doujinshi:    d,
-					ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
-				})
-			}
+		if d.FolderName != "" {
+			result = append(result, DoujinshiWithThumb{
+				Doujinshi:    d,
+				ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+			})
 		}
 	}
 
@@ -78,20 +69,20 @@ func GetDoujinshi(c *gin.Context, database *sql.DB) {
 
 func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
 	galleryId := c.Param("galleryId")
-	folderName, err := getFolderNameFromGalleryID(database, galleryId)
+	doujinshiData, err := db.GetDoujinshi(database, galleryId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
 		return
 	}
 
-	if folderName == "" {
+	if doujinshiData.FolderName == "" {
 		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to find matching title in doujins folders"})
+			gin.H{"error": "The doujin is not synced or downloaded"})
 		return
 	}
 
-	dir := filepath.Join("doujinshi", folderName)
+	dir := filepath.Join("doujinshi", doujinshiData.FolderName)
 	files, err := os.ReadDir(dir)
 	if err != nil || len(files) == 0 {
 		c.Status(http.StatusNotFound)
@@ -122,14 +113,20 @@ func isImageFile(name string) bool {
 
 func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
 	galleryId := c.Param("galleryId")
-	folderName, err := getFolderNameFromGalleryID(database, galleryId)
+	doujinshiData, err := db.GetDoujinshi(database, galleryId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
 		return
 	}
 
-	dir := filepath.Join("doujinshi", folderName)
+	if doujinshiData.FolderName == "" {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "The doujin is not synced or downloaded"})
+		return
+	}
+
+	dir := filepath.Join("doujinshi", doujinshiData.FolderName)
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -157,16 +154,38 @@ func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
 		return
 	}
 
-	log.Print(galleryId, pageNumber)
-	folderName, err := getFolderNameFromGalleryID(database, galleryId)
+	doujinshiData, err := db.GetDoujinshi(database, galleryId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
 		return
 	}
-	path := filepath.Join("doujinshi", folderName, pageNumber)
+
+	if doujinshiData.FolderName == "" {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "The doujin is not synced or downloaded"})
+		return
+	}
+
+	path := filepath.Join("doujinshi", doujinshiData.FolderName, pageNumber)
 	log.Print(path)
 	c.File(path)
+}
+
+func AuthCheck(c *gin.Context, rootURL string, http_config n.HTTPConfig) {
+	html_page, err := n.GetPageHTML(rootURL, http_config)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get favorites page"})
+		return
+	}
+
+	userName, err := n.ReturnUserNameFromHTML(html_page)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get username"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"userName": userName})
 }
 
 func DownloadFavorites(
@@ -244,7 +263,7 @@ func DownloadFavorites(
 					continue
 				}
 
-				err = db.InsertDoujinshiWithMetadata(database, metaData, 1)
+				err = db.InsertDoujinshiWithMetadata(database, metaData, "")
 				if err != nil {
 					fmt.Println("Failed to insert metadata for", v.Title, ":", err)
 					continue
@@ -274,20 +293,31 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 			gin.H{"error": "Failed to read doujinshi folder"})
 		return
 	}
-	downloaded := make(map[string]bool)
-	for _, entry := range entries {
-		downloaded[sanitizeToFilename(entry.Name())] = true
-	}
 
 	var synced []string
-	var stillPending []string
+	stillPending := make([]string, len(pending))
+	for i, d := range pending {
+		stillPending[i] = d.Title
+	}
+
 	for _, d := range pending {
-		sanatized := sanitizeToFilename(d.Title)
-		if downloaded[sanatized] {
-			_ = db.UpdatePendingState(database, d.GalleryID, 0)
-			synced = append(synced, d.Title)
-		} else {
-			stillPending = append(stillPending, sanatized)
+		for _, entry := range entries {
+			if strings.Contains(entry.Name(), "HUNGRRRRY") {
+				log.Println(sanitizeToFilename(entry.Name()), sanitizeToFilename((d.Title)))
+			}
+
+			if sanitizeToFilename(entry.Name()) == sanitizeToFilename(d.Title) {
+				_ = db.UpdateFolderName(database, d.GalleryID, entry.Name())
+				synced = append(synced, d.Title)
+
+				// remove from stillPending
+				for i, title := range stillPending {
+					if title == d.Title {
+						stillPending = append(stillPending[:i], stillPending[i+1:]...)
+						break
+					}
+				}
+			}
 		}
 	}
 
@@ -303,6 +333,7 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 func sanitizeToFilename(s string) string {
 	// Convert to lowercase
 	s = strings.ToLower(s)
+
 	// Replace all punctuation (except spaces and underscores) with nothing
 	s = strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) || unicode.IsNumber(r) || r == ' ' || r == '_' {
@@ -310,40 +341,17 @@ func sanitizeToFilename(s string) string {
 		}
 		return -1
 	}, s)
+
 	// Replace all spaces and underscores with a single underscore
 	s = strings.ReplaceAll(s, " ", "_")
 	s = strings.ReplaceAll(s, "__", "_")
+
 	// Collapse multiple underscores
 	re := regexp.MustCompile(`_+`)
 	s = re.ReplaceAllString(s, "_")
+
 	// Trim leading/trailing underscores
 	s = strings.Trim(s, "_")
+
 	return s
-}
-
-func getFolderNameFromGalleryID(database *sql.DB, galleryId string) (string, error) {
-	fullTitle, err := db.GetNameFromGalleryId(database, galleryId)
-	if err != nil {
-		return "", fmt.Errorf("Failed to read the database")
-	}
-
-	entries, err := os.ReadDir("./doujinshi")
-	if err != nil || len(entries) == 0 {
-		return "", fmt.Errorf("Failed to read the doujinshi folder")
-	}
-
-	folderName := ""
-	for _, entry := range entries {
-		if sanitizeToFilename(fullTitle) == sanitizeToFilename(entry.Name()) {
-			folderName = entry.Name()
-			break
-		}
-	}
-
-	if folderName == "" {
-		return "", fmt.Errorf("Failed to find matching title in doujins folders")
-	}
-
-	return folderName, nil
-
 }

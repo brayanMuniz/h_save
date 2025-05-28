@@ -7,7 +7,7 @@ import (
 )
 
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
-	rows, err := db.Query(`SELECT id, title, gallery_id, pages, uploaded, pending FROM doujinshi`)
+	rows, err := db.Query(`SELECT id, title, gallery_id, pages, uploaded, folder_name FROM doujinshi`)
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +16,7 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	var results []Doujinshi
 	for rows.Next() {
 		var d Doujinshi
-		err := rows.Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.Pending)
+		err := rows.Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.FolderName)
 		if err != nil {
 			return nil, err
 		}
@@ -62,9 +62,9 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 func GetDoujinshi(db *sql.DB, galleryID string) (Doujinshi, error) {
 	var d Doujinshi
 	err := db.QueryRow(
-		`SELECT id, title, gallery_id, pages, uploaded, pending FROM doujinshi WHERE gallery_id = ?`,
+		`SELECT id, title, gallery_id, pages, uploaded, folder_name FROM doujinshi WHERE gallery_id = ?`,
 		galleryID,
-	).Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.Pending)
+	).Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.FolderName)
 	if err != nil {
 		return d, err
 	}
@@ -102,14 +102,15 @@ func DoujinshiOrganizedByGalleryID(db *sql.DB, galleryID string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(
 		`SELECT EXISTS(
-			SELECT 1 FROM doujinshi WHERE gallery_id = ? AND pending = 0
-		)`, galleryID,
+            SELECT 1 FROM doujinshi WHERE gallery_id = ? AND folder_name IS NOT NULL AND folder_name != ''
+        )`, galleryID,
 	).Scan(&exists)
 	return exists, err
 }
 
 func GetPendingDoujinshi(db *sql.DB) ([]Doujinshi, error) {
-	rows, err := db.Query(`SELECT id, title, gallery_id FROM doujinshi WHERE pending = 1`)
+	rows, err := db.Query(`SELECT id, title, gallery_id FROM doujinshi WHERE 
+		folder_name IS NULL OR folder_name = ""`)
 	if err != nil {
 		return nil, err
 	}
@@ -126,15 +127,15 @@ func GetPendingDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	return results, nil
 }
 
-func UpdatePendingState(db *sql.DB, galleryID string, pending int) error {
+func UpdateFolderName(db *sql.DB, galleryID string, folderName string) error {
 	_, err := db.Exec(
-		`UPDATE doujinshi SET pending = ? WHERE gallery_id = ?`,
-		pending, galleryID,
+		`UPDATE doujinshi SET folder_name = ? WHERE gallery_id = ?`,
+		folderName, galleryID,
 	)
 	return err
 }
 
-func InsertDoujinshiWithMetadata(db *sql.DB, meta n.PageMetaData, pending int) error {
+func InsertDoujinshiWithMetadata(db *sql.DB, meta n.PageMetaData, folderName string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -142,11 +143,11 @@ func InsertDoujinshiWithMetadata(db *sql.DB, meta n.PageMetaData, pending int) e
 	defer tx.Rollback()
 
 	_, err = tx.Exec(`
-        INSERT INTO doujinshi (title, gallery_id, pages, uploaded, pending)
+        INSERT INTO doujinshi (title, gallery_id, pages, uploaded, folder_name)
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(gallery_id) DO UPDATE SET
-            title=excluded.title, pages=excluded.pages, uploaded=excluded.uploaded, pending=excluded.pending
-    `, meta.Title, meta.GalleryId, meta.Pages, meta.Uploaded.Format(time.RFC3339), pending)
+            title=excluded.title, pages=excluded.pages, uploaded=excluded.uploaded, folder_name=excluded.folder_name
+    `, meta.Title, meta.GalleryId, meta.Pages, meta.Uploaded.Format(time.RFC3339), folderName)
 	if err != nil {
 		return err
 	}

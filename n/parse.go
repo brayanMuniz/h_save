@@ -222,3 +222,12 @@ func PrintPageMetaData(meta PageMetaData) {
 	printList("Languages", meta.Languages)
 	printList("Categories", meta.Categories)
 }
+
+func ReturnUserNameFromHTML(html_page string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html_page))
+	if err != nil {
+		return "", err
+	}
+	userName := doc.Find(".username").First().Text()
+	return userName, nil
+}
