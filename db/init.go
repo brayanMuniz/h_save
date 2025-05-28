@@ -18,7 +18,7 @@ func InitDB(filepath string) (*sql.DB, error) {
 	    gallery_id TEXT UNIQUE,  
 	    pages TEXT,
 	    uploaded DATETIME,
-	    pending INTEGER
+	    folder_name TEXT  
 	);
 
 	CREATE TABLE IF NOT EXISTS tags (

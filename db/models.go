@@ -8,7 +8,7 @@ type Doujinshi struct {
 	GalleryID  string
 	Pages      string
 	Uploaded   time.Time
-	Pending    int
+	FolderName string // used to determine the FolderName on disk
 	Tags       []string
 	Artists    []string
 	Characters []string

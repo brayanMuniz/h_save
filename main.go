@@ -51,32 +51,10 @@ func main() {
 		fmt.Println("testfile loaded")
 	}
 
-	fmt.Println()
-
-	entries, err := os.ReadDir("./doujinshi")
-	if err != nil {
-		fmt.Println("Error reading ./doujinshi directory:", err)
-		return
-	}
-
-	downloaded := make(map[string]bool)
-	for _, entry := range entries {
-		fmt.Println(entry.Name())
-		downloaded[entry.Name()] = true
-	}
-
 	http_config := n.HTTPConfig{
 		CsrfToken:       csrftoken,
 		SessionId:       sessionid,
 		UserAgentString: userAgentString,
-	}
-
-	all, err := db.GetAllDoujinshi(database)
-	if err != nil {
-		return
-	}
-	for _, v := range all {
-		fmt.Println(v.ID, v.Title, v.Pending)
 	}
 
 	r := routes.SetupRouter(database, rootURL, http_config)

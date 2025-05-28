@@ -41,14 +41,18 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 	// fetches from external source to fill up database
 	n := r.Group("/n")
 	{
+		n.GET("/authCheck", func(ctx *gin.Context) {
+			AuthCheck(ctx, rootURL, http_config)
+		})
+
 		n.GET("/favorites/download", func(ctx *gin.Context) {
 			saveMetadata := ctx.DefaultQuery("save_metadata", "true")
 			skipOrganized := ctx.DefaultQuery("skip_organized", "true")
+			// NOTE: for testing it is set to just the first page
 			DownloadFavorites(ctx, rootURL, "1", http_config, database,
 				saveMetadata == "true",
 				skipOrganized == "true")
 		})
-
 	}
 
 	return r
