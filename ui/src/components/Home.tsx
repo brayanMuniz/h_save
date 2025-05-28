@@ -41,13 +41,12 @@ const Home = () => {
 
   return (
     <div className="flex min-h-screen">
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-gray-200 flex flex-col p-6 rounded-r-2xl">
+      <aside className="w-64 h-screen bg-gray-800 text-gray-200 flex flex-col p-6 rounded-r-2xl fixed top-0">
         <h2 className="text-2xl font-bold mb-6">Library</h2>
+
         <nav className="flex flex-col gap-4 mb-8">
-          <Link to="/favorites" className="hover:text-indigo-400 transition">
-            ★ Favorites
-          </Link>
           <Link to="/artists" className="hover:text-indigo-400 transition">
             🎨 Artists
           </Link>
@@ -63,38 +62,43 @@ const Home = () => {
           <button className="text-left hover:text-indigo-400 transition">
             🎭 Parodies
           </button>
-        </nav>
-        {/* Language Filter */}
-        <div className="mt-auto">
-          <h3 className="text-lg font-semibold mb-2">Language</h3>
-          <div className="flex flex-wrap gap-2">
-            {languages.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => setSelectedLanguage(lang.code)}
-                className={`px-3 py-1 rounded flex items-center gap-1
+
+          {/* Language Filter */}
+          <div className="mt-auto">
+            <h3 className="text-lg font-semibold mb-2">Language</h3>
+            <div className="flex flex-wrap gap-2">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLanguage(lang.code)}
+                  className={`px-3 py-1 rounded flex items-center gap-1
                   ${selectedLanguage === lang.code
-                    ? "bg-indigo-500 text-white"
-                    : "bg-gray-700 hover:bg-indigo-600"
-                  }`}
-              >
-                <span>{lang.flag}</span>
-                <span className="text-sm">{lang.label}</span>
-              </button>
-            ))}
+                      ? "bg-indigo-500 text-white"
+                      : "bg-gray-700 hover:bg-indigo-600"
+                    }`}
+                >
+                  <span>{lang.flag}</span>
+                  <span className="text-sm">{lang.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+
+        </nav>
+
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 ml-64">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredDoujinshi.map((d) => (
             <DoujinshiCard key={d.GalleryID} doujinshi={d} />
           ))}
         </div>
       </main>
+
     </div>
+
   );
 };
 
