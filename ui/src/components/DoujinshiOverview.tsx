@@ -62,14 +62,23 @@ const DoujinshiOverview: React.FC = () => {
 
   return (
     <div className="flex gap-8 min-h-screen">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-8">
-        {/* Doujinshi Card */}
+
+      <Link
+        to="/"
+        className="fixed bottom-8 left-8 bg-gray-700 hover:bg-gray-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-150 ease-in-out z-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75"
+        aria-label="Back to Home"
+        title="Back to Home"
+      >
+        <span className="text-2xl font-semibold">←</span>
+      </Link>
+
+      {/* Main Content: */}
+      <div className="flex-1 flex flex-col gap-6 ml-6">
+
         <DoujinshiCard doujinshi={doujinshi} />
 
         {/* Limited Page Preview */}
         <section>
-          <h4 className="text-gray-200 text-lg mb-2">Preview</h4>
           <div className="flex gap-2">
             {pages.slice(0, PREVIEW_LIMIT).map((url, idx) => {
               const match = url.match(/page\/(\d+\.(webp|jpg|jpeg|png|gif))$/i);
@@ -84,24 +93,18 @@ const DoujinshiOverview: React.FC = () => {
                   <img
                     src={url}
                     alt={`Page ${filename}`}
-                    className="w-20 h-28 object-cover rounded bg-gray-700 hover:ring-2 hover:ring-indigo-400 transition"
+                    className="w-30 h-48 object-cover rounded bg-gray-700 
+                    hover:ring-2 hover:ring-indigo-400 transition"
                   />
                 </Link>
               );
             })}
-            {pages.length > PREVIEW_LIMIT && (
-              <span className="text-gray-400 flex items-center ml-2">
-                +{pages.length - PREVIEW_LIMIT} more
-              </span>
-            )}
+
           </div>
         </section>
 
         {/* Suggestions Row */}
         <section>
-          <h4 className="text-gray-200 text-lg mb-2">
-            Suggestions based on character and tags
-          </h4>
           <div className="flex gap-2 overflow-x-auto">
             {suggestions.map((d) => (
               <Link
@@ -112,7 +115,8 @@ const DoujinshiOverview: React.FC = () => {
                 <img
                   src={d.thumbnail_url}
                   alt={d.Title}
-                  className="w-20 h-28 object-cover rounded bg-gray-700 hover:ring-2 hover:ring-indigo-400 transition"
+                  className="w-20 h-28 object-cover rounded bg-gray-700 
+                  hover:ring-2 hover:ring-indigo-400 transition"
                 />
                 <div className="text-xs text-gray-300 truncate w-20">{d.Title}</div>
               </Link>
@@ -138,7 +142,8 @@ const DoujinshiOverview: React.FC = () => {
                 <img
                   src={d.thumbnail_url}
                   alt={d.Title}
-                  className="w-full aspect-[3/4] object-cover rounded bg-gray-700 hover:ring-2 hover:ring-indigo-400 transition"
+                  className="w-full aspect-[3/4] object-cover rounded bg-gray-700 
+                  hover:ring-2 hover:ring-indigo-400 transition"
                 />
               </Link>
             ))}
@@ -148,6 +153,7 @@ const DoujinshiOverview: React.FC = () => {
           </div>
         </div>
       </aside>
+
     </div>
   );
 };
