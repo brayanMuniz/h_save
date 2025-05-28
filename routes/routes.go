@@ -29,6 +29,10 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 			GetDoujinshiPage(ctx, database)
 		})
 
+		api.GET("/doujinshi/:galleryId/similar", func(ctx *gin.Context) {
+			GetSimilarDoujinshi(ctx, database)
+		})
+
 		api.GET("/doujinshi/:galleryId/thumbnail", func(ctx *gin.Context) {
 			GetDoujinshiThumbnail(ctx, database)
 		})

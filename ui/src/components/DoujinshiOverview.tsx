@@ -29,18 +29,13 @@ const DoujinshiOverview: React.FC = () => {
       setPages(pagesData.pages || []);
       setLoading(false);
 
-      // Fetch suggestions and artist works after main doujinshi is loaded
       if (data.doujinshiData) {
         // Suggestions: based on tags/characters
         fetch(
-          `/api/doujinshi/similar?tags=${encodeURIComponent(
-            (data.doujinshiData.Tags || []).join(",")
-          )}&characters=${encodeURIComponent(
-            (data.doujinshiData.Characters || []).join(",")
-          )}&exclude=${galleryId}&limit=${SUGGESTIONS_LIMIT}`
+          `/api/doujinshi/${galleryId}/similar`
         )
           .then((res) => res.json())
-          .then((d) => setSuggestions(d.doujinshi || []));
+          .then((d) => setSuggestions(d.similarDoujins || []));
 
         // Artist other works
         const artist = (data.doujinshiData.Artists || [])[0];
@@ -53,6 +48,7 @@ const DoujinshiOverview: React.FC = () => {
             .then((res) => res.json())
             .then((d) => setArtistWorks(d.doujinshi || []));
         }
+
       }
     });
   }, [galleryId]);

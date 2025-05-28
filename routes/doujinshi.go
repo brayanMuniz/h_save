@@ -2,7 +2,6 @@ package routes
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
@@ -14,7 +13,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
 	"unicode"
 )
 
@@ -172,6 +170,38 @@ func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
 	c.File(path)
 }
 
+func GetSimilarDoujinshi(c *gin.Context, database *sql.DB) {
+	galleryId := c.Param("galleryId")
+	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get doujinshi data"})
+		return
+	}
+
+	similarList, err := db.GetSimilarDoujinshiByCharactersOrTags(
+		database,
+		galleryId,
+		doujinshiData.Characters,
+		doujinshiData.Tags,
+		doujinshiData.Parodies,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get similar doujinshi"})
+		return
+	}
+
+	var result []DoujinshiWithThumb
+	for _, d := range similarList {
+		result = append(result, DoujinshiWithThumb{
+			Doujinshi:    d,
+			ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"similarDoujins": result})
+
+}
+
 func AuthCheck(c *gin.Context, rootURL string, http_config n.HTTPConfig) {
 	html_page, err := n.GetPageHTML(rootURL, http_config)
 	if err != nil {
@@ -186,97 +216,6 @@ func AuthCheck(c *gin.Context, rootURL string, http_config n.HTTPConfig) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"userName": userName})
-}
-
-func DownloadFavorites(
-	c *gin.Context,
-	rootURL string,
-	pageStart string,
-	http_config n.HTTPConfig,
-	database *sql.DB,
-	saveMetadata bool,
-	skipOrganized bool) {
-
-	favoritesRoute := rootURL + "/favorites" + "/?page=" + pageStart
-	html_page, err := n.GetPageHTML(favoritesRoute, http_config)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to get favorites page"})
-		return
-	}
-
-	listOfFavorites, err := n.GetListOfFavoritesFromHTML(html_page)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to parse favorites HTML"})
-		return
-	}
-
-	// Out of bounds in the favorites page
-	if len(listOfFavorites) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "At the end of the favorites page"})
-		return
-	}
-
-	for _, v := range listOfFavorites {
-		if skipOrganized {
-			organized, err := db.DoujinshiOrganizedByGalleryID(database, v.HolyNumbers)
-			if err != nil {
-				fmt.Println("Failed to check if its organized")
-				continue
-			}
-			if organized {
-				continue
-			}
-		}
-
-		fmt.Println()
-		downloadRoute := strings.TrimSpace(rootURL + "/g/" + v.HolyNumbers + "/download")
-		fmt.Println("Going to download: ", downloadRoute)
-		titleName := v.Title
-		err := n.DownloadTorrentFile(downloadRoute, titleName, http_config)
-		if err != nil {
-			fmt.Println("FAILED TO DOWNLOAD:", downloadRoute)
-			continue
-		}
-		fmt.Println("Downloaded: ", titleName)
-
-		if saveMetadata {
-			exist, err := db.DoujinshiExistsByGalleryID(database, v.HolyNumbers)
-			if err != nil {
-				fmt.Println("Failed to check if doujin exist in db", v.HolyNumbers)
-				continue
-			}
-
-			if !exist {
-				pageRoute := rootURL + "/g/" + v.HolyNumbers + "/"
-				html_page, err := n.GetPageHTML(pageRoute, http_config)
-				if err != nil {
-					fmt.Println("Failed to get html page for ",
-						v.Title, v.HolyNumbers)
-					continue
-				}
-
-				metaData, err := n.GetMetaDataFromPage(html_page)
-				if err != nil {
-					fmt.Print(err)
-					continue
-				}
-
-				err = db.InsertDoujinshiWithMetadata(database, metaData, "")
-				if err != nil {
-					fmt.Println("Failed to insert metadata for", v.Title, ":", err)
-					continue
-				}
-
-				fmt.Println("Saved metadata for: ", metaData.Title)
-			}
-
-		}
-
-		time.Sleep(3 * time.Second)
-	}
-
 }
 
 func SyncDoujinshi(c *gin.Context, database *sql.DB) {
@@ -302,9 +241,6 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 
 	for _, d := range pending {
 		for _, entry := range entries {
-			if strings.Contains(entry.Name(), "HUNGRRRRY") {
-				log.Println(sanitizeToFilename(entry.Name()), sanitizeToFilename((d.Title)))
-			}
 
 			if sanitizeToFilename(entry.Name()) == sanitizeToFilename(d.Title) {
 				_ = db.UpdateFolderName(database, d.GalleryID, entry.Name())
