@@ -22,7 +22,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
           <img
             src={doujinshi.thumbnail_url} // src={null}
             alt={doujinshi.Title}
-            className="w-40 h-56 object-cover rounded-lg bg-gray-700 mb-4"
+            className="w-45 h-60 object-cover rounded-lg bg-gray-700 mb-4"
           />
         </Link>
 
