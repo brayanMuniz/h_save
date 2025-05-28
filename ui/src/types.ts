@@ -1,5 +1,5 @@
 export type Doujinshi = {
-  Id: number;
+  ID: number;
   Title: string;
   GalleryID: string;
   Pages: string;

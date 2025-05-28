@@ -46,11 +46,6 @@ func main() {
 		fmt.Println("user agent string loaded")
 	}
 
-	testFile := os.Getenv("TEST_FILE")
-	if testFile != "" {
-		fmt.Println("testfile loaded")
-	}
-
 	http_config := n.HTTPConfig{
 		CsrfToken:       csrftoken,
 		SessionId:       sessionid,
