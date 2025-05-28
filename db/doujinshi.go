@@ -2,10 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"github.com/brayanMuniz/h_save/n"
 	"strings"
 	"time"
-
-	"github.com/brayanMuniz/h_save/n"
 )
 
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
