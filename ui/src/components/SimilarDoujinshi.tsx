@@ -3,18 +3,18 @@ import { Link } from "react-router-dom";
 import type { Doujinshi } from "../types";
 
 type Props = {
-  galleryId: string;
+  id: number;
   characters: string[];
   parodies: string[];
   tags: string[];
 };
 
-const SimilarDoujinshi: React.FC<Props> = ({ galleryId, characters, parodies, tags }) => {
+const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) => {
   const [suggestions, setSuggestions] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/doujinshi/${galleryId}/similar/metadata`)
+    fetch(`/api/doujinshi/${id}/similar/metadata`)
       .then((res) => res.json())
       .then((d) => {
         const all = d.similarDoujins || [];
@@ -37,7 +37,7 @@ const SimilarDoujinshi: React.FC<Props> = ({ galleryId, characters, parodies, ta
         setSuggestions([...byChar, ...byParody, ...byTag]);
         setLoading(false);
       });
-  }, [galleryId, characters, parodies, tags]);
+  }, [id, characters, parodies, tags]);
 
   if (loading) return <span className="text-gray-400">Loading suggestions...</span>;
 
@@ -45,8 +45,8 @@ const SimilarDoujinshi: React.FC<Props> = ({ galleryId, characters, parodies, ta
     <div className="flex flex-wrap gap-2">
       {suggestions.map((d) => (
         <Link
-          key={d.GalleryID}
-          to={`/doujinshi/${d.GalleryID}`}
+          key={d.ID}
+          to={`/doujinshi/${d.ID}`}
           className="block"
         >
           <img
@@ -66,4 +66,3 @@ const SimilarDoujinshi: React.FC<Props> = ({ galleryId, characters, parodies, ta
 };
 
 export default SimilarDoujinshi;
-

@@ -2,18 +2,20 @@ package routes
 
 import (
 	"database/sql"
-	"github.com/brayanMuniz/h_save/db"
-	"github.com/brayanMuniz/h_save/n"
-	"github.com/gin-gonic/gin"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/brayanMuniz/h_save/db"
+	"github.com/brayanMuniz/h_save/n"
+	"github.com/gin-gonic/gin"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type DoujinshiWithThumb struct {
@@ -40,8 +42,9 @@ func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 	for _, d := range doujinshi {
 		if d.FolderName != "" {
 			result = append(result, DoujinshiWithThumb{
-				Doujinshi:    d,
-				ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+				Doujinshi: d,
+				// How to deal with this?
+				ThumbnailURL: "/api/doujinshi/" + strconv.FormatInt(d.ID, 10) + "/thumbnail",
 			})
 		}
 	}
@@ -50,8 +53,8 @@ func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 }
 
 func GetDoujinshi(c *gin.Context, database *sql.DB) {
-	galleryId := c.Param("galleryId")
-	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	id := c.Param("id")
+	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
@@ -60,14 +63,14 @@ func GetDoujinshi(c *gin.Context, database *sql.DB) {
 
 	var result DoujinshiWithThumb
 	result.Doujinshi = doujinshiData
-	result.ThumbnailURL = "/api/doujinshi/" + doujinshiData.GalleryID + "/thumbnail"
+	result.ThumbnailURL = "/api/doujinshi/" + strconv.FormatInt(doujinshiData.ID, 10) + "/thumbnail"
 
 	c.JSON(http.StatusOK, gin.H{"doujinshiData": result})
 }
 
 func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
-	galleryId := c.Param("galleryId")
-	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	id := c.Param("id")
+	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
@@ -111,8 +114,6 @@ func isImageFile(name string) bool {
 
 func GetArtistDoujins(c *gin.Context, database *sql.DB) {
 	artist := c.Param("artist")
-	log.Println("artist is:", artist)
-
 	doujinshi, err := db.GetDoujinshiByArtist(database, artist)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch doujinshi for artist"})
@@ -123,7 +124,7 @@ func GetArtistDoujins(c *gin.Context, database *sql.DB) {
 	for _, d := range doujinshi {
 		result = append(result, DoujinshiWithThumb{
 			Doujinshi:    d,
-			ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+			ThumbnailURL: "/api/doujinshi/" + strconv.FormatInt(d.ID, 10) + "/thumbnail",
 		})
 	}
 
@@ -131,8 +132,12 @@ func GetArtistDoujins(c *gin.Context, database *sql.DB) {
 }
 
 func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
-	galleryId := c.Param("galleryId")
-	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	id := c.Param("id")
+
+	log.Println("Request path:", c.Request.URL.Path)
+	log.Println("ID IS:", id)
+
+	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
@@ -155,7 +160,7 @@ func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
 	var imageFiles []string
 	for _, f := range files {
 		if !f.IsDir() && isImageFile(f.Name()) {
-			imageFiles = append(imageFiles, "/api/doujinshi/"+galleryId+"/page/"+f.Name())
+			imageFiles = append(imageFiles, "/api/doujinshi/"+id+"/page/"+f.Name())
 		}
 	}
 
@@ -164,7 +169,7 @@ func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
 }
 
 func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
-	galleryId := c.Param("galleryId")
+	id := c.Param("id")
 	pageNumber := c.Param("pageNumber")
 
 	if !isImageFile(pageNumber) {
@@ -173,7 +178,7 @@ func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
 		return
 	}
 
-	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{"error": err})
@@ -192,8 +197,8 @@ func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
 }
 
 func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
-	galleryId := c.Param("galleryId")
-	doujinshiData, err := db.GetDoujinshi(database, galleryId)
+	id := c.Param("id")
+	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get doujinshi data"})
 		return
@@ -201,7 +206,7 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 
 	similarList, err := db.GetSimilarDoujinshiByMetaData(
 		database,
-		galleryId,
+		id,
 		doujinshiData.Characters,
 		doujinshiData.Tags,
 		doujinshiData.Parodies,
@@ -215,7 +220,7 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 	for _, d := range similarList {
 		result = append(result, DoujinshiWithThumb{
 			Doujinshi:    d,
-			ThumbnailURL: "/api/doujinshi/" + d.GalleryID + "/thumbnail",
+			ThumbnailURL: "/api/doujinshi/" + strconv.FormatInt(d.ID, 10) + "/thumbnail",
 		})
 	}
 
@@ -264,7 +269,7 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 		for _, entry := range entries {
 
 			if sanitizeToFilename(entry.Name()) == sanitizeToFilename(d.Title) {
-				_ = db.UpdateFolderName(database, d.GalleryID, entry.Name())
+				_ = db.UpdateFolderName(database, d.ID, entry.Name())
 				synced = append(synced, d.Title)
 
 				// remove from stillPending

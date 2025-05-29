@@ -2,9 +2,11 @@ package db
 
 import (
 	"database/sql"
-	"github.com/brayanMuniz/h_save/n"
+	"log"
 	"strings"
 	"time"
+
+	"github.com/brayanMuniz/h_save/n"
 )
 
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
@@ -60,11 +62,12 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 	return names, nil
 }
 
-func GetDoujinshi(db *sql.DB, galleryID string) (Doujinshi, error) {
+func GetDoujinshi(db *sql.DB, id string) (Doujinshi, error) {
+	log.Println(id)
 	var d Doujinshi
 	err := db.QueryRow(
-		`SELECT id, title, gallery_id, pages, uploaded, folder_name FROM doujinshi WHERE gallery_id = ?`,
-		galleryID,
+		`SELECT id, title, gallery_id, pages, uploaded, folder_name FROM doujinshi WHERE id = ?`,
+		id,
 	).Scan(&d.ID, &d.Title, &d.GalleryID, &d.Pages, &d.Uploaded, &d.FolderName)
 	if err != nil {
 		return d, err
@@ -84,12 +87,11 @@ func GetDoujinshi(db *sql.DB, galleryID string) (Doujinshi, error) {
 
 func GetSimilarDoujinshiByMetaData(
 	db *sql.DB,
-	excludeGalleryID string,
+	excludedDoujinshiID string, // or int64 if you prefer
 	characters []string,
 	tags []string,
 	parodies []string,
 ) ([]Doujinshi, error) {
-	// Build query for characters
 	var args []interface{}
 	var conditions []string
 
@@ -138,14 +140,14 @@ func GetSimilarDoujinshiByMetaData(
     `)
 	}
 
-	// Exclude the original doujinshi
-	args = append(args, excludeGalleryID)
+	// Exclude the original doujinshi by internal id
+	args = append(args, excludedDoujinshiID)
 
 	query := `
         SELECT d.id, d.title, d.gallery_id, d.pages, d.uploaded, d.folder_name
         FROM doujinshi d
         WHERE (` + strings.Join(conditions, " OR ") + `)
-        AND d.gallery_id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
+        AND d.id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
         LIMIT 100
     `
 
@@ -253,10 +255,10 @@ func GetPendingDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	return results, nil
 }
 
-func UpdateFolderName(db *sql.DB, galleryID string, folderName string) error {
+func UpdateFolderName(db *sql.DB, id int64, folderName string) error {
 	_, err := db.Exec(
-		`UPDATE doujinshi SET folder_name = ? WHERE gallery_id = ?`,
-		folderName, galleryID,
+		`UPDATE doujinshi SET folder_name = ? WHERE id = ?`,
+		folderName, id,
 	)
 	return err
 }

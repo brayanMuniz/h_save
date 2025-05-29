@@ -59,14 +59,12 @@ func GetUserProfile(ctx *gin.Context, database *sql.DB) {
 	var progress []map[string]interface{}
 	for rows.Next() {
 		var id int64
-		var galleryId string
 		var rating, lastPage int
-		if err := rows.Scan(&id, &galleryId, &rating, &lastPage); err == nil {
+		if err := rows.Scan(&id, &rating, &lastPage); err == nil {
 			progress = append(progress, map[string]interface{}{
-				"id":        id,
-				"galleryId": galleryId,
-				"rating":    rating,
-				"lastPage":  lastPage,
+				"id":       id,
+				"rating":   rating,
+				"lastPage": lastPage,
 			})
 		}
 	}
