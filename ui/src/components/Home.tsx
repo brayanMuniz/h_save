@@ -92,7 +92,7 @@ const Home = () => {
       <main className="flex-1 p-6 ml-64">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredDoujinshi.map((d) => (
-            <DoujinshiCard key={d.GalleryID} doujinshi={d} />
+            <DoujinshiCard key={d.ID} doujinshi={d} />
           ))}
         </div>
       </main>

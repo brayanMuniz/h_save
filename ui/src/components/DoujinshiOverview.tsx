@@ -9,20 +9,21 @@ import SimilarDoujinshi from "./SimilarDoujinshi";
 const PREVIEW_LIMIT = 6;
 
 const DoujinshiOverview: React.FC = () => {
-  const { galleryId } = useParams();
+  const { id } = useParams();
   const [doujinshi, setDoujinshi] = useState<Doujinshi | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const [artistWorks, setArtistWorks] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
-    if (!galleryId) return;
+    if (!id) return;
     setLoading(true);
 
     // Fetch main doujinshi and its pages
     Promise.all([
-      fetch(`/api/doujinshi/${galleryId}`).then((res) => res.json()),
-      fetch(`/api/doujinshi/${galleryId}/pages`).then((res) => res.json()),
+      fetch(`/api/doujinshi/${id}`).then((res) => res.json()),
+      fetch(`/api/doujinshi/${id}/pages`).then((res) => res.json()),
     ]).then(([data, pagesData]) => {
       setDoujinshi(data.doujinshiData);
       setPages(pagesData.pages || []);
@@ -42,7 +43,7 @@ const DoujinshiOverview: React.FC = () => {
 
       }
     });
-  }, [galleryId]);
+  }, [id]);
 
   if (loading) return <div className="text-white">Loading...</div>;
   if (!doujinshi) return <div className="text-red-400">Not found</div>;
@@ -73,7 +74,7 @@ const DoujinshiOverview: React.FC = () => {
               return (
                 <Link
                   key={idx}
-                  to={`/doujinshi/${galleryId}/page/${filename}`}
+                  to={`/doujinshi/${id}/page/${filename}`}
                   state={{ pages, currentIdx: idx }}
                   className="block"
                 >
@@ -92,7 +93,7 @@ const DoujinshiOverview: React.FC = () => {
 
         {/* Suggestions Row */}
         <SimilarDoujinshi
-          galleryId={galleryId!}
+          id={doujinshi.ID}
           characters={doujinshi.Characters ?? []}
           parodies={doujinshi.Parodies ?? []}
           tags={doujinshi.Tags ?? []}
@@ -108,8 +109,8 @@ const DoujinshiOverview: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             {artistWorks.map((d) => (
               <Link
-                key={d.GalleryID}
-                to={`/doujinshi/${d.GalleryID}`}
+                key={d.ID}
+                to={`/doujinshi/${d.ID}`}
                 className="block"
               >
                 <img

@@ -23,23 +23,23 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 			GetAllDoujinshi(ctx, database)
 		})
 
-		api.GET("/doujinshi/:galleryId", func(ctx *gin.Context) {
+		api.GET("/doujinshi/:id", func(ctx *gin.Context) {
 			GetDoujinshi(ctx, database)
 		})
 
-		api.GET("/doujinshi/:galleryId/pages", func(ctx *gin.Context) {
+		api.GET("/doujinshi/:id/pages", func(ctx *gin.Context) {
 			GetDoujinshiPages(ctx, database)
 		})
 
-		api.GET("/doujinshi/:galleryId/page/:pageNumber", func(ctx *gin.Context) {
+		api.GET("/doujinshi/:id/page/:pageNumber", func(ctx *gin.Context) {
 			GetDoujinshiPage(ctx, database)
 		})
 
-		api.GET("/doujinshi/:galleryId/similar/metadata", func(ctx *gin.Context) {
+		api.GET("/doujinshi/:id/similar/metadata", func(ctx *gin.Context) {
 			GetSimilarDoujinshiByMetadata(ctx, database)
 		})
 
-		api.GET("/doujinshi/:galleryId/thumbnail", func(ctx *gin.Context) {
+		api.GET("/doujinshi/:id/thumbnail", func(ctx *gin.Context) {
 			GetDoujinshiThumbnail(ctx, database)
 		})
 

@@ -65,7 +65,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
   return (
     <div className="flex bg-gray-900 rounded-xl shadow-lg p-4 mb-2 max-w-3xl">
       <div className="flex flex-col items-center mr-6">
-        <Link to={`/doujinshi/${doujinshi.GalleryID}`}>
+        <Link to={`/doujinshi/${doujinshi.ID.toString()}`}>
           <img
             src={doujinshi.thumbnail_url}
             alt={doujinshi.Title}

@@ -17,14 +17,14 @@ function App() {
         />
 
         <Route
-          path="/doujinshi/:galleryId"
+          path="/doujinshi/:id"
           element={
             <DoujinshiOverview />
           }
         />
 
         <Route
-          path="/doujinshi/:galleryId/page/:pageNumber"
+          path="/doujinshi/:id/page/:pageNumber"
           element={<DoujinshiReader />}
         />
 
