@@ -5,7 +5,6 @@ import type { Doujinshi } from "../types";
 import DoujinshiCard from "./DoujinshiCard";
 import SimilarDoujinshi from "./SimilarDoujinshi";
 
-// Helper: limit preview pages
 const PREVIEW_LIMIT = 6;
 
 const DoujinshiOverview: React.FC = () => {
@@ -15,12 +14,10 @@ const DoujinshiOverview: React.FC = () => {
   const [artistWorks, setArtistWorks] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     if (!id) return;
     setLoading(true);
 
-    // Fetch main doujinshi and its pages
     Promise.all([
       fetch(`/api/doujinshi/${id}`).then((res) => res.json()),
       fetch(`/api/doujinshi/${id}/pages`).then((res) => res.json()),
@@ -30,17 +27,13 @@ const DoujinshiOverview: React.FC = () => {
       setLoading(false);
 
       if (data.doujinshiData) {
-
-        // Artist other works
+        // TODO: combine to be artists and groups
         const artist = (data.doujinshiData.Artists || [])[0];
         if (artist) {
-          fetch(
-            `/api/artist/${artist}`
-          )
+          fetch(`/api/artist/${artist}`)
             .then((res) => res.json())
             .then((d) => setArtistWorks(d.doujinshi || []));
         }
-
       }
     });
   }, [id]);
@@ -51,16 +44,29 @@ const DoujinshiOverview: React.FC = () => {
   return (
     <div className="flex gap-8 min-h-screen">
 
-      <Link
-        to="/"
-        className="fixed bottom-8 left-8 bg-gray-700 hover:bg-gray-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-150 ease-in-out z-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75"
-        aria-label="Back to Home"
-        title="Back to Home"
-      >
-        <span className="text-2xl font-semibold">←</span>
-      </Link>
+      <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col sticky top-0 h-screen bg-gray-800 rounded-lg p-4 text-gray-200">
 
-      {/* Main Content: */}
+        <Link
+          to="/"
+          className="mb-8 text-2xl font-bold text-white hover:text-indigo-400 transition"
+          aria-label="Back to Home"
+          title="Back to Home"
+        >
+          Ecchi
+        </Link>
+
+        {/* TODO: Add filter controls here (tags, artists, etc.) */}
+        <div className="flex-1">
+          <button className="bg-indigo-700 text-white px-2 py-1 rounded mb-2 w-full">Tag: Example</button>
+          <button className="bg-pink-700 text-white px-2 py-1 rounded mb-2 w-full">Artist: Example</button>
+          <button className="bg-green-700 text-white px-2 py-1 rounded mb-2 w-full">Character: Example</button>
+          {/* ... */}
+        </div>
+      </aside>
+
+
+
+      {/* Main Content */}
       <div className="flex-1 flex flex-col gap-6 ml-6">
 
         <DoujinshiCard doujinshi={doujinshi} />
@@ -87,19 +93,17 @@ const DoujinshiOverview: React.FC = () => {
                 </Link>
               );
             })}
-
           </div>
         </section>
 
         {/* Suggestions Row */}
+        <h3 className="text-white">Similar Doujins</h3>
         <SimilarDoujinshi
           id={doujinshi.ID}
           characters={doujinshi.Characters ?? []}
           parodies={doujinshi.Parodies ?? []}
           tags={doujinshi.Tags ?? []}
         />
-
-
       </div>
 
       {/* Sidebar: Artist Other Works */}
@@ -127,9 +131,9 @@ const DoujinshiOverview: React.FC = () => {
           </div>
         </div>
       </aside>
-
     </div>
   );
 };
 
 export default DoujinshiOverview;
+

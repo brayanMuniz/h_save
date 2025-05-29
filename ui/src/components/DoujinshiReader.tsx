@@ -2,7 +2,7 @@ import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const DoujinshiReader = () => {
-  const { galleryId, pageNumber } = useParams();
+  const { id, pageNumber } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -13,12 +13,12 @@ const DoujinshiReader = () => {
 
   useEffect(() => {
     if (pages && currentIdx !== null) return;
-    if (!galleryId || !pageNumber) {
+    if (!id || !pageNumber) {
       setError("No page data provided.");
       return;
     }
     setLoading(true);
-    fetch(`/api/doujinshi/${galleryId}/pages`)
+    fetch(`/api/doujinshi/${id}/pages`)
       .then((res) => res.json())
       .then((data) => {
         const pageList: string[] = data.pages || [];
@@ -35,7 +35,7 @@ const DoujinshiReader = () => {
         setError("Failed to load page data.");
         setLoading(false);
       });
-  }, [galleryId, pageNumber, pages, currentIdx]);
+  }, [id, pageNumber, pages, currentIdx]);
 
   if (loading) {
     return <div className="text-white">Loading...</div>;
@@ -50,7 +50,7 @@ const DoujinshiReader = () => {
     if (idx < 0 || idx >= totalPages) return;
     const match = pages[idx].match(/page\/([^/]+)$/);
     const filename = match ? match[1] : "";
-    navigate(`/doujinshi/${galleryId}/page/${filename}`, {
+    navigate(`/doujinshi/${id}/page/${filename}`, {
       state: { pages, currentIdx: idx },
     });
     setCurrentIdx(idx);
@@ -75,7 +75,7 @@ const DoujinshiReader = () => {
     >
       {/* Back to overview icon */}
       <Link
-        to={`/doujinshi/${galleryId}`}
+        to={`/doujinshi/${id}`}
         className="absolute top-6 left-8 bg-black/60 rounded p-2 hover:bg-black/80 transition"
         style={{ zIndex: 10 }}
         aria-label="Back to overview"
