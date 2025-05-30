@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import DoujinshiCard from "../components/DoujinshiCard";
 import type { Doujinshi } from "../types";
 import { Link } from "react-router-dom";
 
+import HeaderBar from "../components/HeaderBar";
+import CoverImage from "../components/CoverImage";
+import DoujinshiCard from "../components/DoujinshiCard";
 
+import { getLanguageFlag } from "../utils/utils";
 
-// Example language options
 const languages = [
   { code: "all", label: "All", flag: "🌐" },
   { code: "japanese", label: "Japanese", flag: "🇯🇵" },
@@ -17,6 +19,7 @@ const Home = () => {
   const [doujinshi, setDoujinshi] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState("all");
+  const [viewMode, setViewMode] = useState<"card" | "cover">("cover");
 
   useEffect(() => {
     fetch("/api/doujinshi")
@@ -90,13 +93,35 @@ const Home = () => {
 
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 p-6 ml-64">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredDoujinshi.map((d) => (
-            <DoujinshiCard key={d.ID} doujinshi={d} />
-          ))}
+        <HeaderBar viewMode={viewMode} setViewMode={setViewMode} />
+
+        <div
+          className={`grid ${viewMode === "cover"
+            ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2"
+            : "grid-cols-1 md:grid-cols-2 gap-4"
+            }`}
+        >
+          {filteredDoujinshi.map((d) =>
+            viewMode === "cover" ? (
+              <Link key={d.ID} to={`/doujinshi/${d.ID}`} className="block">
+                <CoverImage
+                  imgUrl={d.thumbnail_url}
+                  flag={getLanguageFlag(d.Languages)}
+                  title={d.Title}
+                  characters={d.Characters ?? []}
+                  tags={d.Tags ?? []}
+                  parodies={d.Parodies ?? []}
+                  oCount={0}
+                // rating={d.rating}
+                />
+              </Link>
+            ) : (
+              <DoujinshiCard key={d.ID} doujinshi={d} />
+            )
+          )}
         </div>
+
       </main>
 
     </div>

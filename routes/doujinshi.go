@@ -104,6 +104,7 @@ func GetDoujinshiThumbnail(c *gin.Context, database *sql.DB) {
 	}
 
 	thumbnailPath := filepath.Join(dir, imageFiles[0])
+	c.Header("Cache-Control", "no-store")
 	c.File(thumbnailPath)
 }
 
@@ -223,7 +224,6 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 			ThumbnailURL: "/api/doujinshi/" + strconv.FormatInt(d.ID, 10) + "/thumbnail",
 		})
 	}
-
 	c.JSON(http.StatusOK, gin.H{"similarDoujins": result})
 
 }
