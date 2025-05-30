@@ -50,11 +50,7 @@ const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) =
     <div className="flex flex-wrap gap-2">
       {suggestions.map((d) => (
         <Link
-          key={d.ID}
-          to={`/doujinshi/${d.ID}`}
-          className="block"
-          style={{ width: "14rem" }} // Adjust width as needed for your grid
-        >
+          key={d.ID} to={`/doujinshi/${d.ID}`} className="block" style={{ width: "14rem" }} >
           <CoverImage
             imgUrl={d.thumbnail_url}
             flag={getLanguageFlag(d.Languages)}

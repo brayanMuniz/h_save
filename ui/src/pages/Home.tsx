@@ -98,13 +98,13 @@ const Home = () => {
 
         <div
           className={`grid ${viewMode === "cover"
-            ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2"
+            ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2"
             : "grid-cols-1 md:grid-cols-2 gap-4"
             }`}
         >
           {filteredDoujinshi.map((d) =>
             viewMode === "cover" ? (
-              <Link key={d.ID} to={`/doujinshi/${d.ID}`} className="block">
+              <Link key={d.ID} to={`/doujinshi/${d.ID}`} className="block" style={{ width: "14rem" }}>
                 <CoverImage
                   imgUrl={d.thumbnail_url}
                   flag={getLanguageFlag(d.Languages)}

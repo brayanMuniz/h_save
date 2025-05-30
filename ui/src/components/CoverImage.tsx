@@ -25,11 +25,17 @@ const CoverImage: React.FC<CoverImageProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
+  const handleTouch = (e: React.TouchEvent) => {
+    setHovered((prev) => !prev);
+    e.stopPropagation();
+  };
+
   return (
     <div
       className="relative w-56 h-80 rounded-2xl overflow-hidden shadow-lg bg-gray-900"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onTouchEnd={handleTouch}
       tabIndex={0}
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}

@@ -43,6 +43,18 @@ const DoujinshiOverview: React.FC = () => {
 
   return (
     <div className="flex gap-8 min-h-screen">
+      {/* Top bar for back navigation on md screens only */}
+      <div className="fixed top-0 left-0 w-full h-16 bg-gray-900 flex items-center px-8 z-40 md:flex lg:hidden">
+        <Link
+          to="/"
+          className="text-white text-xl font-bold hover:text-indigo-400 transition"
+          aria-label="Back to Home"
+          title="Back to Home"
+        >
+          ← Home
+        </Link>
+      </div>
+
 
       <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col sticky top-0 h-screen bg-gray-800 rounded-lg p-4 text-gray-200">
 
@@ -67,8 +79,7 @@ const DoujinshiOverview: React.FC = () => {
 
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-6 ml-6">
-
+      <div className="flex-1 flex flex-col gap-6 ml-6 md:pt-20 lg:pt-0">
         <DoujinshiCard doujinshi={doujinshi} />
 
         {/* Limited Page Preview */}
