@@ -3,6 +3,7 @@ package n
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/brayanMuniz/h_save/db"
 	"log"
 	"strings"
 	"time"
@@ -11,20 +12,6 @@ import (
 type FavoriteData struct {
 	HolyNumbers string
 	Title       string
-}
-
-type PageMetaData struct {
-	Title      string
-	GalleryId  string
-	Characters []string
-	Parodies   []string
-	Tags       []string
-	Artists    []string
-	Groups     []string
-	Languages  []string
-	Categories []string
-	Pages      string
-	Uploaded   time.Time
 }
 
 func GetListOfFavoritesFromHTML(html_page string) ([]FavoriteData, error) {
@@ -52,7 +39,7 @@ func GetListOfFavoritesFromHTML(html_page string) ([]FavoriteData, error) {
 	return favorites_list, nil
 }
 
-func GetMetaDataFromPage(html_page string) (PageMetaData, error) {
+func GetMetaDataFromPage(html_page string) (db.Doujinshi, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html_page))
 	if err != nil {
 		log.Fatal(err)
@@ -170,13 +157,15 @@ func GetMetaDataFromPage(html_page string) (PageMetaData, error) {
 
 	})
 
-	return PageMetaData{
+	return db.Doujinshi{
+		Source:     "nhentai",
+		ExternalID: strings.TrimSpace(galleryId),
+
 		Title:      strings.TrimSpace(fullTitle),
-		GalleryId:  strings.TrimSpace(galleryId),
-		Parodies:   trimSlice(parodiesList),
-		Characters: trimSlice(charactersList),
 		Tags:       trimSlice(tagsList),
 		Artists:    trimSlice(artistList),
+		Characters: trimSlice(charactersList),
+		Parodies:   trimSlice(parodiesList),
 		Groups:     trimSlice(groupsList),
 		Languages:  trimSlice(languagesList),
 		Categories: trimSlice(categoriesList),
@@ -195,32 +184,6 @@ func trimSlice(slice []string) []string {
 		}
 	}
 	return trimmed
-}
-
-func PrintPageMetaData(meta PageMetaData) {
-	fmt.Println("Title:      ", meta.Title)
-	fmt.Println("Gallery ID: ", meta.GalleryId)
-	fmt.Println("Pages:      ", meta.Pages)
-	fmt.Println("Uploaded:   ", meta.Uploaded.Format(time.RFC3339))
-
-	printList := func(label string, items []string) {
-		if len(items) == 0 {
-			fmt.Printf("%s: (none)\n", label)
-		} else {
-			fmt.Printf("%s:\n", label)
-			for _, item := range items {
-				fmt.Printf("  - %s\n", item)
-			}
-		}
-	}
-
-	printList("Characters", meta.Characters)
-	printList("Parodies", meta.Parodies)
-	printList("Tags", meta.Tags)
-	printList("Artists", meta.Artists)
-	printList("Groups", meta.Groups)
-	printList("Languages", meta.Languages)
-	printList("Categories", meta.Categories)
 }
 
 func ReturnUserNameFromHTML(html_page string) (string, error) {

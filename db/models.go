@@ -3,12 +3,12 @@ package db
 import "time"
 
 type Doujinshi struct {
-	ID         int64
-	Title      string
-	GalleryID  string
-	Pages      string
-	Uploaded   time.Time
+	ID         int64  // database id
+	Source     string // n
+	ExternalID string // example: galleryId for n
 	FolderName string // used to determine the FolderName on disk
+
+	Title      string
 	Tags       []string
 	Artists    []string
 	Characters []string
@@ -16,4 +16,6 @@ type Doujinshi struct {
 	Groups     []string
 	Languages  []string
 	Categories []string
+	Pages      string
+	Uploaded   time.Time
 }

@@ -45,26 +45,30 @@ func GetUserProfile(ctx *gin.Context, database *sql.DB) {
 	languages := getNames("favorite_languages", "language_id", "languages")
 	categories := getNames("favorite_categories", "category_id", "categories")
 
-	// Gather all doujinshi progress (with both id and gallery_id)
 	rows, err := database.Query(`
-		SELECT d.id, d.gallery_id, p.rating, p.last_page
-		FROM doujinshi_progress p
-		JOIN doujinshi d ON p.doujinshi_id = d.id
-	`)
+	SELECT d.id, d.source, d.external_id, p.rating, p.last_page
+	FROM doujinshi_progress p
+	JOIN doujinshi d ON p.doujinshi_id = d.id
+`)
+
 	if err != nil {
 		ctx.JSON(500, gin.H{"error": "Failed to get progress"})
 		return
 	}
 	defer rows.Close()
+
 	var progress []map[string]interface{}
 	for rows.Next() {
 		var id int64
+		var source, externalID string
 		var rating, lastPage int
-		if err := rows.Scan(&id, &rating, &lastPage); err == nil {
+		if err := rows.Scan(&id, &source, &externalID, &rating, &lastPage); err == nil {
 			progress = append(progress, map[string]interface{}{
-				"id":       id,
-				"rating":   rating,
-				"lastPage": lastPage,
+				"id":         id,
+				"source":     source,
+				"externalId": externalID,
+				"rating":     rating,
+				"lastPage":   lastPage,
 			})
 		}
 	}

@@ -1,10 +1,11 @@
 export type Doujinshi = {
   ID: number;
+  Source: string;
+  ExternalID: string;
   Title: string;
-  GalleryID: string;
   Pages: string;
   Uploaded: string; // ISO string from backend
-  Pending: number;
+  FolderName: string;
   Tags: string[];
   Artists: string[];
   Characters: string[];
