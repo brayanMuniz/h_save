@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
-import Home from "./components/Home";
-import DoujinshiReader from "./components/DoujinshiReader";
-import DoujinshiOverview from "./components/DoujinshiOverview";
+import Home from "./pages/Home";
+import DoujinshiReader from "./pages/DoujinshiReader";
+import DoujinshiOverview from "./pages/DoujinshiOverview";
 
 function App() {
   return (

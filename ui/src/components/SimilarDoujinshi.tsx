@@ -2,12 +2,37 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Doujinshi } from "../types";
 
+import CoverImage from "./CoverImage";
+
 type Props = {
   id: number;
   characters: string[];
   parodies: string[];
   tags: string[];
 };
+
+export function getLanguageFlag(languages: string[] | undefined): React.ReactNode {
+  if (!languages || languages.length === 0) return <span>🏳️</span>;
+  const joined = languages.join(" ").toLowerCase();
+
+  if (joined.includes("jap")) return <span role="img" aria-label="Japanese">🇯🇵</span>;
+  if (joined.includes("eng")) return <span role="img" aria-label="English">🇺🇸</span>;
+  if (joined.includes("chi")) return <span role="img" aria-label="Chinese">🇨🇳</span>;
+  if (joined.includes("korean") || joined.includes("kor")) return <span role="img" aria-label="Korean">🇰🇷</span>;
+
+  // Fallback: try to find a language word in any entry
+  for (const lang of languages) {
+    const l = lang.toLowerCase();
+    if (l.includes("jap")) return <span role="img" aria-label="Japanese">🇯🇵</span>;
+    if (l.includes("eng")) return <span role="img" aria-label="English">🇺🇸</span>;
+    if (l.includes("chi")) return <span role="img" aria-label="Chinese">🇨🇳</span>;
+    if (l.includes("korean") || l.includes("kor")) return <span role="img" aria-label="Korean">🇰🇷</span>;
+  }
+
+  // If nothing matches, show white flag
+  return <span>🏳️</span>;
+}
+
 
 const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) => {
   const [suggestions, setSuggestions] = useState<Doujinshi[]>([]);
@@ -42,26 +67,33 @@ const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) =
   if (loading) return <span className="text-gray-400">Loading suggestions...</span>;
 
   return (
+
     <div className="flex flex-wrap gap-2">
       {suggestions.map((d) => (
         <Link
           key={d.ID}
           to={`/doujinshi/${d.ID}`}
           className="block"
+          style={{ width: "14rem" }} // Adjust width as needed for your grid
         >
-          <img
-            src={d.thumbnail_url}
-            alt={d.Title}
-            className="w-25 h-40 object-cover rounded bg-gray-700 
-            hover:ring-2 hover:ring-indigo-400 transition"
+          <CoverImage
+            imgUrl={d.thumbnail_url}
+            flag={getLanguageFlag(d.Languages)}
+            title={d.Title}
+            characters={d.Characters ?? []}
+            tags={d.Tags ?? []}
+            parodies={d.Parodies ?? []}
+            oCount={0} // NOTE: for now using 0 
+          // rating={d.rating}
           />
-          <div className="text-xs text-gray-300 truncate w-20">{d.Title}</div>
         </Link>
       ))}
       {suggestions.length === 0 && (
         <span className="text-gray-400">No suggestions found.</span>
       )}
     </div>
+
+
   );
 };
 
