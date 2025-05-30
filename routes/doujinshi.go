@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
+	// "unicode"
 
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
@@ -267,7 +267,6 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 
 	for _, d := range pending {
 		for _, entry := range entries {
-
 			if sanitizeToFilename(entry.Name()) == sanitizeToFilename(d.Title) {
 				_ = db.UpdateFolderName(database, d.ID, entry.Name())
 				synced = append(synced, d.Title)
@@ -290,30 +289,12 @@ func SyncDoujinshi(c *gin.Context, database *sql.DB) {
 
 }
 
-// The downloaded file != title, need to sanatize it
-// This is how to map the title to the sanatized file that is stored in the doujins directory
+var nonWord = regexp.MustCompile(`[^\p{L}\p{N}]+`)
+
 func sanitizeToFilename(s string) string {
-	// Convert to lowercase
 	s = strings.ToLower(s)
-
-	// Replace all punctuation (except spaces and underscores) with nothing
-	s = strings.Map(func(r rune) rune {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) || r == ' ' || r == '_' {
-			return r
-		}
-		return -1
-	}, s)
-
-	// Replace all spaces and underscores with a single underscore
-	s = strings.ReplaceAll(s, " ", "_")
-	s = strings.ReplaceAll(s, "__", "_")
-
-	// Collapse multiple underscores
-	re := regexp.MustCompile(`_+`)
-	s = re.ReplaceAllString(s, "_")
-
-	// Trim leading/trailing underscores
+	s = nonWord.ReplaceAllString(s, "_")
+	s = regexp.MustCompile(`_+`).ReplaceAllString(s, "_")
 	s = strings.Trim(s, "_")
-
 	return s
 }

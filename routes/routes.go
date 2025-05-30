@@ -145,8 +145,8 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 		n.GET("/favorites/download", func(ctx *gin.Context) {
 			saveMetadata := ctx.DefaultQuery("save_metadata", "true")
 			skipOrganized := ctx.DefaultQuery("skip_organized", "true")
-			// NOTE: for testing it is set to just the first page
-			DownloadFavorites(ctx, rootURL, "1", http_config, database,
+			// NOTE: for testing you can change the page number
+			DownloadFavorites(ctx, rootURL, "2", http_config, database,
 				saveMetadata == "true",
 				skipOrganized == "true")
 		})

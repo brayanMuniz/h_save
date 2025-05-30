@@ -48,7 +48,10 @@ func DownloadFavorites(
 
 	for _, v := range listOfFavorites {
 		if skipOrganized {
-			organized, err := db.DoujinshiOrganizedByGalleryID(database, v.HolyNumbers)
+			organized, err := db.DoujinshiOrganizedList(
+				database,
+				"nhentai",
+				v.HolyNumbers)
 			if err != nil {
 				fmt.Println("Failed to check if its organized")
 				failed = append(failed, v.Title)
@@ -73,7 +76,7 @@ func DownloadFavorites(
 		downloaded = append(downloaded, v.Title)
 
 		if saveMetadata {
-			exist, err := db.DoujinshiExistsByGalleryID(database, v.HolyNumbers)
+			exist, err := db.DoujinshiExists(database, "nhentai", v.HolyNumbers)
 			if err != nil {
 				fmt.Println("Failed to check if doujin exist in db", v.HolyNumbers)
 				failed = append(failed, v.Title)
