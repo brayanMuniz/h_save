@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Doujinshi } from "../types";
 
-import DoujinshiCard from "./DoujinshiCard";
-import SimilarDoujinshi from "./SimilarDoujinshi";
+import DoujinshiCard from "../components/DoujinshiCard";
+import SimilarDoujinshi from "../components/SimilarDoujinshi";
 
 const PREVIEW_LIMIT = 6;
 

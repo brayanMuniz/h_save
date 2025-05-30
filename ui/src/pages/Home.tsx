@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import DoujinshiCard from "./DoujinshiCard";
+import DoujinshiCard from "../components/DoujinshiCard";
 import type { Doujinshi } from "../types";
 import { Link } from "react-router-dom";
+
+
 
 // Example language options
 const languages = [
