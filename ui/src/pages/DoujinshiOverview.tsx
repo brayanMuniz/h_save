@@ -4,6 +4,7 @@ import type { Doujinshi } from "../types";
 
 import DoujinshiCard from "../components/DoujinshiCard";
 import SimilarDoujinshi from "../components/SimilarDoujinshi";
+import DoujinOverviewFilter from "../components/DoujinOverviewFilter";
 
 const PREVIEW_LIMIT = 6;
 
@@ -27,7 +28,6 @@ const DoujinshiOverview: React.FC = () => {
       setLoading(false);
 
       if (data.doujinshiData) {
-        // TODO: combine to be artists and groups
         const artist = (data.doujinshiData.Artists || [])[0];
         if (artist) {
           fetch(`/api/artist/${artist}`)
@@ -43,48 +43,43 @@ const DoujinshiOverview: React.FC = () => {
 
   return (
     <div className="flex gap-8 min-h-screen">
-      {/* Top bar for back navigation on md screens only */}
-      <div className="fixed top-0 left-0 w-full h-16 bg-gray-900 flex items-center px-8 z-40 md:flex lg:hidden">
+
+      {/* Top bar for navigation on md screens only */}
+      <div className="fixed top-0 left-0 w-full h-16 bg-gray-900 flex items-center justify-between px-8 z-40 md:flex lg:hidden">
+        {/* Back Button - Left Side */}
+        <button
+          onClick={() => window.history.back()}
+          className="text-white text-xl hover:text-indigo-400 transition"
+          aria-label="Go back to the previous page"
+          title="Go back"
+        >
+          ←
+        </button>
+
+        {/* Home Link - Right Side */}
         <Link
           to="/"
           className="text-white text-xl font-bold hover:text-indigo-400 transition"
-          aria-label="Back to Home"
-          title="Back to Home"
+          aria-label="Go to Home page"
+          title="Home"
         >
-          ← Home
+          Home
         </Link>
       </div>
 
-
-      <aside className="w-64 flex-shrink-0 hidden lg:flex flex-col sticky top-0 h-screen bg-gray-800 rounded-lg p-4 text-gray-200">
-
-        <Link
-          to="/"
-          className="mb-8 text-2xl font-bold text-white hover:text-indigo-400 transition"
-          aria-label="Back to Home"
-          title="Back to Home"
-        >
-          Ecchi
-        </Link>
-
-        {/* TODO: Add filter controls here (tags, artists, etc.) */}
-        <div className="flex-1">
-          <button className="bg-indigo-700 text-white px-2 py-1 rounded mb-2 w-full">Tag: Example</button>
-          <button className="bg-pink-700 text-white px-2 py-1 rounded mb-2 w-full">Artist: Example</button>
-          <button className="bg-green-700 text-white px-2 py-1 rounded mb-2 w-full">Character: Example</button>
-          {/* ... */}
-        </div>
-      </aside>
-
-
+      <DoujinOverviewFilter
+        characters={doujinshi.Characters ?? []}
+        parodies={doujinshi.Parodies ?? []}
+        tags={doujinshi.Tags ?? []}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-6 ml-6 md:pt-20 lg:pt-0">
+      <div className="flex-1 flex flex-col gap-6 ml-6 pt-20 lg:pt-0">
         <DoujinshiCard doujinshi={doujinshi} />
 
         {/* Limited Page Preview */}
         <section>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-4 md:flex md:gap-2">
             {pages.slice(0, PREVIEW_LIMIT).map((url, idx) => {
               const match = url.match(/page\/(\d+\.(webp|jpg|jpeg|png|gif))$/i);
               const filename = match ? match[1] : "";
@@ -98,7 +93,7 @@ const DoujinshiOverview: React.FC = () => {
                   <img
                     src={url}
                     alt={`Page ${filename}`}
-                    className="w-30 h-48 object-cover rounded bg-gray-700 
+                    className="w-full h-48 md:w-30 object-cover rounded bg-gray-700 
                     hover:ring-2 hover:ring-indigo-400 transition"
                   />
                 </Link>
