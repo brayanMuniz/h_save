@@ -19,3 +19,11 @@ type Doujinshi struct {
 	Pages      string
 	Uploaded   time.Time
 }
+
+type DoujinshiBookmark struct {
+	ID          int64     `json:"id"`
+	DoujinshiID int64     `json:"doujinshiId"`
+	Filename    string    `json:"filename"`
+	Name        string    `json:"name"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
