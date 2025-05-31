@@ -11,6 +11,7 @@ function getLanguageFlag(languages: string[]) {
 }
 
 const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
+  console.log(doujinshi)
   const languageFlag = getLanguageFlag(doujinshi.languages);
 
   // Local state for UI-only filtering
@@ -44,8 +45,12 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
             className="w-45 h-60 object-cover rounded-lg bg-gray-700 mb-4"
           />
         </Link>
-        <div className="flex items-center space-x-2">
+
+        {/* Row: flag, categories, o count */}
+        <div className="flex items-center gap-3 w-full justify-between px-2 mt-2">
+          {/* Language flag */}
           <span className="text-2xl">{languageFlag}</span>
+          {/* Categories */}
           <div className="flex space-x-1">
             {(doujinshi.categories ?? []).slice(0, 3).map((cat, idx) => (
               <span
@@ -56,7 +61,17 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
               </span>
             ))}
           </div>
+          {/* O count */}
+          <div className="flex items-center">
+            <span
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-700 text-white font-bold text-lg shadow"
+              title="O Count"
+            >
+              {doujinshi.oCount ?? 0}
+            </span>
+          </div>
         </div>
+
       </div>
 
       {/* Right: Metadata */}
