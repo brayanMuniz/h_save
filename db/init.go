@@ -184,9 +184,9 @@ func createUserAndProgressTables(db *sql.DB) error {
 
 	CREATE TABLE IF NOT EXISTS doujinshi_page_o (
 	    doujinshi_id INTEGER,
-	    page_number INTEGER,
+	    filename TEXT NOT NULL,
 	    o_count INTEGER DEFAULT 0,
-	    PRIMARY KEY (doujinshi_id, page_number),
+	    PRIMARY KEY (doujinshi_id, filename),
 	    FOREIGN KEY (doujinshi_id) REFERENCES doujinshi(id)
 	);
 
