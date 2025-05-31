@@ -11,7 +11,7 @@ function getLanguageFlag(languages: string[]) {
 }
 
 const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
-  const languageFlag = getLanguageFlag(doujinshi.Languages);
+  const languageFlag = getLanguageFlag(doujinshi.languages);
 
   // Local state for UI-only filtering
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -37,17 +37,17 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
   return (
     <div className="flex flex-col md:flex-row bg-gray-900 rounded-xl shadow-lg p-4 mb-2 max-w-3xl">
       <div className="flex flex-col items-center mb-4 md:mb-0 md:mr-6">
-        <Link to={`/doujinshi/${doujinshi.ID}`}>
+        <Link to={`/doujinshi/${doujinshi.id}`}>
           <img
             src={doujinshi.thumbnail_url}
-            alt={doujinshi.Title}
+            alt={doujinshi.title}
             className="w-45 h-60 object-cover rounded-lg bg-gray-700 mb-4"
           />
         </Link>
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{languageFlag}</span>
           <div className="flex space-x-1">
-            {(doujinshi.Categories ?? []).slice(0, 3).map((cat, idx) => (
+            {(doujinshi.categories ?? []).slice(0, 3).map((cat, idx) => (
               <span
                 key={idx}
                 className="bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded"
@@ -62,11 +62,11 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
       {/* Right: Metadata */}
       <div className="flex-1 flex flex-col justify-between">
         <div className="text-left">
-          <h3 className="text-lg font-bold text-white mb-2">{doujinshi.Title}</h3>
+          <h3 className="text-lg font-bold text-white mb-2">{doujinshi.title}</h3>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Tags:</span>{" "}
-            {(doujinshi.Tags ?? []).map((tag, idx) => (
+            {(doujinshi.tags ?? []).map((tag, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(tag, selectedTags, setSelectedTags)}
@@ -83,7 +83,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Artists:</span>{" "}
-            {(doujinshi.Artists ?? []).map((artist, idx) => (
+            {(doujinshi.artists ?? []).map((artist, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(artist, selectedArtists, setSelectedArtists)}
@@ -100,7 +100,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Characters:</span>{" "}
-            {(doujinshi.Characters ?? []).map((character, idx) => (
+            {(doujinshi.characters ?? []).map((character, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(character, selectedCharacters, setSelectedCharacters)}
@@ -117,7 +117,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Parodies:</span>{" "}
-            {(doujinshi.Parodies ?? []).map((parody, idx) => (
+            {(doujinshi.parodies ?? []).map((parody, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(parody, selectedParodies, setSelectedParodies)}
@@ -134,7 +134,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Groups:</span>{" "}
-            {(doujinshi.Groups ?? []).map((group, idx) => (
+            {(doujinshi.groups ?? []).map((group, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(group, selectedGroups, setSelectedGroups)}
@@ -151,7 +151,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Languages:</span>{" "}
-            {(doujinshi.Languages ?? []).map((language, idx) => (
+            {(doujinshi.languages ?? []).map((language, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(language, selectedLanguages, setSelectedLanguages)}
@@ -168,7 +168,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Categories:</span>{" "}
-            {(doujinshi.Categories ?? []).map((category, idx) => (
+            {(doujinshi.categories ?? []).map((category, idx) => (
               <button
                 key={idx}
                 onClick={() => toggleSelected(category, selectedCategories, setSelectedCategories)}
@@ -184,12 +184,12 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
           </div>
 
           <div className="text-gray-300 text-sm mb-1">
-            <span className="font-semibold">Pages:</span> {doujinshi.Pages}
+            <span className="font-semibold">Pages:</span> {doujinshi.pages}
           </div>
         </div>
         <div className="flex items-center justify-between mt-4">
           <span className="text-gray-400 text-xs">
-            {new Date(doujinshi.Uploaded).toLocaleDateString()}
+            {new Date(doujinshi.uploaded).toLocaleDateString()}
           </span>
         </div>
       </div>

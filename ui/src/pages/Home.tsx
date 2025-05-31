@@ -34,7 +34,7 @@ const Home = () => {
     selectedLanguage === "all"
       ? doujinshi
       : doujinshi.filter((d) =>
-        d.Languages?.some((lang) =>
+        d.languages?.some((lang) =>
           lang.toLowerCase().includes(selectedLanguage)
         )
       );
@@ -154,23 +154,23 @@ const Home = () => {
             {filteredDoujinshi.map((d) =>
               viewMode === "cover" ? (
                 <Link
-                  key={d.ID}
-                  to={`/doujinshi/${d.ID}`}
+                  key={d.id}
+                  to={`/doujinshi/${d.id}`}
                   className="block w-full sm:w-56"
                 >
                   <CoverImage
                     imgUrl={d.thumbnail_url}
-                    flag={getLanguageFlag(d.Languages)}
-                    title={d.Title}
-                    characters={d.Characters ?? []}
-                    tags={d.Tags ?? []}
-                    parodies={d.Parodies ?? []}
+                    flag={getLanguageFlag(d.languages)}
+                    title={d.title}
+                    characters={d.characters ?? []}
+                    tags={d.tags ?? []}
+                    parodies={d.parodies ?? []}
                     oCount={0}
                   // rating={d.rating}
                   />
                 </Link>
               ) : (
-                <DoujinshiCard key={d.ID} doujinshi={d} />
+                <DoujinshiCard key={d.id} doujinshi={d} />
               )
             )}
           </div>

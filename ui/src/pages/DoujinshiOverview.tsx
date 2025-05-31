@@ -87,9 +87,9 @@ const DoujinshiOverview: React.FC = () => {
 
       {/* sidebar */}
       <DoujinOverviewFilter
-        characters={doujinshi.Characters ?? []}
-        parodies={doujinshi.Parodies ?? []}
-        tags={doujinshi.Tags ?? []}
+        characters={doujinshi.characters ?? []}
+        parodies={doujinshi.parodies ?? []}
+        tags={doujinshi.tags ?? []}
       />
 
       {/* Main Content */}
@@ -157,10 +157,10 @@ const DoujinshiOverview: React.FC = () => {
         {/* Suggestions Row */}
         <h3 className="text-white">Similar Doujins</h3>
         <SimilarDoujinshi
-          id={doujinshi.ID}
-          characters={doujinshi.Characters ?? []}
-          parodies={doujinshi.Parodies ?? []}
-          tags={doujinshi.Tags ?? []}
+          id={doujinshi.id}
+          characters={doujinshi.characters ?? []}
+          parodies={doujinshi.parodies ?? []}
+          tags={doujinshi.tags ?? []}
         />
       </div>
 
@@ -171,13 +171,13 @@ const DoujinshiOverview: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             {artistWorks.map((d) => (
               <Link
-                key={d.ID}
-                to={`/doujinshi/${d.ID}`}
+                key={d.id}
+                to={`/doujinshi/${d.id}`}
                 className="block"
               >
                 <img
                   src={d.thumbnail_url}
-                  alt={d.Title}
+                  alt={d.title}
                   className="w-full aspect-[3/4] object-cover rounded bg-gray-700 
                   hover:ring-2 hover:ring-indigo-400 transition"
                 />
