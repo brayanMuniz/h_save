@@ -29,6 +29,7 @@ const DoujinshiReader = () => {
     };
   }, []);
 
+  // Pages and current index
   const [pages, setPages] = useState<string[] | null>(location.state?.pages || null);
   const [currentIdx, setCurrentIdx] = useState<number | null>(location.state?.currentIdx ?? null);
   const [loading, setLoading] = useState(!pages);
@@ -38,6 +39,11 @@ const DoujinshiReader = () => {
   const [showUI, setShowUI] = useState(true);
   const hideUITimer = useRef<number | null>(null);
 
+  // Bookmarks
+  const [bookmarks, setBookmarks] = useState<{ filename: string; name: string }[]>([]);
+  const [bookmarkStatus, setBookmarkStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  // Fetch pages and set current index if not provided
   useEffect(() => {
     if (pages && currentIdx !== null) return;
     if (!id || !pageNumber) {
@@ -64,17 +70,60 @@ const DoujinshiReader = () => {
       });
   }, [id, pageNumber, pages, currentIdx]);
 
-  if (loading) {
-    return <div className="text-white">Loading...</div>;
-  }
-  if (error || !pages || currentIdx === null) {
-    return <div className="text-white">{error || "No page data provided."}</div>;
-  }
+  // Fetch bookmarks for this doujinshi
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/user/doujinshi/${id}/bookmarks`)
+      .then((res) => res.json())
+      .then((data) => setBookmarks(data.bookmarks || []));
+  }, [id]);
 
-  const totalPages = pages.length;
+  // Get current filename
+  const filename =
+    pages && currentIdx !== null
+      ? (() => {
+        const match = pages[currentIdx].match(/page\/([^/]+)$/);
+        return match ? match[1] : "";
+      })()
+      : "";
 
+  // Is current page bookmarked?
+  const isBookmarked = bookmarks.some((bm) => bm.filename === filename);
+
+  // Add bookmark for current page
+  const handleAddBookmark = async () => {
+    if (!id || !filename) return;
+    setBookmarkStatus("saving");
+    try {
+      const res = await fetch(`/api/user/doujinshi/${id}/bookmark`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename,
+          name: "", // Empty name for now
+        }),
+      });
+      if (res.ok) {
+        setBookmarkStatus("saved");
+        setTimeout(() => setBookmarkStatus("idle"), 1500);
+        // Optionally refetch bookmarks
+        fetch(`/api/user/doujinshi/${id}/bookmarks`)
+          .then((res) => res.json())
+          .then((data) => setBookmarks(data.bookmarks || []));
+      } else {
+        setBookmarkStatus("error");
+        setTimeout(() => setBookmarkStatus("idle"), 1500);
+      }
+    } catch {
+      setBookmarkStatus("error");
+      setTimeout(() => setBookmarkStatus("idle"), 1500);
+    }
+  };
+
+  // Navigation logic
+  const totalPages = pages ? pages.length : 0;
   const goToPage = (idx: number) => {
-    if (idx < 0 || idx >= totalPages) return;
+    if (!pages || idx < 0 || idx >= totalPages) return;
     const match = pages[idx].match(/page\/([^/]+)$/);
     const filename = match ? match[1] : "";
     navigate(`/doujinshi/${id}/page/${filename}`, {
@@ -83,26 +132,32 @@ const DoujinshiReader = () => {
     setCurrentIdx(idx);
   };
 
+  // Show UI overlays on center click, navigate on left/right
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!pages || currentIdx === null) return;
     const { clientX, currentTarget } = e;
     const { width, left } = currentTarget.getBoundingClientRect();
     const x = clientX - left;
 
-    // Divide into thirds
     if (x < width / 3) {
       goToPage(currentIdx - 1);
     } else if (x > (2 * width) / 3) {
       goToPage(currentIdx + 1);
     } else {
-      // Center third: toggle UI overlays
       setShowUI((prev) => !prev);
       if (hideUITimer.current) clearTimeout(hideUITimer.current);
       if (!showUI) {
-        // If showing UI, auto-hide after 3 seconds
         hideUITimer.current = setTimeout(() => setShowUI(false), 3000);
       }
     }
   };
+
+  if (loading) {
+    return <div className="text-white">Loading...</div>;
+  }
+  if (error || !pages || currentIdx === null) {
+    return <div className="text-white">{error || "No page data provided."}</div>;
+  }
 
   return (
     <div
@@ -170,6 +225,45 @@ const DoujinshiReader = () => {
         className="w-screen h-screen object-contain"
         draggable={false}
       />
+
+      {showUI && (
+        <>
+          {/* Bookmark button in bottom left */}
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              handleAddBookmark();
+            }}
+            className={`absolute bottom-8 left-8 rounded-full p-4 flex items-center justify-center transition
+        ${isBookmarked ? "bg-green-600 text-white" : "bg-black/60 text-white hover:bg-indigo-600"}`}
+            style={{ zIndex: 20 }}
+            aria-label="Bookmark this page"
+            title="Bookmark this page"
+          >
+            {isBookmarked ? (
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                <polygon points="12 2 22 12 12 22 2 12" />
+              </svg>
+            ) : (
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                <polygon points="12 2 22 12 12 22 2 12" />
+              </svg>
+            )}
+          </button>
+
+          {bookmarkStatus === "saving" && (
+            <span className="absolute bottom-20 left-8 text-xs text-indigo-300">Saving...</span>
+          )}
+          {bookmarkStatus === "saved" && (
+            <span className="absolute bottom-20 left-8 text-xs text-green-400">Bookmarked!</span>
+          )}
+          {bookmarkStatus === "error" && (
+            <span className="absolute bottom-20 left-8 text-xs text-red-400">Error</span>
+          )}
+        </>
+      )}
+
     </div>
   );
 

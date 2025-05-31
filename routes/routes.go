@@ -133,6 +133,16 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 			GetDoujinshiProgress(ctx, database)
 		})
 
+		user.POST("/doujinshi/:id/bookmark", func(ctx *gin.Context) {
+			AddBookmark(ctx, database)
+		})
+		user.GET("/doujinshi/:id/bookmarks", func(ctx *gin.Context) {
+			ListBookmarks(ctx, database)
+		})
+		user.DELETE("/doujinshi/:id/bookmark", func(ctx *gin.Context) {
+			RemoveBookmark(ctx, database)
+		})
+
 	}
 
 	// fetches from external source to fill up database

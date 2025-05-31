@@ -193,7 +193,7 @@ func GetDoujinshiPage(c *gin.Context, database *sql.DB) {
 	}
 
 	path := filepath.Join("doujinshi", doujinshiData.FolderName, pageNumber)
-	log.Print(path)
+	c.Header("Cache-Control", "no-store")
 	c.File(path)
 }
 

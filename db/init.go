@@ -189,6 +189,17 @@ func createUserAndProgressTables(db *sql.DB) error {
 	    PRIMARY KEY (doujinshi_id, page_number),
 	    FOREIGN KEY (doujinshi_id) REFERENCES doujinshi(id)
 	);
-	`)
+
+	CREATE TABLE IF NOT EXISTS doujinshi_bookmarks (
+	    id INTEGER PRIMARY KEY AUTOINCREMENT,
+	    doujinshi_id INTEGER NOT NULL,
+	    filename TEXT NOT NULL,
+	    name TEXT,
+	    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+	    UNIQUE(doujinshi_id, filename),
+	    FOREIGN KEY (doujinshi_id) REFERENCES doujinshi(id)
+	);
+
+`)
 	return err
 }

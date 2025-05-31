@@ -8,12 +8,30 @@ import DoujinOverviewFilter from "../components/DoujinOverviewFilter";
 
 const PREVIEW_LIMIT = 6;
 
+function getPageNumberFromFilename(filename?: string): number | null {
+  if (!filename) return null;
+  const match = filename.match(/^(\d+)/);
+  if (!match) return null;
+  return parseInt(match[1], 10);
+}
+
 const DoujinshiOverview: React.FC = () => {
   const { id } = useParams();
   const [doujinshi, setDoujinshi] = useState<Doujinshi | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const [artistWorks, setArtistWorks] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [bookmarks, setBookmarks] = useState<
+    { id: number; filename: string; name: string }[]
+  >([]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/user/doujinshi/${id}/bookmarks`)
+      .then((res) => res.json())
+      .then((data) => setBookmarks(data.bookmarks || []));
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -76,6 +94,33 @@ const DoujinshiOverview: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-6 ml-6 pt-20 lg:pt-0">
         <DoujinshiCard doujinshi={doujinshi} />
+
+        <div className="mb-4">
+          <h4 className="text-lg font-bold text-white mb-2">Bookmarks</h4>
+          {bookmarks.length === 0 ? (
+            <div className="text-gray-400 text-sm">No bookmarks yet.</div>
+          ) : (
+
+            <ul className="space-y-2">
+              {bookmarks.map((bm) => {
+                const pageNum = getPageNumberFromFilename(bm.filename);
+                return (
+                  <li key={bm.id} className="flex items-center gap-2">
+                    <Link
+                      to={`/doujinshi/${id}/page/${bm.filename}`}
+                      className="bg-indigo-700 text-white px-2 py-1 rounded text-xs hover:bg-indigo-500 transition"
+                    >
+                      {pageNum !== null ? `Page ${pageNum}` : bm.filename}
+                    </Link>
+                    <span className="text-white text-sm">
+                      {bm.name || <em className="text-gray-400">[No name]</em>}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
 
         {/* Limited Page Preview */}
         <section>
