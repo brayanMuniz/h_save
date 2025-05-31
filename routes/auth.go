@@ -1,10 +1,9 @@
 package routes
 
-import "github.com/gin-gonic/gin"
-
 import (
 	"database/sql"
 	"github.com/brayanMuniz/h_save/db"
+	"github.com/gin-gonic/gin"
 )
 
 func LoginHandler(c *gin.Context, database *sql.DB) {

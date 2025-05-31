@@ -120,6 +120,33 @@ const DoujinshiReader = () => {
     }
   };
 
+  const [oCount, setOCount] = useState<number>(0);
+
+  // Fetch O count for the current page
+  useEffect(() => {
+    if (!id || !filename) return;
+    fetch(`/api/user/doujinshi/${id}/o?filename=${encodeURIComponent(filename)}`)
+      .then((res) => res.json())
+      .then((data) => setOCount(data.oCount ?? 0));
+  }, [id, filename]);
+
+  const updateOCount = async (newCount: number) => {
+    if (!id || !filename) return;
+    setOCount(newCount); // Optimistic update
+    await fetch(`/api/user/doujinshi/${id}/o`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename, oCount: newCount }),
+    });
+  };
+
+  const handleIncreaseO = () => updateOCount(oCount + 1);
+  const handleDecreaseO = () => {
+    if (oCount > 0) updateOCount(oCount - 1);
+  };
+
+
+
   // Navigation logic
   const totalPages = pages ? pages.length : 0;
   const goToPage = (idx: number) => {
@@ -228,6 +255,37 @@ const DoujinshiReader = () => {
 
       {showUI && (
         <>
+          {/* O count button in bottom right */}
+          <div className="absolute bottom-8 right-8 flex flex-col items-end z-20">
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                handleIncreaseO();
+              }}
+              className="rounded-full p-4 bg-black/60 text-white text-2xl flex items-center justify-center hover:bg-indigo-600 transition mb-2"
+              aria-label="Increase O count"
+              title="Increase O count"
+            >
+              <span className="mr-2">O</span>
+              <span className="text-lg font-bold">+</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="bg-black/60 px-3 py-1 rounded text-lg text-white">{oCount}</span>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  handleDecreaseO();
+                }}
+                className="rounded-full p-2 bg-black/60 text-white text-lg flex items-center justify-center hover:bg-red-600 transition"
+                aria-label="Decrease O count"
+                title="Decrease O count"
+                disabled={oCount === 0}
+              >
+                <span>-</span>
+              </button>
+            </div>
+          </div>
+
           {/* Bookmark button in bottom left */}
           <button
             onClick={e => {

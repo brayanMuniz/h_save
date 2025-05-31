@@ -143,6 +143,16 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 			RemoveBookmark(ctx, database)
 		})
 
+		user.POST("/doujinshi/:id/o", func(ctx *gin.Context) {
+			SetOCountHandler(ctx, database)
+		})
+		user.GET("/doujinshi/:id/o", func(ctx *gin.Context) {
+			GetOCountHandler(ctx, database)
+		})
+		user.GET("/doujinshi/:id/o/total", func(ctx *gin.Context) {
+			GetTotalOCountHandler(ctx, database)
+		})
+
 	}
 
 	// fetches from external source to fill up database

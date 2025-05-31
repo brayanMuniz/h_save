@@ -27,3 +27,9 @@ type DoujinshiBookmark struct {
 	Name        string    `json:"name"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+type DoujinshiPageO struct {
+	DoujinshiID int64  `json:"id"`
+	Filename    string `json:"filename"`
+	OCount      int    `json:"ocount"`
+}

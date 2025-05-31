@@ -111,7 +111,7 @@ func DownloadFavorites(
 			}
 		}
 
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
