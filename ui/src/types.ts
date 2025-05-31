@@ -2,6 +2,7 @@ export type Doujinshi = {
   ID: number;
   Source: string;
   ExternalID: string;
+
   Title: string;
   Pages: string;
   Uploaded: string; // ISO string from backend
