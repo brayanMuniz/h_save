@@ -3,21 +3,22 @@ package db
 import "time"
 
 type Doujinshi struct {
-	ID         int64  // database id
-	Source     string // n
-	ExternalID string // example: galleryId for n
-	FolderName string // used to determine the FolderName on disk
+	ID         int64  `json:"id"`
+	Source     string `json:"source"`
+	ExternalID string `json:"externalId"`
+	FolderName string `json:"folderName"`
+	OCount     int    `json:"oCount"`
 
-	Title      string
-	Tags       []string
-	Artists    []string
-	Characters []string
-	Parodies   []string
-	Groups     []string
-	Languages  []string
-	Categories []string
-	Pages      string
-	Uploaded   time.Time
+	Title      string    `json:"title"`
+	Tags       []string  `json:"tags"`
+	Artists    []string  `json:"artists"`
+	Characters []string  `json:"characters"`
+	Parodies   []string  `json:"parodies"`
+	Groups     []string  `json:"groups"`
+	Languages  []string  `json:"languages"`
+	Categories []string  `json:"categories"`
+	Pages      string    `json:"pages"`
+	Uploaded   time.Time `json:"uploaded"`
 }
 
 type DoujinshiBookmark struct {

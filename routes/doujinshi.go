@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	// "unicode"
 
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
@@ -213,7 +212,7 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 		doujinshiData.Parodies,
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get similar doujinshi"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 

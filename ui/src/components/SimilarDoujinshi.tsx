@@ -25,17 +25,17 @@ const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) =
         // Priority: characters > parodies > tags
 
         const byChar = all.filter((dj: Doujinshi) =>
-          (dj.Characters ?? []).some((c) => characters.includes(c))
+          (dj.characters ?? []).some((c) => characters.includes(c))
         );
         const byParody = all.filter(
           (dj: Doujinshi) =>
-            !byChar.includes(dj) && (dj.Parodies ?? []).some((p) => parodies.includes(p))
+            !byChar.includes(dj) && (dj.parodies ?? []).some((p) => parodies.includes(p))
         );
         const byTag = all.filter(
           (dj: Doujinshi) =>
             !byChar.includes(dj) &&
             !byParody.includes(dj) &&
-            (dj.Tags ?? []).some((t) => tags.includes(t))
+            (dj.tags ?? []).some((t) => tags.includes(t))
         );
 
         setSuggestions([...byChar, ...byParody, ...byTag]);
@@ -50,14 +50,14 @@ const SimilarDoujinshi: React.FC<Props> = ({ id, characters, parodies, tags }) =
     <div className="flex flex-wrap gap-2">
       {suggestions.map((d) => (
         <Link
-          key={d.ID} to={`/doujinshi/${d.ID}`} className="block" style={{ width: "14rem" }} >
+          key={d.id} to={`/doujinshi/${d.id}`} className="block" style={{ width: "14rem" }} >
           <CoverImage
             imgUrl={d.thumbnail_url}
-            flag={getLanguageFlag(d.Languages)}
-            title={d.Title}
-            characters={d.Characters ?? []}
-            tags={d.Tags ?? []}
-            parodies={d.Parodies ?? []}
+            flag={getLanguageFlag(d.languages)}
+            title={d.title}
+            characters={d.characters ?? []}
+            tags={d.tags ?? []}
+            parodies={d.parodies ?? []}
             oCount={0} // NOTE: for now using 0 
           // rating={d.rating}
           />

@@ -2,12 +2,21 @@ package db
 
 import (
 	"database/sql"
+	"log"
 	"strings"
 	"time"
 )
 
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
-	rows, err := db.Query(`SELECT id, source, external_id, title, pages, uploaded, folder_name FROM doujinshi`)
+	rows, err := db.Query(`
+	SELECT
+		d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name,
+		COALESCE(SUM(o.o_count), 0) AS o_count
+	FROM doujinshi d
+	LEFT JOIN doujinshi_page_o o ON d.id = o.doujinshi_id
+	GROUP BY d.id
+`)
+
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +25,9 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	var results []Doujinshi
 	for rows.Next() {
 		var d Doujinshi
-		err := rows.Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages, &d.Uploaded, &d.FolderName)
+		err := rows.Scan(
+			&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages, &d.Uploaded, &d.FolderName, &d.OCount,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +80,15 @@ func GetDoujinshi(db *sql.DB, id string) (Doujinshi, error) {
 		return d, err
 	}
 
-	// Fetch related data
+	// Fetch total o count
+	err = db.QueryRow(
+		`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
+	).Scan(&d.OCount)
+	if err != nil {
+		d.OCount = 0 // fallback
+	}
+
+	// Fetch related data for each doujinshi
 	d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
 	d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
 	d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
@@ -136,16 +155,22 @@ func GetSimilarDoujinshiByMetaData(
     `)
 	}
 
+	// This is to prevent an error where nothing is passed
+	var whereClause string
+	if len(conditions) > 0 {
+		whereClause = "(" + strings.Join(conditions, " OR ") + ") AND "
+	} else {
+		return []Doujinshi{}, nil
+	}
+
 	// Exclude the original doujinshi by internal id
 	args = append(args, excludedDoujinshiID)
 
 	query := `
-        SELECT d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name
-        FROM doujinshi d
-        WHERE (` + strings.Join(conditions, " OR ") + `)
-        AND d.id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
-        LIMIT 100
-    `
+	SELECT d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name
+	FROM doujinshi d
+	WHERE ` + whereClause + `d.id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
+`
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
@@ -159,6 +184,13 @@ func GetSimilarDoujinshiByMetaData(
 		if err := rows.Scan(&d.ID, &d.Source, &d.ExternalID,
 			&d.Title, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
 			return nil, err
+		}
+
+		err := db.QueryRow(
+			`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
+		).Scan(&d.OCount)
+		if err != nil {
+			d.OCount = 0
 		}
 
 		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
@@ -191,9 +223,19 @@ func GetDoujinshiByArtist(db *sql.DB, artistName string) ([]Doujinshi, error) {
 	var results []Doujinshi
 	for rows.Next() {
 		var d Doujinshi
-		if err := rows.Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
+		if err := rows.Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages,
+			&d.Uploaded, &d.FolderName); err != nil {
 			return nil, err
 		}
+
+		// fetch and set o count
+		err := db.QueryRow(
+			`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
+		).Scan(&d.OCount)
+		if err != nil {
+			d.OCount = 0
+		}
+
 		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
 		d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
 		d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
@@ -202,6 +244,7 @@ func GetDoujinshiByArtist(db *sql.DB, artistName string) ([]Doujinshi, error) {
 		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
 		results = append(results, d)
+
 	}
 	return results, nil
 }
