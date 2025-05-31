@@ -85,6 +85,7 @@ const DoujinshiOverview: React.FC = () => {
         </Link>
       </div>
 
+      {/* sidebar */}
       <DoujinOverviewFilter
         characters={doujinshi.Characters ?? []}
         parodies={doujinshi.Parodies ?? []}
@@ -92,34 +93,40 @@ const DoujinshiOverview: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-6 ml-6 pt-20 lg:pt-0">
-        <DoujinshiCard doujinshi={doujinshi} />
+      <div className="flex-1 flex flex-col gap-6 ml-4 pt-20 lg:pt-0">
 
-        <div className="mb-4">
-          <h4 className="text-lg font-bold text-white mb-2">Bookmarks</h4>
-          {bookmarks.length === 0 ? (
-            <div className="text-gray-400 text-sm">No bookmarks yet.</div>
-          ) : (
+        <div className="flex-1 flex flex-col lg:flex-row lg:pt-0">
+          {/* Left */}
+          <div className="flex-1">
+            <DoujinshiCard doujinshi={doujinshi} />
+          </div>
 
-            <ul className="space-y-2">
-              {bookmarks.map((bm) => {
-                const pageNum = getPageNumberFromFilename(bm.filename);
-                return (
-                  <li key={bm.id} className="flex items-center gap-2">
-                    <Link
-                      to={`/doujinshi/${id}/page/${bm.filename}`}
-                      className="bg-indigo-700 text-white px-2 py-1 rounded text-xs hover:bg-indigo-500 transition"
-                    >
-                      {pageNum !== null ? `Page ${pageNum}` : bm.filename}
-                    </Link>
-                    <span className="text-white text-sm">
-                      {bm.name || <em className="text-gray-400">[No name]</em>}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          {/* Right: Bookmarks */}
+          <div className="w-64 bg-gray-800 rounded-lg p-4">
+            <h4 className="text-lg font-bold text-white mb-2">Bookmarks</h4>
+            {bookmarks.length === 0 ? (
+              <div className="text-gray-400 text-sm">No bookmarks yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {bookmarks.map((bm) => {
+                  const pageNum = getPageNumberFromFilename(bm.filename);
+                  return (
+                    <li key={bm.id} className="flex items-center gap-2">
+                      <Link
+                        to={`/doujinshi/${id}/page/${bm.filename}`}
+                        className="bg-indigo-700 text-white px-2 py-1 rounded text-xs hover:bg-indigo-500 transition"
+                      >
+                        {pageNum !== null ? `Page ${pageNum}` : bm.filename}
+                      </Link>
+                      <span className="text-white text-sm">
+                        {bm.name || <em className="text-gray-400">[No name]</em>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* Limited Page Preview */}
@@ -158,7 +165,7 @@ const DoujinshiOverview: React.FC = () => {
       </div>
 
       {/* Sidebar: Artist Other Works */}
-      <aside className="w-64 flex-shrink-0 hidden lg:block">
+      <aside className="w-64 flex-shrink-0 hidden xl:block">
         <div className="bg-gray-800 rounded-lg p-4 text-gray-200 sticky top-8">
           <h4 className="text-lg font-bold mb-4">Artist Other Works</h4>
           <div className="grid grid-cols-2 gap-2">
