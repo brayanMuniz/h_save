@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { Doujinshi } from "../types";
 
@@ -15,12 +15,27 @@ function getPageNumberFromFilename(filename?: string): number | null {
   return parseInt(match[1], 10);
 }
 
+interface FilterState {
+  characters: { ordered: string[]; excluded: Set<string> };
+  parodies: { ordered: string[]; excluded: Set<string> };
+  tags: { ordered: string[]; excluded: Set<string> };
+}
+
 const DoujinshiOverview: React.FC = () => {
   const { id } = useParams();
   const [doujinshi, setDoujinshi] = useState<Doujinshi | null>(null);
   const [pages, setPages] = useState<string[]>([]);
   const [artistWorks, setArtistWorks] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Memoize the initial filter state
+  const initialFilterState = useMemo(() => ({
+    characters: { ordered: [], excluded: new Set<string>() },
+    parodies: { ordered: [], excluded: new Set<string>() },
+    tags: { ordered: [], excluded: new Set<string>() },
+  }), []);
+
+  const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
 
   const [bookmarks, setBookmarks] = useState<
     { id: number; filename: string; name: string }[]
@@ -30,7 +45,8 @@ const DoujinshiOverview: React.FC = () => {
     if (!id) return;
     fetch(`/api/user/doujinshi/${id}/bookmarks`)
       .then((res) => res.json())
-      .then((data) => setBookmarks(data.bookmarks || []));
+      .then((data) => setBookmarks(data.bookmarks || []))
+      .catch((error) => console.error('Error fetching bookmarks:', error));
   }, [id]);
 
   useEffect(() => {
@@ -46,25 +62,44 @@ const DoujinshiOverview: React.FC = () => {
       setLoading(false);
 
       if (data.doujinshiData) {
-        const artist = (data.doujinshiData.Artists || [])[0];
+        const artist = (data.doujinshiData.artists || [])[0];
         if (artist) {
           fetch(`/api/artist/${artist}`)
             .then((res) => res.json())
-            .then((d) => setArtistWorks(d.doujinshi || []));
+            .then((d) => setArtistWorks(d.doujinshi || []))
+            .catch((error) => console.error('Error fetching artist works:', error));
         }
       }
+    }).catch((error) => {
+      console.error('Error fetching doujinshi data:', error);
+      setLoading(false);
     });
   }, [id]);
+
+
+  const handleFilterChange = useCallback((newFilterState: FilterState) => {
+    setFilterState(prevState => {
+      // Only update if there's actually a change
+      const hasChanged =
+        prevState.characters.ordered.join(',') !== newFilterState.characters.ordered.join(',') ||
+        prevState.parodies.ordered.join(',') !== newFilterState.parodies.ordered.join(',') ||
+        prevState.tags.ordered.join(',') !== newFilterState.tags.ordered.join(',') ||
+        Array.from(prevState.characters.excluded).sort().join(',') !== Array.from(newFilterState.characters.excluded).sort().join(',') ||
+        Array.from(prevState.parodies.excluded).sort().join(',') !== Array.from(newFilterState.parodies.excluded).sort().join(',') ||
+        Array.from(prevState.tags.excluded).sort().join(',') !== Array.from(newFilterState.tags.excluded).sort().join(',');
+
+      return hasChanged ? newFilterState : prevState;
+    });
+  }, []);
+
 
   if (loading) return <div className="text-white">Loading...</div>;
   if (!doujinshi) return <div className="text-red-400">Not found</div>;
 
   return (
     <div className="flex gap-8 min-h-screen">
-
       {/* Top bar for navigation on md screens only */}
       <div className="fixed top-0 left-0 w-full h-16 bg-gray-900 flex items-center justify-between px-8 z-40 md:flex lg:hidden">
-        {/* Back Button - Left Side */}
         <button
           onClick={() => window.history.back()}
           className="text-white text-xl hover:text-indigo-400 transition"
@@ -74,7 +109,6 @@ const DoujinshiOverview: React.FC = () => {
           ←
         </button>
 
-        {/* Home Link - Right Side */}
         <Link
           to="/"
           className="text-white text-xl font-bold hover:text-indigo-400 transition"
@@ -90,11 +124,11 @@ const DoujinshiOverview: React.FC = () => {
         characters={doujinshi.characters ?? []}
         parodies={doujinshi.parodies ?? []}
         tags={doujinshi.tags ?? []}
+        onFilterChange={handleFilterChange}
       />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-6 ml-4 pt-20 lg:pt-0">
-
         <div className="flex-1 flex flex-col lg:flex-row lg:pt-0">
           {/* Left */}
           <div className="flex-1">
@@ -156,12 +190,7 @@ const DoujinshiOverview: React.FC = () => {
 
         {/* Suggestions Row */}
         <h3 className="text-white">Similar Doujins</h3>
-        <SimilarDoujinshi
-          id={doujinshi.id}
-          characters={doujinshi.characters ?? []}
-          parodies={doujinshi.parodies ?? []}
-          tags={doujinshi.tags ?? []}
-        />
+        <SimilarDoujinshi id={doujinshi.id} filterState={filterState} />
       </div>
 
       {/* Sidebar: Artist Other Works */}
@@ -170,11 +199,7 @@ const DoujinshiOverview: React.FC = () => {
           <h4 className="text-lg font-bold mb-4">Artist Other Works</h4>
           <div className="grid grid-cols-2 gap-2">
             {artistWorks.map((d) => (
-              <Link
-                key={d.id}
-                to={`/doujinshi/${d.id}`}
-                className="block"
-              >
+              <Link key={d.id} to={`/doujinshi/${d.id}`} className="block">
                 <img
                   src={d.thumbnail_url}
                   alt={d.title}
@@ -184,7 +209,9 @@ const DoujinshiOverview: React.FC = () => {
               </Link>
             ))}
             {artistWorks.length === 0 && (
-              <span className="text-gray-400 col-span-2">No other works found.</span>
+              <span className="text-gray-400 col-span-2">
+                No other works found.
+              </span>
             )}
           </div>
         </div>
@@ -194,4 +221,3 @@ const DoujinshiOverview: React.FC = () => {
 };
 
 export default DoujinshiOverview;
-

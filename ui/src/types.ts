@@ -26,3 +26,19 @@ export type Progress = {
   rating: number | null;
   lastPage: number | null;
 };
+
+// For filtering on card
+export interface FilterState {
+  characters: {
+    ordered: string[];
+    excluded: Set<string>;
+  };
+  parodies: {
+    ordered: string[];
+    excluded: Set<string>;
+  };
+  tags: {
+    ordered: string[];
+    excluded: Set<string>;
+  };
+}

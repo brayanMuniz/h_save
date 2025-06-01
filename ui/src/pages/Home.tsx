@@ -165,8 +165,8 @@ const Home = () => {
                     characters={d.characters ?? []}
                     tags={d.tags ?? []}
                     parodies={d.parodies ?? []}
-                    oCount={0}
-                  // rating={d.rating}
+                    oCount={d.oCount}
+                    rating={d.progress.rating ?? 0}
                   />
                 </Link>
               ) : (
