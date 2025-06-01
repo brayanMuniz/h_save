@@ -1,6 +1,6 @@
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
-import React from "react"; // Ensure React is imported for JSX
+import { useEffect, useState, useRef, useCallback } from "react";
+import React from "react";
 
 // Simple SVG Minus Icon
 const MinusIcon = () => (
@@ -10,7 +10,7 @@ const MinusIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
-    className="w-5 h-5" // Adjust size as needed
+    className="w-5 h-5"
   >
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
   </svg>
@@ -24,7 +24,7 @@ const PlusIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
-    className="w-5 h-5" // Adjust size as needed
+    className="w-5 h-5"
   >
     <path
       strokeLinecap="round"
@@ -34,10 +34,46 @@ const PlusIcon = () => (
   </svg>
 );
 
+// Play Icon
+const PlayIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className="w-6 h-6"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"
+    />
+  </svg>
+);
+
+// Stop Icon
+const StopIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    className="w-6 h-6"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z"
+    />
+  </svg>
+);
+
 // OCounter Component
 interface OCounterProps {
   count: number;
-  setCount: (newCount: number) => void; // Expects a function that takes the new count
+  setCount: (newCount: number) => void;
   minCount?: number;
   maxCount?: number;
 }
@@ -58,7 +94,6 @@ const OCounter: React.FC<OCounterProps> = ({
 
   return (
     <div className="flex items-center gap-2 p-1 bg-gray-800/80 rounded-lg shadow">
-      {/* Adjusted background to bg-gray-800/80 for better blend with overlays */}
       <button
         onClick={handleDecrement}
         disabled={count <= minCount}
@@ -79,6 +114,58 @@ const OCounter: React.FC<OCounterProps> = ({
         className="px-2 py-2 bg-gray-700/80 text-white rounded hover:bg-gray-600/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Increment count"
         title="Increment"
+      >
+        <PlusIcon />
+      </button>
+    </div>
+  );
+};
+
+// Interval Counter Component for Autoplay
+interface IntervalCounterProps {
+  interval: number;
+  setInterval: (newInterval: number) => void;
+  disabled?: boolean;
+}
+
+const IntervalCounter: React.FC<IntervalCounterProps> = ({
+  interval,
+  setInterval,
+  disabled = false,
+}) => {
+  const handleDecrement = () => {
+    setInterval(Math.max(1, interval - 1));
+  };
+
+  const handleIncrement = () => {
+    setInterval(Math.min(30, interval + 1));
+  };
+
+  return (
+    <div className="flex items-center gap-2 p-1 bg-gray-800/80 rounded-lg shadow">
+      <button
+        onClick={handleDecrement}
+        disabled={disabled || interval <= 1}
+        className="px-2 py-2 bg-gray-700/80 text-white rounded hover:bg-gray-600/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Decrease interval"
+        title="Decrease interval"
+      >
+        <MinusIcon />
+      </button>
+
+      <div className="flex items-center gap-1 min-w-[60px] justify-center">
+        <span className="text-lg font-medium text-white select-none">
+          {interval}
+        </span>
+        <span className="text-sm text-gray-300 select-none">s</span>
+      </div>
+
+      <button
+        onClick={handleIncrement}
+        disabled={disabled || interval >= 30}
+        className="px-2 py-2 bg-gray-700/80 text-white rounded hover:bg-gray-600/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Increase interval"
+        title="Increase interval"
       >
         <PlusIcon />
       </button>
@@ -132,11 +219,16 @@ const DoujinshiReader = () => {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
+  // Autoplay state
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoPlayInterval, setAutoPlayInterval] = useState(7);
+  const autoPlayTimer = useRef<number | null>(null);
+
   useEffect(() => {
     if (pages && currentIdx !== null) return;
     if (!id || !pageNumber) {
       setError("No page data provided.");
-      setLoading(false); // Ensure loading is set to false
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -155,7 +247,7 @@ const DoujinshiReader = () => {
           setError("Page not found.");
         } else {
           setCurrentIdx(idx);
-          setError(null); // Clear previous errors
+          setError(null);
         }
         setLoading(false);
       })
@@ -197,7 +289,7 @@ const DoujinshiReader = () => {
       if (res.ok) {
         setBookmarkStatus("saved");
         setTimeout(() => setBookmarkStatus("idle"), 1500);
-        fetch(`/api/user/doujinshi/${id}/bookmarks`) // Refetch bookmarks
+        fetch(`/api/user/doujinshi/${id}/bookmarks`)
           .then((res) => res.json())
           .then((data) => setBookmarks(data.bookmarks || []));
       } else {
@@ -214,15 +306,16 @@ const DoujinshiReader = () => {
 
   useEffect(() => {
     if (!id || !filename) return;
-    fetch(`/api/user/doujinshi/${id}/o?filename=${encodeURIComponent(filename)}`)
+    fetch(
+      `/api/user/doujinshi/${id}/o?filename=${encodeURIComponent(filename)}`
+    )
       .then((res) => res.json())
       .then((data) => setOCount(data.oCount ?? 0));
   }, [id, filename]);
 
-  // This function will be passed to OCounter
   const updateOCount = async (newCount: number) => {
     if (!id || !filename) return;
-    setOCount(newCount); // Optimistic update
+    setOCount(newCount);
     try {
       await fetch(`/api/user/doujinshi/${id}/o`, {
         method: "POST",
@@ -235,19 +328,93 @@ const DoujinshiReader = () => {
   };
 
   const totalPages = pages ? pages.length : 0;
-  const goToPage = (idx: number) => {
-    if (!pages || idx < 0 || idx >= totalPages) return;
-    const nextPageFilename = (() => {
-      const match = pages[idx].match(/page\/([^/]+)$/);
-      return match ? match[1] : "";
-    })();
-    if (nextPageFilename) {
-      navigate(`/doujinshi/${id}/page/${nextPageFilename}`, {
-        state: { pages, currentIdx: idx },
-      });
-      setCurrentIdx(idx); // Update currentIdx immediately for current session
+
+  const goToPage = useCallback(
+    (idx: number) => {
+      if (!pages || idx < 0 || idx >= totalPages) return;
+      const nextPageFilename = (() => {
+        const match = pages[idx].match(/page\/([^/]+)$/);
+        return match ? match[1] : "";
+      })();
+      if (nextPageFilename) {
+        navigate(`/doujinshi/${id}/page/${nextPageFilename}`, {
+          state: { pages, currentIdx: idx },
+        });
+        setCurrentIdx(idx);
+      }
+    },
+    [pages, totalPages, navigate, id]
+  );
+
+  // Autoplay logic
+  const startAutoPlay = useCallback(() => {
+    if (autoPlayTimer.current) {
+      clearTimeout(autoPlayTimer.current);
+    }
+
+    const nextPage = () => {
+      if (currentIdx !== null && currentIdx < totalPages - 1) {
+        goToPage(currentIdx + 1);
+        // Set timer for next page
+        autoPlayTimer.current = window.setTimeout(
+          nextPage,
+          autoPlayInterval * 1000
+        );
+      } else {
+        // Reached the end, stop autoplay
+        setIsAutoPlaying(false);
+      }
+    };
+
+    autoPlayTimer.current = window.setTimeout(
+      nextPage,
+      autoPlayInterval * 1000
+    );
+  }, [currentIdx, totalPages, goToPage, autoPlayInterval]);
+
+  const stopAutoPlay = useCallback(() => {
+    if (autoPlayTimer.current) {
+      clearTimeout(autoPlayTimer.current);
+      autoPlayTimer.current = null;
+    }
+    setIsAutoPlaying(false);
+  }, []);
+
+  const toggleAutoPlay = () => {
+    if (isAutoPlaying) {
+      stopAutoPlay();
+    } else {
+      if (currentIdx !== null && currentIdx < totalPages - 1) {
+        setIsAutoPlaying(true);
+        startAutoPlay();
+      }
     }
   };
+
+  // Stop autoplay when reaching the end or when component unmounts
+  useEffect(() => {
+    if (isAutoPlaying && currentIdx !== null && currentIdx >= totalPages - 1) {
+      stopAutoPlay();
+    }
+  }, [currentIdx, totalPages, isAutoPlaying, stopAutoPlay]);
+
+  // Restart autoplay timer when interval changes
+  useEffect(() => {
+    if (isAutoPlaying) {
+      stopAutoPlay();
+      setIsAutoPlaying(true);
+      startAutoPlay();
+    }
+  }, [autoPlayInterval, isAutoPlaying, startAutoPlay, stopAutoPlay]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoPlayTimer.current) {
+        clearTimeout(autoPlayTimer.current);
+      }
+    };
+  }, []);
 
   const handleScreenClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!pages || currentIdx === null) return;
@@ -264,27 +431,27 @@ const DoujinshiReader = () => {
         const newShowUI = !prev;
         if (hideUITimer.current) clearTimeout(hideUITimer.current);
         if (newShowUI) {
-          // If UI is now shown, set a timer to hide it
-          hideUITimer.current = window.setTimeout(() => setShowUI(false), 3000);
+          hideUITimer.current = window.setTimeout(
+            () => setShowUI(false),
+            4000
+          );
         }
         return newShowUI;
       });
     }
   };
 
-  // Auto-hide UI after a delay when it's shown
   useEffect(() => {
     if (showUI) {
       if (hideUITimer.current) clearTimeout(hideUITimer.current);
       hideUITimer.current = window.setTimeout(() => {
         setShowUI(false);
-      }, 3000); // Hide after 3 seconds
+      }, 4000);
     }
-    // Cleanup timer on unmount or if showUI becomes false
     return () => {
       if (hideUITimer.current) clearTimeout(hideUITimer.current);
     };
-  }, [showUI]); // Rerun when showUI changes
+  }, [showUI]);
 
   if (loading) {
     return (
@@ -323,7 +490,7 @@ const DoujinshiReader = () => {
                 enterFullscreen();
               }}
               className="absolute top-6 left-24 bg-black/60 rounded p-2 hover:bg-black/80 transition text-white"
-              style={{ zIndex: 60 }} // Ensure UI elements are above image
+              style={{ zIndex: 60 }}
               aria-label="Enter Fullscreen"
               title="Enter Fullscreen"
             >
@@ -365,12 +532,43 @@ const DoujinshiReader = () => {
               />
             </svg>
           </Link>
+
+          {/* Page counter */}
           <span
             className="absolute top-6 right-8 text-white bg-black/60 px-4 py-2 rounded text-lg"
             style={{ pointerEvents: "none", zIndex: 60 }}
           >
             Page {currentIdx + 1} / {totalPages}
           </span>
+
+          {/* Autoplay controls - positioned below page counter */}
+          <div
+            className="absolute top-20 right-8 flex items-center gap-3 bg-black/60 px-4 py-2 rounded-lg"
+            style={{ zIndex: 60 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-white text-sm font-medium">Autoplay:</span>
+              <IntervalCounter
+                interval={autoPlayInterval}
+                setInterval={setAutoPlayInterval}
+                disabled={isAutoPlaying}
+              />
+            </div>
+
+            <button
+              onClick={toggleAutoPlay}
+              disabled={currentIdx >= totalPages - 1}
+              className={`p-2 rounded-full transition ${isAutoPlaying
+                ? "bg-red-600 hover:bg-red-500 text-white"
+                : "bg-green-600 hover:bg-green-500 text-white disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
+              aria-label={isAutoPlaying ? "Stop autoplay" : "Start autoplay"}
+              title={isAutoPlaying ? "Stop autoplay" : "Start autoplay"}
+            >
+              {isAutoPlaying ? <StopIcon /> : <PlayIcon />}
+            </button>
+          </div>
         </>
       )}
 
@@ -379,22 +577,17 @@ const DoujinshiReader = () => {
         alt={`Page ${currentIdx + 1}`}
         className="w-screen h-screen object-contain"
         draggable={false}
-        style={{ zIndex: 50 }} // Ensure image is below UI overlays
+        style={{ zIndex: 50 }}
       />
 
       {showUI && (
         <>
           {/* OCounter in bottom right */}
           <div
-            className="absolute bottom-8 right-8 z-60" // Ensure UI elements are above image
-            onClick={(e) => e.stopPropagation()} // Prevent main screen click
+            className="absolute bottom-8 right-8 z-60"
+            onClick={(e) => e.stopPropagation()}
           >
-            <OCounter
-              count={oCount}
-              setCount={updateOCount}
-              minCount={0}
-            // maxCount={/* Optional: some upper limit */}
-            />
+            <OCounter count={oCount} setCount={updateOCount} minCount={0} />
           </div>
 
           <button
@@ -408,7 +601,9 @@ const DoujinshiReader = () => {
                 : "bg-black/60 text-white hover:bg-indigo-600"
               }`}
             style={{ zIndex: 60 }}
-            aria-label={isBookmarked ? "Remove Bookmark" : "Bookmark this page"}
+            aria-label={
+              isBookmarked ? "Remove Bookmark" : "Bookmark this page"
+            }
             title={isBookmarked ? "Remove Bookmark" : "Bookmark this page"}
           >
             {isBookmarked ? (
@@ -443,9 +638,16 @@ const DoujinshiReader = () => {
             bookmarkStatus === "error") && (
               <span
                 className={`absolute bottom-20 left-8 text-xs px-2 py-1 rounded
-                ${bookmarkStatus === "saving" ? "bg-blue-500/70 text-white" : ""}
-                ${bookmarkStatus === "saved" ? "bg-green-500/70 text-white" : ""}
-                ${bookmarkStatus === "error" ? "bg-red-500/70 text-white" : ""}`}
+                ${bookmarkStatus === "saving"
+                    ? "bg-blue-500/70 text-white"
+                    : ""
+                  }
+                ${bookmarkStatus === "saved"
+                    ? "bg-green-500/70 text-white"
+                    : ""
+                  }
+                ${bookmarkStatus === "error" ? "bg-red-500/70 text-white" : ""
+                  }`}
                 style={{ zIndex: 60 }}
               >
                 {bookmarkStatus === "saving" && "Saving bookmark..."}
