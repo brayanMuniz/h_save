@@ -1,6 +1,6 @@
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useRef, useCallback } from "react";
-import React from "react";
+import React from "react"; // Ensure React is imported for JSX
 
 // Simple SVG Minus Icon
 const MinusIcon = () => (
@@ -221,7 +221,7 @@ const DoujinshiReader = () => {
 
   // Autoplay state
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
-  const [autoPlayInterval, setAutoPlayInterval] = useState(7);
+  const [autoPlayInterval, setAutoPlayInterval] = useState(3);
   const autoPlayTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -346,6 +346,31 @@ const DoujinshiReader = () => {
     [pages, totalPages, navigate, id]
   );
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (currentIdx === null) return;
+
+      switch (event.key) {
+        case "ArrowLeft":
+          event.preventDefault();
+          goToPage(currentIdx - 1);
+          break;
+        case "ArrowRight":
+          event.preventDefault();
+          goToPage(currentIdx + 1);
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentIdx, goToPage]);
+
   // Autoplay logic
   const startAutoPlay = useCallback(() => {
     if (autoPlayTimer.current) {
@@ -433,7 +458,7 @@ const DoujinshiReader = () => {
         if (newShowUI) {
           hideUITimer.current = window.setTimeout(
             () => setShowUI(false),
-            4000
+            3000
           );
         }
         return newShowUI;
