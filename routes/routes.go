@@ -235,7 +235,7 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 			saveMetadata := ctx.DefaultQuery("save_metadata", "true")
 			skipOrganized := ctx.DefaultQuery("skip_organized", "true")
 			// NOTE: for testing you can change the page number
-			DownloadFavorites(ctx, rootURL, "2", http_config, database,
+			DownloadFavorites(ctx, rootURL, "1", http_config, database,
 				saveMetadata == "true",
 				skipOrganized == "true")
 		})
