@@ -203,35 +203,68 @@ type ProgressRequest struct {
 	LastPage int `json:"lastPage"`
 }
 
-func SetDoujinshiProgress(ctx *gin.Context, database *sql.DB) {
-	id, ok := parseID(ctx, "id")
-	if !ok {
-		return
-	}
-	var req ProgressRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid request"})
-		return
-	}
-	if err := db.SetDoujinshiProgress(database, id, req.Rating, req.LastPage); err != nil {
-		ctx.JSON(500, gin.H{"error": "Failed to set progress"})
-		return
-	}
-	ctx.JSON(200, gin.H{"success": true})
-}
+func GetDoujinshiProgress(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
 
-func GetDoujinshiProgress(ctx *gin.Context, database *sql.DB) {
-	id, ok := parseID(ctx, "id")
-	if !ok {
-		return
-	}
 	progress, err := db.GetDoujinshiProgress(database, id)
 	if err != nil {
-		ctx.JSON(404, gin.H{"error": "No progress found"})
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to get doujinshi progress"})
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"rating":   progress.Rating,
-		"lastPage": progress.LastPage,
+
+	c.JSON(http.StatusOK, gin.H{"progress": progress})
+}
+
+func SetDoujinshiProgress(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+
+	var request struct {
+		Rating   *int `json:"rating"`
+		LastPage *int `json:"lastPage"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate rating
+	if request.Rating != nil && (*request.Rating < 1 || *request.Rating > 5) {
+		c.JSON(http.StatusBadRequest,
+			gin.H{"error": "Rating must be between 1 and 5"})
+		return
+	}
+
+	// Validate last_page
+	if request.LastPage != nil && *request.LastPage < 0 {
+		c.JSON(http.StatusBadRequest,
+			gin.H{"error": "Last page must be non-negative"})
+		return
+	}
+
+	err := db.UpdateDoujinshiProgress(
+		database,
+		id,
+		request.Rating,
+		request.LastPage,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to update doujinshi progress"})
+		return
+	}
+
+	// Return the updated progress
+	progress, err := db.GetDoujinshiProgress(database, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,
+			gin.H{"error": "Failed to get updated progress"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Progress updated successfully",
+		"progress": progress,
 	})
 }

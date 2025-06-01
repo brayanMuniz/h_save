@@ -2,7 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -40,6 +40,12 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
 		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+
+		idString := strconv.FormatInt(d.ID, 10)
+		progress, err := GetDoujinshiProgress(db, idString)
+		if err == nil {
+			d.Progress = &progress
+		}
 
 		results = append(results, d)
 	}
@@ -96,6 +102,11 @@ func GetDoujinshi(db *sql.DB, id string) (Doujinshi, error) {
 	d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
 	d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 	d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+
+	progress, err := GetDoujinshiProgress(db, id)
+	if err == nil {
+		d.Progress = &progress
+	}
 
 	return d, nil
 }
@@ -201,6 +212,12 @@ func GetSimilarDoujinshiByMetaData(
 		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
 
+		idString := strconv.FormatInt(d.ID, 10)
+		progress, err := GetDoujinshiProgress(db, idString)
+		if err == nil {
+			d.Progress = &progress
+		}
+
 		results = append(results, d)
 	}
 	return results, nil
@@ -243,6 +260,13 @@ func GetDoujinshiByArtist(db *sql.DB, artistName string) ([]Doujinshi, error) {
 		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
 		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
 		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+
+		idString := strconv.FormatInt(d.ID, 10)
+		progress, err := GetDoujinshiProgress(db, idString)
+		if err == nil {
+			d.Progress = &progress
+		}
+
 		results = append(results, d)
 
 	}

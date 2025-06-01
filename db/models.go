@@ -19,6 +19,8 @@ type Doujinshi struct {
 	Categories []string  `json:"categories"`
 	Pages      string    `json:"pages"`
 	Uploaded   time.Time `json:"uploaded"`
+
+	Progress *DoujinshiProgress `json:"progress,omitempty"`
 }
 
 type DoujinshiBookmark struct {
@@ -33,4 +35,10 @@ type DoujinshiPageO struct {
 	DoujinshiID int64  `json:"id"`
 	Filename    string `json:"filename"`
 	OCount      int    `json:"ocount"`
+}
+
+type DoujinshiProgress struct {
+	DoujinshiID int64 `json:"doujinshiId"`
+	Rating      *int  `json:"rating"`   // nullable
+	LastPage    *int  `json:"lastPage"` // nullable
 }
