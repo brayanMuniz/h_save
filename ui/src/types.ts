@@ -2,6 +2,8 @@ export type Doujinshi = {
   id: number;
   source: string;
   externalId: string;
+  progress: Progress;
+
 
   title: string;
   pages: string;
@@ -17,4 +19,10 @@ export type Doujinshi = {
   languages: string[];
   categories: string[];
   thumbnail_url: string;
+};
+
+export type Progress = {
+  doujinshiId: number;
+  rating: number | null;
+  lastPage: number | null;
 };
