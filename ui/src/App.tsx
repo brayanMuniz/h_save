@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import DoujinshiReader from "./pages/DoujinshiReader";
 import DoujinshiOverview from "./pages/DoujinshiOverview";
+import Browse from "./pages/Browse";
 
 function App() {
   return (
@@ -15,6 +16,14 @@ function App() {
             <Home />
           }
         />
+
+        <Route
+          path="/browse"
+          element={
+            <Browse />
+          }
+        />
+
 
         <Route
           path="/doujinshi/:id"

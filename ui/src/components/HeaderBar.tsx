@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 type ViewMode = "card" | "cover";
 
@@ -9,7 +10,16 @@ interface HeaderBarProps {
 
 const HeaderBar: React.FC<HeaderBarProps> = ({ viewMode, setViewMode }) => (
   <div className="flex items-center justify-between w-full mb-6">
-    <span className="text-4xl font-bold text-gray-200 font-handwriting">Ecchi</span>
+
+    <Link
+      to="/"
+      className="text-4xl font-bold text-gray-200 font-handwriting hover:text-indigo-400 transition"
+    >
+      Ecchi
+
+    </Link>
+
+
     <div className="flex items-center gap-2">
       <button
         onClick={() => setViewMode("card")}
