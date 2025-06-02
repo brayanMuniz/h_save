@@ -42,3 +42,32 @@ export interface FilterState {
     excluded: Set<string>;
   };
 }
+
+// Filter browsing page
+export interface BrowseFilters {
+  artists: FilterGroup;
+  groups: FilterGroup;
+  tags: FilterGroup;
+  characters: FilterGroup;
+  parodies: FilterGroup;
+  languages: string[];
+  rating: { min: number; max: number };
+  oCount: { min: number; max: number };
+  formats: string[];
+  genres: string[];
+  search: string;
+}
+
+export interface FilterGroup {
+  included: string[];
+  excluded: string[];
+}
+
+export interface FilterSection {
+  id: keyof BrowseFilters;
+  label: string;
+  icon: string;
+  collapsed: boolean;
+}
+
+export type FilterType = "artists" | "groups" | "tags" | "characters" | "parodies";
