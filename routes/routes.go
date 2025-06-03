@@ -2,13 +2,15 @@ package routes
 
 import (
 	"database/sql"
+	"net/http"
+
 	"github.com/brayanMuniz/h_save/db"
 	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gin.Engine {
+func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 	r := gin.Default()
 
 	api := r.Group("/api")
@@ -57,7 +59,7 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 		// ============================================================================
 		// SYNC ROUTES
 		// ============================================================================
-		api.GET("/sync", func(ctx *gin.Context) {
+		api.POST("/sync", func(ctx *gin.Context) {
 			SyncDoujinshi(ctx, database)
 		})
 
@@ -223,22 +225,36 @@ func SetupRouter(database *sql.DB, rootURL string, http_config n.HTTPConfig) *gi
 	}
 
 	// ============================================================================
-	// EXTERNAL SOURCE ROUTES (nhentai integration)
+	// EXTERNAL SOURCE ROUTES
 	// ============================================================================
-	n := r.Group("/n")
+	nhentai := r.Group("/nhentai")
 	{
-		n.GET("/authCheck", func(ctx *gin.Context) {
-			AuthCheck(ctx, rootURL, http_config)
+		nhentai.POST("/authCheck", func(ctx *gin.Context) {
+			AuthCheck(ctx, rootURL)
 		})
 
-		n.GET("/favorites/download", func(ctx *gin.Context) {
-			saveMetadata := ctx.DefaultQuery("save_metadata", "true")
-			skipOrganized := ctx.DefaultQuery("skip_organized", "true")
-			// NOTE: for testing you can change the page number
-			DownloadFavorites(ctx, rootURL, "1", http_config, database,
-				saveMetadata == "true",
-				skipOrganized == "true")
+		nhentai.POST("/favorites/download", func(ctx *gin.Context) {
+			var req struct {
+				SessionId     string `json:"sessionId"`
+				CsrfToken     string `json:"csrfToken"`
+				SaveMetadata  bool   `json:"saveMetadata"`
+				SkipOrganized bool   `json:"skipOrganized"`
+			}
+			if err := ctx.ShouldBindJSON(&req); err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+				return
+			}
+
+			httpConfig := n.HTTPConfig{
+				SessionId: req.SessionId,
+				CsrfToken: req.CsrfToken,
+			}
+
+			result := DownloadAllFavorites(ctx, rootURL, httpConfig, database,
+				req.SaveMetadata, req.SkipOrganized)
+			ctx.JSON(http.StatusOK, result)
 		})
+
 	}
 
 	return r

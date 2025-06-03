@@ -227,8 +227,22 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 
 }
 
-func AuthCheck(c *gin.Context, rootURL string, http_config n.HTTPConfig) {
-	html_page, err := n.GetPageHTML(rootURL, http_config)
+func AuthCheck(c *gin.Context, rootURL string) {
+	var req struct {
+		SessionId string `json:"sessionId"`
+		CsrfToken string `json:"csrfToken"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	httpConfig := n.HTTPConfig{
+		SessionId: req.SessionId,
+		CsrfToken: req.CsrfToken,
+	}
+
+	html_page, err := n.GetPageHTML(rootURL, httpConfig)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get favorites page"})
 		return
