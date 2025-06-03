@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import DoujinshiReader from "./pages/DoujinshiReader";
 import DoujinshiOverview from "./pages/DoujinshiOverview";
 import Browse from "./pages/Browse";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -24,6 +25,13 @@ function App() {
           }
         />
 
+
+        <Route
+          path="/settings"
+          element={
+            <Settings />
+          }
+        />
 
         <Route
           path="/doujinshi/:id"
