@@ -11,9 +11,8 @@ import (
 )
 
 type HTTPConfig struct {
-	SessionId       string
-	CsrfToken       string
-	UserAgentString string
+	SessionId string
+	CsrfToken string
 }
 
 const saveTorrentsFolder = "download_me_senpai"

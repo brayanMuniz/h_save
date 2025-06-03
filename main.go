@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/brayanMuniz/h_save/db"
-	"github.com/brayanMuniz/h_save/n"
 	"github.com/brayanMuniz/h_save/routes"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -41,18 +40,7 @@ func main() {
 		fmt.Println("sessionid loaded")
 	}
 
-	userAgentString := os.Getenv("USER_AGENT_STRING")
-	if userAgentString != "" {
-		fmt.Println("user agent string loaded")
-	}
-
-	http_config := n.HTTPConfig{
-		CsrfToken:       csrftoken,
-		SessionId:       sessionid,
-		UserAgentString: userAgentString,
-	}
-
-	r := routes.SetupRouter(database, rootURL, http_config)
+	r := routes.SetupRouter(database, rootURL)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
