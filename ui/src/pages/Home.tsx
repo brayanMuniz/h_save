@@ -218,6 +218,7 @@ const Home = () => {
             )}
           </div>
         </main>
+
       </div>
     </div>
   );

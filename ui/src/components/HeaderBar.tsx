@@ -9,7 +9,7 @@ interface HeaderBarProps {
 }
 
 const HeaderBar: React.FC<HeaderBarProps> = ({ viewMode, setViewMode }) => (
-  <div className="flex items-center justify-between w-full mb-6">
+  <div className="sticky top-0 z-20 flex items-center justify-between w-full mb-6 bg-gray-900 p-4 shadow-md">
 
     <Link
       to="/"
