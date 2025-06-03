@@ -56,7 +56,7 @@ const CoverImage: React.FC<CoverImageProps> = ({
 
       {/* Overlay on hover/focus */}
       {hovered && (
-        <div className="absolute inset-0 flex flex-col justify-between p-4 z-20 text-white">
+        <div className="absolute inset-0 flex flex-col justify-between p-4 z-15 text-white">
           <div>
             <div className="font-bold text-lg mb-2 truncate">{title}</div>
             <div className="text-sm mb-1">
