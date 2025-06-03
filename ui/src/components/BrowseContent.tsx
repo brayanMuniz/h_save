@@ -33,8 +33,8 @@ const BrowseContent = ({
 
       <div
         className={`grid ${viewMode === "cover"
-          ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2"
-          : "grid-cols-1 md:grid-cols-2 gap-4"
+          ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-2"
+          : "grid-cols-1 lg:grid-cols-2 gap-4"
           }`}
       >
         {doujinshi.map((d) =>
