@@ -223,56 +223,6 @@ func GetSimilarDoujinshiByMetaData(
 	return results, nil
 }
 
-func GetDoujinshiByArtist(db *sql.DB, artistName string) ([]Doujinshi, error) {
-	query := `
-		SELECT d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name
-		FROM doujinshi d
-		JOIN doujinshi_artists da ON d.id = da.doujinshi_id
-		JOIN artists a ON da.artist_id = a.id
-		WHERE a.name = ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
-	`
-	rows, err := db.Query(query, artistName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []Doujinshi
-	for rows.Next() {
-		var d Doujinshi
-		if err := rows.Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages,
-			&d.Uploaded, &d.FolderName); err != nil {
-			return nil, err
-		}
-
-		// fetch and set o count
-		err := db.QueryRow(
-			`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
-		).Scan(&d.OCount)
-		if err != nil {
-			d.OCount = 0
-		}
-
-		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
-		d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
-		d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
-		d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
-		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
-		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
-		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
-
-		idString := strconv.FormatInt(d.ID, 10)
-		progress, err := GetDoujinshiProgress(db, idString)
-		if err == nil {
-			d.Progress = &progress
-		}
-
-		results = append(results, d)
-
-	}
-	return results, nil
-}
-
 func DoujinshiExists(db *sql.DB, source, externalID string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(
@@ -389,4 +339,29 @@ func linkManyToMany(tx *sql.Tx, doujinshiID int64, values []string, entityTable,
 		}
 	}
 	return nil
+}
+
+func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) { // Ensure Doujinshi struct matches this expectation
+	err := db.QueryRow(
+		`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
+	).Scan(&d.OCount)
+	if err != nil {
+		d.OCount = 0
+	}
+
+	d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
+	d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
+	d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
+	d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
+	d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
+	d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
+	d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+
+	idString := strconv.FormatInt(d.ID, 10)
+	progress, err := GetDoujinshiProgress(db, idString)
+	if err == nil {
+		d.Progress = &progress
+	} else if err != sql.ErrNoRows { // Don't treat "no progress found" as a critical error
+		d.Progress = nil
+	}
 }

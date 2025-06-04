@@ -113,8 +113,14 @@ func isImageFile(name string) bool {
 }
 
 func GetArtistDoujins(c *gin.Context, database *sql.DB) {
-	artist := c.Param("artist")
-	doujinshi, err := db.GetDoujinshiByArtist(database, artist)
+	artistIDStr := c.Param("id")
+	artistID, err := strconv.ParseInt(artistIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID format"})
+		return
+	}
+
+	doujinshi, err := db.GetDoujinshiByArtist(database, artistID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch doujinshi for artist"})
 		return

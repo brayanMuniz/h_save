@@ -52,8 +52,8 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 		// ============================================================================
 		// ARTIST ROUTES
 		// ============================================================================
-		api.GET("/artist/:artist", func(ctx *gin.Context) {
-			GetArtistDoujins(ctx, database)
+		api.GET("/artists", func(ctx *gin.Context) {
+			GetAllArtist(ctx, database)
 		})
 
 		// ============================================================================
