@@ -71,3 +71,12 @@ export interface FilterSection {
 }
 
 export type FilterType = "artists" | "groups" | "tags" | "characters" | "parodies";
+
+export interface Artist {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null; // Can be null if no rated doujinshi
+}

@@ -5,6 +5,7 @@ import DoujinshiReader from "./pages/DoujinshiReader";
 import DoujinshiOverview from "./pages/DoujinshiOverview";
 import Browse from "./pages/Browse";
 import Settings from "./pages/Settings";
+import Artists from "./pages/Artists";
 
 function App() {
   return (
@@ -24,6 +25,15 @@ function App() {
             <Browse />
           }
         />
+
+        <Route
+          path="/artists"
+          element={
+            <Artists />
+          }
+        />
+
+
 
 
         <Route
