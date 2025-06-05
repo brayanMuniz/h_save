@@ -1,6 +1,6 @@
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useRef, useCallback } from "react";
-import React from "react"; // Ensure React is imported for JSX
+import React from "react";
 
 // Simple SVG Minus Icon
 const MinusIcon = () => (

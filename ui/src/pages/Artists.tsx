@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import type { Artist } from "../types";
-import { Link } from "react-router-dom";
-import ArtistCard from "../components/ArtistCard";
-import SettingsButton from "../components/SettingsButton";
-import SyncButton from "../components/SyncButton";
 
-// Define filter types
+import ArtistCard from "../components/ArtistCard";
+import Sidebar from "../components/SideBar";
+import MobileNav from "../components/MobileNav";
+
 interface ArtistFilters {
   showFavoritesOnly: boolean;
   minDoujinCount: string;
@@ -216,47 +215,11 @@ const ArtistsPage = () => {
     <div className="min-h-screen bg-gray-900">
 
       {/* Sidebar - Reusing structure from Home */}
-      <aside className="hidden lg:flex w-64 h-screen bg-gray-800 text-gray-200 flex-col p-6 rounded-r-2xl fixed top-0 left-0 z-40">
-        <Link to="/" className="cursor-pointer">
-          <h2 className="text-2xl font-bold mb-6 hover:text-indigo-400 transition">
-            Library
-          </h2>
-        </Link>
-        <nav className="flex flex-col gap-4 mb-auto">
-          <Link
-            to="/browse" // Assuming /browse is your home or main doujinshi view
-            className="hover:text-indigo-400 transition py-1"
-          >
-            🔍 Browse
-          </Link>
-          <Link
-            to="/artists"
-            className="bg-indigo-600 px-3 py-2 rounded transition" // Active style
-          >
-            🎨 Artists
-          </Link>
-          {/* ... other sidebar links ... */}
-        </nav>
-        <div className="flex flex-row justify-between items-center gap-2 pt-4 border-t border-gray-700">
-          <SettingsButton />
-          <SyncButton onSyncComplete={() => { /* Define or pass handler */ }} />
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Content Area */}
       <div className="lg:ml-64">
-        {/* Mobile Header - Can be adapted if needed */}
-        <nav className="lg:hidden sticky top-0 z-30 bg-gray-800 text-gray-200 p-3 shadow-md">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold">Artists</h1>
-            <Link
-              to="/"
-              className="px-3 py-1 text-sm rounded hover:bg-indigo-600 transition"
-            >
-              🏠 Home
-            </Link>
-          </div>
-        </nav>
+        <MobileNav />
 
         {/* Main Content */}
         <main className="flex-1 p-6">
