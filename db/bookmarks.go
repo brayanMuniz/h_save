@@ -35,6 +35,15 @@ func GetBookmarks(db *sql.DB, doujinshiID int64) ([]DoujinshiBookmark, error) {
 	return bookmarks, nil
 }
 
+func UpdateBookmark(db *sql.DB, bookmarkID int64, name string) error {
+	_, err := db.Exec(`
+		UPDATE doujinshi_bookmarks 
+		SET name = ? 
+		WHERE id = ?
+	`, name, bookmarkID)
+	return err
+}
+
 func RemoveBookmark(db *sql.DB, doujinshiID int64, filename string) error {
 	_, err := db.Exec(`DELETE FROM doujinshi_bookmarks WHERE doujinshi_id = ? AND filename = ?`, doujinshiID, filename)
 	return err
