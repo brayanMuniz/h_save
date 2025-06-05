@@ -26,14 +26,33 @@ func GetAllArtist(c *gin.Context, database *sql.DB) {
 }
 
 func GetArtistPageDataHandler(c *gin.Context, database *sql.DB) {
-	artistIDStr := c.Param("id")
-	artistID, err := strconv.ParseInt(artistIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID format"})
-		return
+	var artistID int64
+	var err error
+	userNameQuery := c.Query("username")
+
+	if userNameQuery != "" {
+		id, dbErr := db.GetArtistIDByName(database, userNameQuery)
+		if dbErr != nil {
+			if dbErr == sql.ErrNoRows {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Artist not found by username: " + userNameQuery})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error looking up artist by username"})
+			return
+		}
+		artistID = id
+	} else {
+		// If no username query parameter, use the 'id' from the path
+		artistIDStr := c.Param("id")
+		id, parseErr := strconv.ParseInt(artistIDStr, 10, 64)
+		if parseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID format in path"})
+			return
+		}
+		artistID = id
 	}
 
-	artistDetails, err := db.GetArtistDetailsByID(database, artistID)
+	artistDetails, err := db.GetArtistDetails(database, artistID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch artist details"})
 		return

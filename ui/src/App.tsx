@@ -6,6 +6,7 @@ import DoujinshiOverview from "./pages/DoujinshiOverview";
 import Browse from "./pages/Browse";
 import Settings from "./pages/Settings";
 import Artists from "./pages/Artists";
+import ArtistPage from "./pages/ArtistPage";
 
 function App() {
   return (
@@ -33,8 +34,12 @@ function App() {
           }
         />
 
-
-
+        <Route
+          path="/artist/:artist"
+          element={
+            <ArtistPage />
+          }
+        />
 
         <Route
           path="/settings"

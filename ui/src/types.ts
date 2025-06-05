@@ -80,3 +80,8 @@ export interface Artist {
   totalOCount: number;
   averageRating: number | null; // Can be null if no rated doujinshi
 }
+
+export interface ArtistPageResponse {
+  artistDetails: Artist;
+  doujinshiList: Doujinshi[];
+}
