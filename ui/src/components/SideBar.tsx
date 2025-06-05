@@ -18,18 +18,20 @@ const Sidebar: React.FC<SidebarProps> = () => (
       <Link to="/browse" className="hover:text-indigo-400 transition py-1">
         🔍 Browse
       </Link>
+
       <Link to="/artists" className="hover:text-indigo-400 transition py-1">
         🎨 Artists
       </Link>
+
       <Link to="/groups" className="hover:text-indigo-400 transition py-1">
         👥 Groups
       </Link>
-      <button
-        type="button"
-        className="text-left hover:text-indigo-400 transition py-1"
-      >
+
+      <Link to="/tags" className="hover:text-indigo-400 transition py-1">
         🏷️ Tags
-      </button>
+      </Link>
+
+
       <button
         type="button"
         className="text-left hover:text-indigo-400 transition py-1"

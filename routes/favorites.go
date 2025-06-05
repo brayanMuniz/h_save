@@ -196,3 +196,37 @@ func GetFavoriteNames(
 	}
 	ctx.JSON(200, gin.H{entityName: names})
 }
+
+func AddFavoriteByID(
+	ctx *gin.Context,
+	database *sql.DB,
+	addFunc func(*sql.DB, int64) error,
+) {
+	id, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	if err := addFunc(database, id); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add favorite"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func RemoveFavoriteByID(
+	ctx *gin.Context,
+	database *sql.DB,
+	removeFunc func(*sql.DB, int64) error,
+) {
+	id, ok := parseID(ctx, "id") // Get 'id' from the URL path
+	if !ok {
+		return
+	}
+
+	if err := removeFunc(database, id); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove favorite"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"success": true})
+}

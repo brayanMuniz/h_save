@@ -61,6 +61,17 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 		})
 
 		// ============================================================================
+		// TAG ROUTES
+		// ============================================================================
+		api.GET("/tags", func(ctx *gin.Context) {
+			GetAllTagsHandler(ctx, database)
+		})
+
+		api.GET("/tag/:id", func(ctx *gin.Context) {
+			GetTagPageDataHandler(ctx, database)
+		})
+
+		// ============================================================================
 		// SYNC ROUTES
 		// ============================================================================
 		api.POST("/sync", func(ctx *gin.Context) {
@@ -128,6 +139,18 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			// ========================================================================
 			// FAVORITE TAG ROUTES
 			// ========================================================================
+			user.GET("/favorite/tags", func(ctx *gin.Context) {
+				GetFavoriteNames(ctx, database, "favorite_tags", "tag_id", "tags", "tags")
+			})
+
+			user.POST("/favorite/tag/:id", func(ctx *gin.Context) {
+				AddFavoriteByID(ctx, database, db.AddFavoriteTag)
+			})
+
+			user.DELETE("/favorite/tag/:id", func(ctx *gin.Context) {
+				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteTag)
+			})
+
 			user.POST("/favorite/tag", func(ctx *gin.Context) {
 				AddFavoriteByName(ctx, database, "tag", "tags", db.AddFavoriteTag)
 			})
@@ -136,23 +159,19 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				RemoveFavoriteByName(ctx, database, "tag", "tags", db.RemoveFavoriteTag)
 			})
 
-			user.GET("/favorite/tags", func(ctx *gin.Context) {
-				GetFavoriteNames(ctx, database, "favorite_tags", "tag_id", "tags", "tags")
-			})
-
 			// ========================================================================
 			// FAVORITE ARTIST ROUTES
 			// ========================================================================
-			user.POST("/favorite/artist", func(ctx *gin.Context) {
-				AddFavoriteByName(ctx, database, "artist", "artists", db.AddFavoriteArtist)
-			})
-
-			user.DELETE("/favorite/artist", func(ctx *gin.Context) {
-				RemoveFavoriteByName(ctx, database, "artist", "artists", db.RemoveFavoriteArtist)
-			})
-
 			user.GET("/favorite/artists", func(ctx *gin.Context) {
 				GetFavoriteNames(ctx, database, "favorite_artists", "artist_id", "artists", "artists")
+			})
+
+			user.POST("/favorite/artist/:id", func(ctx *gin.Context) {
+				AddFavoriteByID(ctx, database, db.AddFavoriteArtist)
+			})
+
+			user.DELETE("/favorite/artist/:id", func(ctx *gin.Context) {
+				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteArtist)
 			})
 
 			// ========================================================================

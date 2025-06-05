@@ -1,3 +1,11 @@
+export type SortKey = "uploaded" | "rating" | "oCount" | "title";
+export type SortOrder = "asc" | "desc";
+
+export interface SortState {
+  key: SortKey;
+  order: SortOrder;
+}
+
 export type Doujinshi = {
   id: number;
   source: string;
@@ -83,5 +91,19 @@ export interface Artist {
 
 export interface ArtistPageResponse {
   artistDetails: Artist;
+  doujinshiList: Doujinshi[];
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+export interface TagPageResponse {
+  tagDetails: Tag;
   doujinshiList: Doujinshi[];
 }
