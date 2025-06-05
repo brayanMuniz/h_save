@@ -37,7 +37,7 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 
 	mainQuery := `
 	SELECT
-		a.id, -- <<-- Select the artist ID
+		a.id, 
 		a.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
 		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_artist_ocount,
@@ -104,18 +104,16 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 	return results, nil
 }
 
-func GetArtistDetailsByID(db *sql.DB, artistID int64) (*ArtistData, error) {
+func GetArtistDetails(db *sql.DB, artistID int64) (*ArtistData, error) {
 	// Check if the artist is a favorite
 	var isFavorite bool
 	err := db.QueryRow(
 		`SELECT EXISTS(SELECT 1 FROM favorite_artists WHERE artist_id = ?)`,
 		artistID,
 	).Scan(&isFavorite)
-	if err != nil && err != sql.ErrNoRows { // ErrNoRows is not an error for EXISTS, it means false
-		// log.Printf("Error checking favorite status for artist ID %d: %v", artistID, err)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
-	// If err == sql.ErrNoRows, isFavorite will be false, which is correct.
 
 	query := `
 	SELECT
@@ -197,4 +195,17 @@ func GetDoujinshiByArtist(db *sql.DB, artistID int64) ([]Doujinshi, error) {
 
 	}
 	return results, nil
+}
+
+func GetArtistIDByName(db *sql.DB, artistName string) (int64, error) {
+	var artistID int64
+	query := `SELECT id FROM artists WHERE LOWER(name) = LOWER(?)`
+	err := db.QueryRow(query, artistName).Scan(&artistID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, sql.ErrNoRows
+		}
+		return 0, err
+	}
+	return artistID, nil
 }

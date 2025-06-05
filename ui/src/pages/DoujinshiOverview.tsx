@@ -61,18 +61,19 @@ const DoujinshiOverview: React.FC = () => {
       setPages(pagesData.pages || []);
       setLoading(false);
 
-      // NOTE: need to reconfigure server for this to work 
-      //
-      // if (data.doujinshiData) {
-      //   const artist = (data.doujinshiData.artists || [])[0];
-      //   if (artist) {
-      //     fetch(`/api/artist/${artist}`)
-      //       .then((res) => res.json())
-      //       .then((d) => setArtistWorks(d.doujinshi || []))
-      //       .catch((error) => console.error('Error fetching artist works:', error));
-      //   }
-      // }
-      //
+      if (data.doujinshiData) {
+        const artist = (data.doujinshiData.artists || [])[0];
+        if (artist) {
+          // it aint the best code, but it gets the job done 
+          fetch(`/api/artist/0?username=${artist}`)
+            .then((res) => res.json())
+            .then((d) => {
+              setArtistWorks(d.doujinshiList || [])
+            })
+            .catch((error) => console.error('Error fetching artist works:', error));
+        }
+      }
+
 
     }).catch((error) => {
       console.error('Error fetching doujinshi data:', error);
@@ -197,7 +198,7 @@ const DoujinshiOverview: React.FC = () => {
         <SimilarDoujinshi id={doujinshi.id} filterState={filterState} />
       </div>
 
-      {/* Sidebar: Artist Other Works 
+      {/* Sidebar: Artist Other Works */}
       <aside className="w-64 flex-shrink-0 hidden xl:block">
         <div className="bg-gray-800 rounded-lg p-4 text-gray-200 sticky top-8">
           <h4 className="text-lg font-bold mb-4">Artist Other Works</h4>
@@ -220,7 +221,6 @@ const DoujinshiOverview: React.FC = () => {
           </div>
         </div>
       </aside>
-      */}
 
     </div>
   );
