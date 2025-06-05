@@ -13,33 +13,12 @@ function getLanguageFlag(languages: string[]) {
 const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
   const languageFlag = getLanguageFlag(doujinshi.languages);
 
-  // Local state for UI-only filtering
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
-  const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
-  const [selectedParodies, setSelectedParodies] = useState<string[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
   // Rating state
   const [currentRating, setCurrentRating] = useState<number>(
     doujinshi.progress?.rating ?? 0
   );
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [isUpdatingRating, setIsUpdatingRating] = useState<boolean>(false);
-
-  function toggleSelected(
-    value: string,
-    selected: string[],
-    setSelected: React.Dispatch<React.SetStateAction<string[]>>
-  ) {
-    setSelected((prev) =>
-      prev.includes(value)
-        ? prev.filter((v) => v !== value)
-        : [...prev, value]
-    );
-  }
 
   const updateRating = async (rating: number) => {
     if (isUpdatingRating) return;
@@ -51,25 +30,27 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
     setCurrentRating(rating);
 
     try {
-      const response = await fetch(`/api/user/doujinshi/${doujinshi.id}/progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rating: rating > 0 ? rating : null,
-        }),
-      });
+      const response = await fetch(
+        `/api/user/doujinshi/${doujinshi.id}/progress`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rating: rating > 0 ? rating : null, // Send null for deletion
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to update rating: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Rating updated successfully:', data);
-
+      console.log("Rating updated successfully:", data);
     } catch (error) {
-      console.error('Error updating rating:', error);
+      console.error("Error updating rating:", error);
       // Revert optimistic update on error
       setCurrentRating(previousRating);
       // You might want to show a toast notification here
@@ -113,12 +94,13 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
           {/* Categories */}
           <div className="flex space-x-1">
             {(doujinshi.categories ?? []).slice(0, 3).map((cat, idx) => (
-              <span
+              <Link
                 key={idx}
-                className="bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded"
+                to={`/category/${encodeURIComponent(cat)}`}
+                className="bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded hover:bg-gray-700 transition"
               >
                 {cat}
-              </span>
+              </Link>
             ))}
           </div>
           {/* O count */}
@@ -137,90 +119,77 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
       {/* Right: Metadata */}
       <div className="flex-1 flex flex-col justify-between">
         <div className="text-left">
-          <h3 className="text-lg font-bold text-white mb-2">{doujinshi.title}</h3>
+          <h3 className="text-lg font-bold text-white mb-2">
+            {doujinshi.title}
+          </h3>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Tags:</span>{" "}
             {(doujinshi.tags ?? []).map((tag, idx) => (
-              <button
+              <Link
                 key={idx}
-                onClick={() => toggleSelected(tag, selectedTags, setSelectedTags)}
-                className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                  ${selectedTags.includes(tag)
-                    ? "bg-indigo-500 text-white"
-                    : "bg-indigo-700 hover:bg-indigo-500 text-white"}`}
-                type="button"
+                to={`/tag/${encodeURIComponent(tag)}`}
+                className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                  bg-indigo-700 hover:bg-indigo-500 text-white"
               >
                 {tag}
-              </button>
+              </Link>
             ))}
           </div>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Artists:</span>{" "}
             {(doujinshi.artists ?? []).map((artist, idx) => (
-              <button
+              <Link
                 key={idx}
-                onClick={() => toggleSelected(artist, selectedArtists, setSelectedArtists)}
-                className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                  ${selectedArtists.includes(artist)
-                    ? "bg-pink-500 text-white"
-                    : "bg-pink-700 hover:bg-pink-500 text-white"}`}
-                type="button"
+                to={`/artist/${encodeURIComponent(artist)}`}
+                className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                  bg-pink-700 hover:bg-pink-500 text-white"
               >
                 {artist}
-              </button>
+              </Link>
             ))}
           </div>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Characters:</span>{" "}
             {(doujinshi.characters ?? []).map((character, idx) => (
-              <button
+              <Link
                 key={idx}
-                onClick={() => toggleSelected(character, selectedCharacters, setSelectedCharacters)}
-                className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                  ${selectedCharacters.includes(character)
-                    ? "bg-green-500 text-white"
-                    : "bg-green-700 hover:bg-green-500 text-white"}`}
-                type="button"
+                to={`/character/${encodeURIComponent(character)}`}
+                className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                  bg-green-700 hover:bg-green-500 text-white"
               >
                 {character}
-              </button>
+              </Link>
             ))}
           </div>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Parodies:</span>{" "}
             {(doujinshi.parodies ?? []).map((parody, idx) => (
-              <button
+              <Link
                 key={idx}
-                onClick={() => toggleSelected(parody, selectedParodies, setSelectedParodies)}
-                className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                  ${selectedParodies.includes(parody)
-                    ? "bg-yellow-500 text-white"
-                    : "bg-yellow-700 hover:bg-yellow-500 text-white"}`}
-                type="button"
+                to={`/parody/${encodeURIComponent(parody)}`}
+                className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                  bg-yellow-700 hover:bg-yellow-500 text-white"
               >
                 {parody}
-              </button>
+              </Link>
             ))}
           </div>
 
           <div className="text-gray-300 text-sm mb-1">
             <span className="font-semibold">Groups:</span>{" "}
             {(doujinshi.groups ?? []).map((group, idx) => (
-              <button
+              <Link
                 key={idx}
-                onClick={() => toggleSelected(group, selectedGroups, setSelectedGroups)}
-                className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                  ${selectedGroups.includes(group)
-                    ? "bg-blue-500 text-white"
-                    : "bg-blue-700 hover:bg-blue-500 text-white"}`}
-                type="button"
+                to={`/group/${encodeURIComponent(group)}`}
+                className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                  bg-blue-700 hover:bg-blue-500 text-white"
               >
                 {group}
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -229,34 +198,28 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
               <div className="text-gray-300 text-sm mb-1">
                 <span className="font-semibold">Languages:</span>{" "}
                 {(doujinshi.languages ?? []).map((language, idx) => (
-                  <button
+                  <Link
                     key={idx}
-                    onClick={() => toggleSelected(language, selectedLanguages, setSelectedLanguages)}
-                    className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                      ${selectedLanguages.includes(language)
-                        ? "bg-purple-500 text-white"
-                        : "bg-purple-700 hover:bg-purple-500 text-white"}`}
-                    type="button"
+                    to={`/language/${encodeURIComponent(language)}`}
+                    className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                      bg-purple-700 hover:bg-purple-500 text-white"
                   >
                     {language}
-                  </button>
+                  </Link>
                 ))}
               </div>
 
               <div className="text-gray-300 text-sm mb-1">
                 <span className="font-semibold">Categories:</span>{" "}
                 {(doujinshi.categories ?? []).map((category, idx) => (
-                  <button
+                  <Link
                     key={idx}
-                    onClick={() => toggleSelected(category, selectedCategories, setSelectedCategories)}
-                    className={`inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
-                      ${selectedCategories.includes(category)
-                        ? "bg-gray-500 text-white"
-                        : "bg-gray-700 hover:bg-gray-500 text-white"}`}
-                    type="button"
+                    to={`/category/${encodeURIComponent(category)}`}
+                    className="inline-block px-2 py-1 rounded mr-1 mb-1 text-xs transition
+                      bg-gray-700 hover:bg-gray-500 text-white"
                   >
                     {category}
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -265,7 +228,8 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => {
                 const starIndex = i;
-                const displayRating = hoverRating > 0 ? hoverRating : currentRating;
+                const displayRating =
+                  hoverRating > 0 ? hoverRating : currentRating;
                 const isFilled = starIndex < displayRating;
                 const isHovering = hoverRating > 0;
 
@@ -277,12 +241,20 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
                     onMouseLeave={handleStarLeave}
                     disabled={isUpdatingRating}
                     className={`text-lg transition-all duration-150 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 rounded
-                      ${isUpdatingRating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                      ${isHovering ? 'transform scale-105' : ''}`}
-                    title={`Rate ${starIndex + 1} star${starIndex + 1 !== 1 ? 's' : ''}`}
+                      ${isUpdatingRating
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer"
+                      }
+                      ${isHovering ? "transform scale-105" : ""}`}
+                    title={`Rate ${starIndex + 1} star${starIndex + 1 !== 1 ? "s" : ""
+                      }${currentRating === starIndex + 1 ? " (click to remove)" : ""
+                      }`}
                   >
-                    <span className={`${isFilled ? 'text-yellow-400' : 'text-gray-500'} transition-colors duration-150`}>
-                      {isFilled ? '★' : '☆'}
+                    <span
+                      className={`${isFilled ? "text-yellow-400" : "text-gray-500"
+                        } transition-colors duration-150`}
+                    >
+                      {isFilled ? "★" : "☆"}
                     </span>
                   </button>
                 );
