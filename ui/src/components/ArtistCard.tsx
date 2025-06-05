@@ -33,7 +33,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
       </button>
 
       <Link
-        to={`/artist/${encodeURIComponent(artist.name)}`} // Link to a page showing doujins by this artist
+        to={`/artist/${encodeURIComponent(artist.name)}`}
         className="block" // Make the link cover the card content area
       >
         <h3 className="text-xl font-bold text-indigo-400 truncate pr-10">
