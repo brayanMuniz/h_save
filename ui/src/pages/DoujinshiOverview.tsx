@@ -29,24 +29,35 @@ const DoujinshiOverview: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Memoize the initial filter state
-  const initialFilterState = useMemo(() => ({
-    characters: { ordered: [], excluded: new Set<string>() },
-    parodies: { ordered: [], excluded: new Set<string>() },
-    tags: { ordered: [], excluded: new Set<string>() },
-  }), []);
+  const initialFilterState = useMemo(
+    () => ({
+      characters: { ordered: [], excluded: new Set<string>() },
+      parodies: { ordered: [], excluded: new Set<string>() },
+      tags: { ordered: [], excluded: new Set<string>() },
+    }),
+    [],
+  );
 
-  const [filterState, setFilterState] = useState<FilterState>(initialFilterState);
+  const [filterState, setFilterState] =
+    useState<FilterState>(initialFilterState);
 
   const [bookmarks, setBookmarks] = useState<
     { id: number; filename: string; name: string }[]
   >([]);
+
+  // State for bookmark editing
+  const [editingBookmarkId, setEditingBookmarkId] = useState<number | null>(
+    null,
+  );
+  const [editingName, setEditingName] = useState<string>("");
+  const [isUpdatingBookmark, setIsUpdatingBookmark] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     fetch(`/api/user/doujinshi/${id}/bookmarks`)
       .then((res) => res.json())
       .then((data) => setBookmarks(data.bookmarks || []))
-      .catch((error) => console.error('Error fetching bookmarks:', error));
+      .catch((error) => console.error("Error fetching bookmarks:", error));
   }, [id]);
 
   useEffect(() => {
@@ -56,47 +67,121 @@ const DoujinshiOverview: React.FC = () => {
     Promise.all([
       fetch(`/api/doujinshi/${id}`).then((res) => res.json()),
       fetch(`/api/doujinshi/${id}/pages`).then((res) => res.json()),
-    ]).then(([data, pagesData]) => {
-      setDoujinshi(data.doujinshiData);
-      setPages(pagesData.pages || []);
-      setLoading(false);
+    ])
+      .then(([data, pagesData]) => {
+        setDoujinshi(data.doujinshiData);
+        setPages(pagesData.pages || []);
+        setLoading(false);
 
-      if (data.doujinshiData) {
-        const artist = (data.doujinshiData.artists || [])[0];
-        if (artist) {
-          // it aint the best code, but it gets the job done 
-          fetch(`/api/artist/0?username=${artist}`)
-            .then((res) => res.json())
-            .then((d) => {
-              setArtistWorks(d.doujinshiList || [])
-            })
-            .catch((error) => console.error('Error fetching artist works:', error));
+        if (data.doujinshiData) {
+          const artist = (data.doujinshiData.artists || [])[0];
+          if (artist) {
+            // it aint the best code, but it gets the job done
+            fetch(`/api/artist/0?username=${artist}`)
+              .then((res) => res.json())
+              .then((d) => {
+                setArtistWorks(d.doujinshiList || []);
+              })
+              .catch((error) =>
+                console.error("Error fetching artist works:", error),
+              );
+          }
         }
-      }
-
-
-    }).catch((error) => {
-      console.error('Error fetching doujinshi data:', error);
-      setLoading(false);
-    });
+      })
+      .catch((error) => {
+        console.error("Error fetching doujinshi data:", error);
+        setLoading(false);
+      });
   }, [id]);
 
-
   const handleFilterChange = useCallback((newFilterState: FilterState) => {
-    setFilterState(prevState => {
+    setFilterState((prevState) => {
       // Only update if there's actually a change
       const hasChanged =
-        prevState.characters.ordered.join(',') !== newFilterState.characters.ordered.join(',') ||
-        prevState.parodies.ordered.join(',') !== newFilterState.parodies.ordered.join(',') ||
-        prevState.tags.ordered.join(',') !== newFilterState.tags.ordered.join(',') ||
-        Array.from(prevState.characters.excluded).sort().join(',') !== Array.from(newFilterState.characters.excluded).sort().join(',') ||
-        Array.from(prevState.parodies.excluded).sort().join(',') !== Array.from(newFilterState.parodies.excluded).sort().join(',') ||
-        Array.from(prevState.tags.excluded).sort().join(',') !== Array.from(newFilterState.tags.excluded).sort().join(',');
+        prevState.characters.ordered.join(",") !==
+        newFilterState.characters.ordered.join(",") ||
+        prevState.parodies.ordered.join(",") !==
+        newFilterState.parodies.ordered.join(",") ||
+        prevState.tags.ordered.join(",") !==
+        newFilterState.tags.ordered.join(",") ||
+        Array.from(prevState.characters.excluded).sort().join(",") !==
+        Array.from(newFilterState.characters.excluded).sort().join(",") ||
+        Array.from(prevState.parodies.excluded).sort().join(",") !==
+        Array.from(newFilterState.parodies.excluded).sort().join(",") ||
+        Array.from(prevState.tags.excluded).sort().join(",") !==
+        Array.from(newFilterState.tags.excluded).sort().join(",");
 
       return hasChanged ? newFilterState : prevState;
     });
   }, []);
 
+  const startEditingBookmark = (bookmark: {
+    id: number;
+    filename: string;
+    name: string;
+  }) => {
+    setEditingBookmarkId(bookmark.id);
+    setEditingName(bookmark.name || "");
+  };
+
+  const cancelEditingBookmark = () => {
+    setEditingBookmarkId(null);
+    setEditingName("");
+  };
+
+  const saveBookmarkName = async () => {
+    if (!editingBookmarkId || isUpdatingBookmark) return;
+
+    setIsUpdatingBookmark(true);
+    try {
+      const response = await fetch(
+        `/api/user/doujinshi/${id}/bookmarks/${editingBookmarkId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: editingName.trim(),
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update bookmark: ${response.status}`);
+      }
+
+      // Update local state optimistically
+      setBookmarks((prev) =>
+        prev.map((bm) =>
+          bm.id === editingBookmarkId
+            ? { ...bm, name: editingName.trim() }
+            : bm,
+        ),
+      );
+
+      setEditingBookmarkId(null);
+      setEditingName("");
+    } catch (error) {
+      console.error("Error updating bookmark:", error);
+      // You might want to show a toast notification here
+      alert("Failed to update bookmark name");
+    } finally {
+      setIsUpdatingBookmark(false);
+    }
+  };
+
+  const handleBookmarkNameKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveBookmarkName();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEditingBookmark();
+    }
+  };
 
   if (loading) return <div className="text-white">Loading...</div>;
   if (!doujinshi) return <div className="text-red-400">Not found</div>;
@@ -149,17 +234,47 @@ const DoujinshiOverview: React.FC = () => {
               <ul className="space-y-2">
                 {bookmarks.map((bm) => {
                   const pageNum = getPageNumberFromFilename(bm.filename);
+                  const isEditing = editingBookmarkId === bm.id;
+
                   return (
-                    <li key={bm.id} className="flex items-center gap-2">
+                    <li key={bm.id} className="flex flex-row gap-2">
                       <Link
                         to={`/doujinshi/${id}/page/${bm.filename}`}
-                        className="bg-indigo-700 text-white px-2 py-1 rounded text-xs hover:bg-indigo-500 transition"
+                        className="bg-indigo-700 text-white px-2 py-1 rounded text-xs hover:bg-indigo-500 transition inline-block w-fit"
                       >
                         {pageNum !== null ? `Page ${pageNum}` : bm.filename}
                       </Link>
-                      <span className="text-white text-sm">
-                        {bm.name || <em className="text-gray-400">[No name]</em>}
-                      </span>
+
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={handleBookmarkNameKeyDown}
+                            onBlur={saveBookmarkName}
+                            placeholder="Bookmark name..."
+                            autoFocus
+                            disabled={isUpdatingBookmark}
+                            className="flex-1 bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
+                          />
+                          {isUpdatingBookmark && (
+                            <span className="text-xs text-gray-400">...</span>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditingBookmark(bm)}
+                          className="text-white text-sm text-left hover:text-indigo-400 transition"
+                          title="Click to edit bookmark name"
+                        >
+                          {bm.name ? (
+                            bm.name
+                          ) : (
+                            <em className="text-gray-400">[Click to add name]</em>
+                          )}
+                        </button>
+                      )}
                     </li>
                   );
                 })}
@@ -221,7 +336,6 @@ const DoujinshiOverview: React.FC = () => {
           </div>
         </div>
       </aside>
-
     </div>
   );
 };

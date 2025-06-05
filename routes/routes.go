@@ -106,6 +106,10 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				RemoveBookmark(ctx, database)
 			})
 
+			user.PATCH("/doujinshi/:id/bookmarks/:bookmarkId", func(ctx *gin.Context) {
+				UpdateBookmark(ctx, database)
+			})
+
 			// ========================================================================
 			// O-COUNT ROUTES (Page-specific tracking)
 			// ========================================================================

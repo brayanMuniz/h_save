@@ -42,6 +42,37 @@ func ListBookmarks(ctx *gin.Context, database *sql.DB) {
 	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
 }
 
+func UpdateBookmark(ctx *gin.Context, database *sql.DB) {
+	_, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	// Parse bookmark ID from URL
+	bookmarkID, ok := parseID(ctx, "bookmarkId")
+	if !ok {
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if err := db.UpdateBookmark(database, bookmarkID, req.Name); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bookmark"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Bookmark updated successfully",
+	})
+}
+
 func RemoveBookmark(ctx *gin.Context, database *sql.DB) {
 	id, ok := parseID(ctx, "id")
 	if !ok {
