@@ -38,8 +38,8 @@ const BrowsePage = () => {
         const itemLanguages = item.languages || [];
         const hasLanguage = itemLanguages.some((lang) =>
           filters.languages.some((filterLang) =>
-            lang.toLowerCase().includes(filterLang)
-          )
+            lang.toLowerCase().includes(filterLang),
+          ),
         );
         if (!hasLanguage) return false;
       }
@@ -56,35 +56,46 @@ const BrowsePage = () => {
       }
 
       // Filter groups (tags, artists, etc.) with proper null safety
-      const filterTypes = ['tags', 'artists', 'characters', 'parodies', 'groups'] as const;
+      const filterTypes = [
+        "tags",
+        "artists",
+        "characters",
+        "parodies",
+        "groups",
+      ] as const;
 
       for (const filterType of filterTypes) {
-        const itemTags = item[filterType] || []; // Default to empty array if null/undefined
+        const itemValues = item[filterType] || []; // e.g., item.tags or item.artists
         const filterGroup = filters[filterType];
 
-        // Check exclusions first
+        // Check exclusions first (this is an OR relationship - if any excluded tag is present, filter out)
         if (filterGroup.excluded.length > 0) {
-          const hasExcludedTag = filterGroup.excluded.some(excluded =>
-            itemTags.some(tag =>
-              tag && tag.toLowerCase().includes(excluded.toLowerCase())
-            )
+          const hasExcluded = filterGroup.excluded.some((excludedValue) =>
+            itemValues.some(
+              (itemValue) =>
+                itemValue &&
+                itemValue.toLowerCase().includes(excludedValue.toLowerCase()),
+            ),
           );
-          if (hasExcludedTag) return false;
+          if (hasExcluded) return false;
         }
 
-        // Check inclusions (if any are specified)
         if (filterGroup.included.length > 0) {
-          const hasIncludedTag = filterGroup.included.some(included =>
-            itemTags.some(tag =>
-              tag && tag.toLowerCase().includes(included.toLowerCase())
-            )
+          // Use .every() to ensure ALL included filters are present
+          const hasAllIncluded = filterGroup.included.every((includedValue) =>
+            itemValues.some(
+              (itemValue) =>
+                itemValue &&
+                itemValue.toLowerCase().includes(includedValue.toLowerCase()),
+            ),
           );
-          if (!hasIncludedTag) return false;
+          if (!hasAllIncluded) return false;
         }
       }
 
       return true;
     });
+
 
     // Then sort
     const sorted = [...filtered].sort((a, b) => {
