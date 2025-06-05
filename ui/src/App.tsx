@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import DoujinshiReader from "./pages/DoujinshiReader";
 import DoujinshiOverview from "./pages/DoujinshiOverview";
-import Browse from "./pages/Browse";
+import BrowsePage from "./pages/BrowsePage";
 import Settings from "./pages/Settings";
 
 import Artists from "./pages/Artists";
@@ -27,7 +27,7 @@ function App() {
         <Route
           path="/browse"
           element={
-            <Browse />
+            <BrowsePage />
           }
         />
 
