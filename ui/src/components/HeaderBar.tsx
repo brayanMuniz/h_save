@@ -1,51 +1,103 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import type { SortState, SortKey, SortOrder } from "../types";
 
 type ViewMode = "card" | "cover";
 
 interface HeaderBarProps {
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
+  sort?: SortState;
+  setSort?: (sort: SortState) => void;
+  itemCount?: number;
 }
 
-const HeaderBar: React.FC<HeaderBarProps> = ({ viewMode, setViewMode }) => (
-  <div className="sticky top-0 z-20 flex items-center justify-between w-full mb-6 bg-gray-900 p-4 shadow-md">
+const HeaderBar: React.FC<HeaderBarProps> = ({
+  viewMode,
+  setViewMode,
+  sort,
+  setSort,
+  itemCount,
+}) => {
+  const handleSortKeyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (setSort && sort) {
+      setSort({ ...sort, key: e.target.value as SortKey });
+    }
+  };
 
-    <Link
-      to="/"
-      className="text-4xl font-bold text-gray-200 font-handwriting hover:text-indigo-400 transition"
-    >
-      Ecchi
+  const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (setSort && sort) {
+      setSort({ ...sort, order: e.target.value as SortOrder });
+    }
+  };
 
-    </Link>
+  return (
+    <div className="flex items-center justify-between gap-4">
+      {/* Left Side: Item Count or Title */}
+      <div className="flex-shrink-0">
+        {sort && setSort && itemCount !== undefined ? (
+          <span className="text-gray-400 text-sm">
+            {itemCount} result{itemCount !== 1 ? "s" : ""}
+          </span>
+        ) : (
+          <Link
+            to="/"
+            className="text-4xl font-bold text-gray-200 font-handwriting hover:text-indigo-400 transition"
+          >
+            Ecchi
+          </Link>
+        )}
+      </div>
 
+      {/* Center: Sorting Controls (only if props are provided) */}
+      {sort && setSort && (
+        <div className="flex gap-2">
+          <select
+            value={sort.key}
+            onChange={handleSortKeyChange}
+            className="bg-gray-700/50 text-gray-200 text-sm rounded-md px-3 py-2 border border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Sort by"
+          >
+            <option value="uploaded">Date Uploaded</option>
+            <option value="rating">Rating</option>
+            <option value="oCount">♥ Count</option>
+            <option value="title">Title</option>
+          </select>
+          <select
+            value={sort.order}
+            onChange={handleSortOrderChange}
+            className="bg-gray-700/50 text-gray-200 text-sm rounded-md px-3 py-2 border border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label="Sort order"
+          >
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
+      )}
 
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setViewMode("card")}
-        className={`text-2xl font-handwriting px-4 py-1 rounded transition
-          ${viewMode === "card"
-            ? "border-2 border-gray-200 bg-gray-800 text-white"
-            : "text-gray-300 hover:text-white"
-          }`}
-        style={{ borderRadius: "0.5rem" }}
-      >
-        Card
-      </button>
-      <span className="text-2xl font-handwriting text-gray-300">/</span>
-      <button
-        onClick={() => setViewMode("cover")}
-        className={`text-2xl font-handwriting px-4 py-1 rounded transition
-          ${viewMode === "cover"
-            ? "border-2 border-gray-200 bg-gray-800 text-white"
-            : "text-gray-300 hover:text-white"
-          }`}
-        style={{ borderRadius: "0.5rem" }}
-      >
-        Cover
-      </button>
+      {/* Right Side: View Mode Toggle */}
+      <div className="flex items-center rounded-lg border border-gray-600 p-0.5">
+        <button
+          onClick={() => setViewMode("card")}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "card"
+              ? "bg-gray-700 text-white"
+              : "text-gray-400 hover:bg-gray-800"
+            }`}
+        >
+          Card
+        </button>
+        <button
+          onClick={() => setViewMode("cover")}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "cover"
+              ? "bg-gray-700 text-white"
+              : "text-gray-400 hover:bg-gray-800"
+            }`}
+        >
+          Cover
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default HeaderBar;
