@@ -1,46 +1,46 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import type { Tag } from "../types"; // You'll need to define this type
+import type { Tag } from "../types";
 
 interface TagCardProps {
-  tag: Tag;
+  entity: Tag;
   onToggleFavorite: (tagId: number, isFavorite: boolean) => void;
 }
 
-const TagCard: React.FC<TagCardProps> = ({ tag, onToggleFavorite }) => {
+const TagCard: React.FC<TagCardProps> = ({ entity, onToggleFavorite }) => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 flex flex-col justify-between shadow-lg transition-transform hover:scale-105">
       <div>
         <div className="flex justify-between items-start mb-3">
           <Link
-            to={`/tag/${encodeURIComponent(tag.name)}`}
+            to={`/tag/${encodeURIComponent(entity.name)}`}
             className="text-lg font-bold text-indigo-400 hover:text-indigo-300 break-all"
           >
-            {tag.name}
+            {entity.name}
           </Link>
           <button
-            onClick={() => onToggleFavorite(tag.id, tag.isFavorite)}
-            className={`text-2xl transition-colors ${tag.isFavorite
+            onClick={() => onToggleFavorite(entity.id, entity.isFavorite)}
+            className={`text-2xl transition-colors ${entity.isFavorite
               ? "text-red-500 hover:text-red-400"
               : "text-gray-500 hover:text-red-500"
               }`}
-            title={tag.isFavorite ? "Unfavorite" : "Favorite"}
+            title={entity.isFavorite ? "Unfavorite" : "Favorite"}
           >
-            {tag.isFavorite ? "♥" : "♡"}
+            {entity.isFavorite ? "♥" : "♡"}
           </button>
         </div>
         <div className="text-sm text-gray-400 space-y-1">
           <p>
             <span className="font-semibold text-gray-300">Works:</span>{" "}
-            {tag.doujinCount}
+            {entity.doujinCount}
           </p>
           <p>
             <span className="font-semibold text-gray-300">Total ♥:</span>{" "}
-            {tag.totalOCount}
+            {entity.totalOCount}
           </p>
           <p>
             <span className="font-semibold text-gray-300">Avg. Rating:</span>{" "}
-            {tag.averageRating ? tag.averageRating.toFixed(2) : "N/A"}
+            {entity.averageRating ? entity.averageRating.toFixed(2) : "N/A"}
           </p>
         </div>
       </div>

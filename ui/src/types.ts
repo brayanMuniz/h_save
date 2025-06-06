@@ -121,3 +121,19 @@ export interface GroupPageResponse {
   groupDetails: Group;
   doujinshiList: Doujinshi[];
 }
+
+export interface Entity {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+export type EntitySortKey = "name" | "doujinCount" | "totalOCount" | "averageRating";
+
+export interface EntitySortState {
+  key: EntitySortKey;
+  order: SortOrder;
+}
