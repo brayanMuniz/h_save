@@ -137,3 +137,24 @@ export interface EntitySortState {
   key: EntitySortKey;
   order: SortOrder;
 }
+
+// A generic shape that Artist, Tag, Group, etc., details will conform to.
+export interface EntityDetail {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+// A generic shape for the API response for any entity detail page.
+export interface EntityPageResponse {
+  details: EntityDetail;
+  doujinshiList: Doujinshi[];
+}
+
+export interface SortState {
+  key: SortKey;
+  order: SortOrder;
+}

@@ -49,9 +49,7 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			GetSimilarDoujinshiByMetadata(ctx, database)
 		})
 
-		// ============================================================================
-		// ARTIST ROUTES
-		// ============================================================================
+		// ARTIST
 		api.GET("/artists", func(ctx *gin.Context) {
 			GetAllArtist(ctx, database)
 		})

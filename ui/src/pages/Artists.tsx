@@ -1,6 +1,5 @@
-import React from "react";
-import EntityListPage from "./EntityListPage"; // Import the abstract component
-import ArtistCard from "../components/ArtistCard"; // Import the specific card
+import EntityListPage from "./EntityListPage";
+import ArtistCard from "../components/ArtistCard";
 
 const ArtistsPage = () => {
   return (

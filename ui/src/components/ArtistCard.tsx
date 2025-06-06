@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import type { Artist } from "../types";
 
 interface ArtistCardProps {
-  // Changed prop name from 'artist' to 'entity' for generic compatibility
   entity: Artist;
   onToggleFavorite: (artistId: number, isFavorite: boolean) => void;
 }
@@ -25,8 +24,8 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
           <button
             onClick={() => onToggleFavorite(entity.id, entity.isFavorite)}
             className={`text-2xl transition-colors ${entity.isFavorite
-                ? "text-red-500 hover:text-red-400"
-                : "text-gray-500 hover:text-red-500"
+              ? "text-red-500 hover:text-red-400"
+              : "text-gray-500 hover:text-red-500"
               }`}
             title={entity.isFavorite ? "Unfavorite" : "Favorite"}
           >
