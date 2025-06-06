@@ -28,7 +28,7 @@ func GetAllArtist(c *gin.Context, database *sql.DB) {
 func GetArtistPageDataHandler(c *gin.Context, database *sql.DB) {
 	var artistID int64
 	var err error
-	userNameQuery := c.Query("username")
+	userNameQuery := c.Query("name")
 
 	if userNameQuery != "" {
 		id, dbErr := db.GetArtistIDByName(database, userNameQuery)
