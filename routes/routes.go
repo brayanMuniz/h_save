@@ -83,6 +83,19 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			GetAllCharactersHandler(ctx, database)
 		})
 
+		api.GET("/character/:id", func(ctx *gin.Context) {
+			GetCharacterPageDataHandler(ctx, database)
+		})
+
+		// PARODY
+		api.GET("/parodies", func(ctx *gin.Context) {
+			GetAllParodiesHandler(ctx, database)
+		})
+
+		api.GET("/parody/:id", func(ctx *gin.Context) {
+			GetParodyPageDataHandler(ctx, database)
+		})
+
 		// ============================================================================
 		// SYNC ROUTES
 		// ============================================================================
@@ -202,12 +215,12 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			// ========================================================================
 			// FAVORITE PARODY ROUTES
 			// ========================================================================
-			user.POST("/favorite/parody", func(ctx *gin.Context) {
-				AddFavoriteByName(ctx, database, "parody", "parodies", db.AddFavoriteParody)
+			user.POST("/favorite/parody/:id", func(ctx *gin.Context) {
+				AddFavoriteByID(ctx, database, db.AddFavoriteParody)
 			})
 
-			user.DELETE("/favorite/parody", func(ctx *gin.Context) {
-				RemoveFavoriteByName(ctx, database, "parody", "parodies", db.RemoveFavoriteParody)
+			user.DELETE("/favorite/parody/:id", func(ctx *gin.Context) {
+				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteParody)
 			})
 
 			user.GET("/favorite/parodies", func(ctx *gin.Context) {

@@ -16,6 +16,10 @@ import GroupsPage from "./pages/GroupsPage";
 import GroupPage from "./pages/GroupPage";
 
 import CharactersPage from "./pages/CharactersPage";
+import CharacterPage from "./pages/CharacterPage";
+
+import ParodiesPage from "./pages/ParodiesPage";
+import ParodyPage from "./pages/ParodyPage";
 
 function App() {
   return (
@@ -82,6 +86,28 @@ function App() {
           path="/characters"
           element={
             <CharactersPage />
+          }
+        />
+
+        <Route
+          path="/character/:character"
+          element={
+            <CharacterPage />
+          }
+        />
+
+
+        <Route
+          path="/parodies"
+          element={
+            <ParodiesPage />
+          }
+        />
+
+        <Route
+          path="/parody/:parody"
+          element={
+            <ParodyPage />
           }
         />
 

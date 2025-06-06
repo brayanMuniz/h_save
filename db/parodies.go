@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-type CharacterData struct {
+type ParodyData struct {
 	ID            int64    `json:"id"`
 	Name          string   `json:"name"`
 	IsFavorite    bool     `json:"isFavorite"`
@@ -13,9 +13,9 @@ type CharacterData struct {
 	AverageRating *float64 `json:"averageRating"`
 }
 
-func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
-	favoriteCharactersSet := make(map[int64]bool)
-	favQuery := `SELECT character_id FROM favorite_characters`
+func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
+	favoriteParodiesSet := make(map[int64]bool)
+	favQuery := `SELECT parody_id FROM favorite_parodies`
 	favRows, err := db.Query(favQuery)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
 		if err := favRows.Scan(&favID); err != nil {
 			return nil, err
 		}
-		favoriteCharactersSet[favID] = true
+		favoriteParodiesSet[favID] = true
 	}
 	if err = favRows.Err(); err != nil {
 		return nil, err
@@ -35,17 +35,17 @@ func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
 
 	mainQuery := `
 	SELECT
-		c.id,
-		c.name,
+		p.id,
+		p.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
-		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_character_ocount,
+		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_parody_ocount,
 		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating
 	FROM
-		characters c
+		parodies p
 	LEFT JOIN
-		doujinshi_characters dc ON c.id = dc.character_id
+		doujinshi_parodies dpd ON p.id = dpd.parody_id
 	LEFT JOIN
-		doujinshi d ON dc.doujinshi_id = d.id AND d.folder_name IS NOT NULL AND d.folder_name != ''
+		doujinshi d ON dpd.doujinshi_id = d.id AND d.folder_name IS NOT NULL AND d.folder_name != ''
 	LEFT JOIN
 		(SELECT
 			 po.doujinshi_id,
@@ -56,9 +56,9 @@ func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
 	LEFT JOIN
 		doujinshi_progress dp ON d.id = dp.doujinshi_id
 	GROUP BY
-		c.id, c.name
+		p.id, p.name
 	ORDER BY
-		c.name ASC;
+		p.name ASC;
 	`
 
 	allRows, err := db.Query(mainQuery)
@@ -67,28 +67,28 @@ func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
 	}
 	defer allRows.Close()
 
-	var results []CharacterData
+	var results []ParodyData
 	for allRows.Next() {
-		var charID int64
-		var charName string
+		var parodyID int64
+		var parodyName string
 		var doujinCount int
 		var totalOCount int64
 		var avgRating sql.NullFloat64
 
-		if err := allRows.Scan(&charID, &charName, &doujinCount, &totalOCount, &avgRating); err != nil {
+		if err := allRows.Scan(&parodyID, &parodyName, &doujinCount, &totalOCount, &avgRating); err != nil {
 			return nil, err
 		}
 
-		_, isFav := favoriteCharactersSet[charID]
+		_, isFav := favoriteParodiesSet[parodyID]
 
 		var avgRatingPtr *float64
 		if avgRating.Valid {
 			avgRatingPtr = &avgRating.Float64
 		}
 
-		results = append(results, CharacterData{
-			ID:            charID,
-			Name:          charName,
+		results = append(results, ParodyData{
+			ID:            parodyID,
+			Name:          parodyName,
 			IsFavorite:    isFav,
 			DoujinCount:   doujinCount,
 			TotalOCount:   totalOCount,
@@ -102,11 +102,11 @@ func GetAllCharacters(db *sql.DB) ([]CharacterData, error) {
 	return results, nil
 }
 
-func GetCharacterDetails(db *sql.DB, characterID int64) (*CharacterData, error) {
+func GetParodyDetails(db *sql.DB, parodyID int64) (*ParodyData, error) {
 	var isFavorite bool
 	err := db.QueryRow(
-		`SELECT EXISTS(SELECT 1 FROM favorite_characters WHERE character_id = ?)`,
-		characterID,
+		`SELECT EXISTS(SELECT 1 FROM favorite_parodies WHERE parody_id = ?)`,
+		parodyID,
 	).Scan(&isFavorite)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
@@ -114,17 +114,17 @@ func GetCharacterDetails(db *sql.DB, characterID int64) (*CharacterData, error) 
 
 	query := `
 	SELECT
-		c.id,
-		c.name,
+		p.id,
+		p.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
-		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_character_ocount,
+		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_parody_ocount,
 		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating
 	FROM
-		characters c
+		parodies p
 	LEFT JOIN
-		doujinshi_characters dc ON c.id = dc.character_id
+		doujinshi_parodies dpd ON p.id = dpd.parody_id
 	LEFT JOIN
-		doujinshi d ON dc.doujinshi_id = d.id AND d.folder_name IS NOT NULL AND d.folder_name != ''
+		doujinshi d ON dpd.doujinshi_id = d.id AND d.folder_name IS NOT NULL AND d.folder_name != ''
 	LEFT JOIN
 		(SELECT
 			 po.doujinshi_id,
@@ -135,44 +135,44 @@ func GetCharacterDetails(db *sql.DB, characterID int64) (*CharacterData, error) 
 	LEFT JOIN
 		doujinshi_progress dp ON d.id = dp.doujinshi_id
 	WHERE
-		c.id = ?
+		p.id = ?
 	GROUP BY
-		c.id, c.name;
+		p.id, p.name;
 	`
-	var charInfo CharacterData
+	var parodyInfo ParodyData
 	var avgRating sql.NullFloat64
 
-	err = db.QueryRow(query, characterID).Scan(
-		&charInfo.ID,
-		&charInfo.Name,
-		&charInfo.DoujinCount,
-		&charInfo.TotalOCount,
+	err = db.QueryRow(query, parodyID).Scan(
+		&parodyInfo.ID,
+		&parodyInfo.Name,
+		&parodyInfo.DoujinCount,
+		&parodyInfo.TotalOCount,
 		&avgRating,
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, nil // Character not found
+		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 
-	charInfo.IsFavorite = isFavorite
+	parodyInfo.IsFavorite = isFavorite
 	if avgRating.Valid {
-		charInfo.AverageRating = &avgRating.Float64
+		parodyInfo.AverageRating = &avgRating.Float64
 	}
 
-	return &charInfo, nil
+	return &parodyInfo, nil
 }
 
-func GetDoujinshiByCharacter(db *sql.DB, characterID int64) ([]Doujinshi, error) {
+func GetDoujinshiByParody(db *sql.DB, parodyID int64) ([]Doujinshi, error) {
 	query := `
 		SELECT d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name
 		FROM doujinshi d
-		JOIN doujinshi_characters dc ON d.id = dc.doujinshi_id
-		WHERE dc.character_id = ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
+		JOIN doujinshi_parodies dpd ON d.id = dpd.doujinshi_id
+		WHERE dpd.parody_id = ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
 		ORDER BY d.uploaded DESC, d.title ASC
 	`
-	rows, err := db.Query(query, characterID)
+	rows, err := db.Query(query, parodyID)
 	if err != nil {
 		return nil, err
 	}
@@ -191,25 +191,25 @@ func GetDoujinshiByCharacter(db *sql.DB, characterID int64) ([]Doujinshi, error)
 	return results, nil
 }
 
-func GetCharacterIDByName(db *sql.DB, characterName string) (int64, error) {
-	var characterID int64
-	query := `SELECT id FROM characters WHERE LOWER(name) = LOWER(?)`
-	err := db.QueryRow(query, characterName).Scan(&characterID)
+func GetParodyIDByName(db *sql.DB, parodyName string) (int64, error) {
+	var parodyID int64
+	query := `SELECT id FROM parodies WHERE LOWER(name) = LOWER(?)`
+	err := db.QueryRow(query, parodyName).Scan(&parodyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, sql.ErrNoRows
 		}
 		return 0, err
 	}
-	return characterID, nil
+	return parodyID, nil
 }
 
-func AddFavoriteCharacter(db *sql.DB, characterID int64) error {
-	_, err := db.Exec(`INSERT OR IGNORE INTO favorite_characters (character_id) VALUES (?)`, characterID)
+func AddFavoriteParody(db *sql.DB, parodyID int64) error {
+	_, err := db.Exec(`INSERT OR IGNORE INTO favorite_parodies (parody_id) VALUES (?)`, parodyID)
 	return err
 }
 
-func RemoveFavoriteCharacter(db *sql.DB, characterID int64) error {
-	_, err := db.Exec(`DELETE FROM favorite_characters WHERE character_id = ?`, characterID)
+func RemoveFavoriteParody(db *sql.DB, parodyID int64) error {
+	_, err := db.Exec(`DELETE FROM favorite_parodies WHERE parody_id = ?`, parodyID)
 	return err
 }
