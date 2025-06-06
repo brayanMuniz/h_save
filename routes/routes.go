@@ -72,6 +72,17 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 		})
 
 		// ============================================================================
+		// GROUP ROUTES
+		// ============================================================================
+		api.GET("/groups", func(ctx *gin.Context) {
+			GetAllGroupsHandler(ctx, database)
+		})
+
+		api.GET("/group/:id", func(ctx *gin.Context) {
+			GetGroupPageDataHandler(ctx, database)
+		})
+
+		// ============================================================================
 		// SYNC ROUTES
 		// ============================================================================
 		api.POST("/sync", func(ctx *gin.Context) {
@@ -207,12 +218,12 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			// ========================================================================
 			// FAVORITE GROUP ROUTES
 			// ========================================================================
-			user.POST("/favorite/group", func(ctx *gin.Context) {
-				AddFavoriteByName(ctx, database, "group", "groups", db.AddFavoriteGroup)
+			user.POST("/favorite/group/:id", func(ctx *gin.Context) {
+				AddFavoriteByID(ctx, database, db.AddFavoriteGroup)
 			})
 
-			user.DELETE("/favorite/group", func(ctx *gin.Context) {
-				RemoveFavoriteByName(ctx, database, "group", "groups", db.RemoveFavoriteGroup)
+			user.DELETE("/favorite/group/:id", func(ctx *gin.Context) {
+				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteGroup)
 			})
 
 			user.GET("/favorite/groups", func(ctx *gin.Context) {

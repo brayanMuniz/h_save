@@ -107,3 +107,17 @@ export interface TagPageResponse {
   tagDetails: Tag;
   doujinshiList: Doujinshi[];
 }
+
+export interface Group {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+export interface GroupPageResponse {
+  groupDetails: Group;
+  doujinshiList: Doujinshi[];
+}

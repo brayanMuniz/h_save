@@ -19,6 +19,11 @@ const Sidebar: React.FC<SidebarProps> = () => (
         🔍 Browse
       </Link>
 
+
+      <Link to="/tags" className="hover:text-indigo-400 transition py-1">
+        🏷️ Tags
+      </Link>
+
       <Link to="/artists" className="hover:text-indigo-400 transition py-1">
         🎨 Artists
       </Link>
@@ -27,23 +32,15 @@ const Sidebar: React.FC<SidebarProps> = () => (
         👥 Groups
       </Link>
 
-      <Link to="/tags" className="hover:text-indigo-400 transition py-1">
-        🏷️ Tags
+      <Link to="/characters" className="hover:text-indigo-400 transition py-1">
+        🧑‍🎤 Characters
+      </Link>
+
+      <Link to="/parodies" className="hover:text-indigo-400 transition py-1">
+        🎭 Parodies
       </Link>
 
 
-      <button
-        type="button"
-        className="text-left hover:text-indigo-400 transition py-1"
-      >
-        🧑‍🎤 Characters
-      </button>
-      <button
-        type="button"
-        className="text-left hover:text-indigo-400 transition py-1"
-      >
-        🎭 Parodies
-      </button>
     </nav>
 
     {/* Bottom Actions */}
