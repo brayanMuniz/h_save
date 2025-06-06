@@ -1,62 +1,53 @@
 import React from "react";
-import type { Artist } from "../types";
 import { Link } from "react-router-dom";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
+import type { Artist } from "../types";
 
 interface ArtistCardProps {
-  artist: Artist;
-  onToggleFavorite: (artistId: number, currentIsFavorite: boolean) => void;
+  // Changed prop name from 'artist' to 'entity' for generic compatibility
+  entity: Artist;
+  onToggleFavorite: (artistId: number, isFavorite: boolean) => void;
 }
 
 const ArtistCard: React.FC<ArtistCardProps> = ({
-  artist,
+  entity,
   onToggleFavorite,
 }) => {
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggleFavorite(artist.id, artist.isFavorite);
-  };
-
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-shadow duration-300 ease-in-out p-5 text-gray-200 relative">
-      <button
-        onClick={handleFavoriteClick}
-        className="absolute top-3 right-3 text-2xl p-1 rounded-full hover:bg-gray-700 transition-colors"
-        aria-label={artist.isFavorite ? "Unfavorite artist" : "Favorite artist"}
-      >
-        {artist.isFavorite ? (
-          <FaHeart className="text-red-500" />
-        ) : (
-          <FaRegHeart className="text-gray-400 hover:text-red-400" />
-        )}
-      </button>
-
-      <Link
-        to={`/artist/${encodeURIComponent(artist.name)}`}
-        className="block" // Make the link cover the card content area
-      >
-        <h3 className="text-xl font-bold text-indigo-400 truncate pr-10">
-          {/* pr-10 to avoid overlap with heart */}
-          {artist.name}
-        </h3>
-        <div className="space-y-2 text-sm mt-3">
+    <div className="bg-gray-800 rounded-lg p-4 flex flex-col justify-between shadow-lg transition-transform hover:scale-105">
+      <div>
+        <div className="flex justify-between items-start mb-3">
+          <Link
+            to={`/artist/${encodeURIComponent(entity.name)}`}
+            className="text-lg font-bold text-indigo-400 hover:text-indigo-300 break-all"
+          >
+            {entity.name}
+          </Link>
+          <button
+            onClick={() => onToggleFavorite(entity.id, entity.isFavorite)}
+            className={`text-2xl transition-colors ${entity.isFavorite
+                ? "text-red-500 hover:text-red-400"
+                : "text-gray-500 hover:text-red-500"
+              }`}
+            title={entity.isFavorite ? "Unfavorite" : "Favorite"}
+          >
+            {entity.isFavorite ? "♥" : "♡"}
+          </button>
+        </div>
+        <div className="text-sm text-gray-400 space-y-1">
           <p>
-            <span className="font-semibold text-gray-400">Doujins:</span>{" "}
-            {artist.doujinCount}
+            <span className="font-semibold text-gray-300">Works:</span>{" "}
+            {entity.doujinCount}
           </p>
           <p>
-            <span className="font-semibold text-gray-400">Total O-Count:</span>{" "}
-            {artist.totalOCount.toLocaleString()}
+            <span className="font-semibold text-gray-300">Total ♥:</span>{" "}
+            {entity.totalOCount}
           </p>
           <p>
-            <span className="font-semibold text-gray-400">Avg. Rating:</span>{" "}
-            {artist.averageRating !== null
-              ? `${artist.averageRating.toFixed(1)} / 5`
-              : "N/A"}
+            <span className="font-semibold text-gray-300">Avg. Rating:</span>{" "}
+            {entity.averageRating ? entity.averageRating.toFixed(2) : "N/A"}
           </p>
         </div>
-      </Link>
+      </div>
     </div>
   );
 };

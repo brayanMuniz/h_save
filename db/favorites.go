@@ -24,16 +24,6 @@ func RemoveFavoriteArtist(database *sql.DB, artistID int64) error {
 	return err
 }
 
-func AddFavoriteCharacter(database *sql.DB, characterID int64) error {
-	_, err := database.Exec(`INSERT OR IGNORE INTO favorite_characters (character_id) VALUES (?)`, characterID)
-	return err
-}
-
-func RemoveFavoriteCharacter(database *sql.DB, characterID int64) error {
-	_, err := database.Exec(`DELETE FROM favorite_characters WHERE character_id = ?`, characterID)
-	return err
-}
-
 func AddFavoriteParody(database *sql.DB, parodyID int64) error {
 	_, err := database.Exec(`INSERT OR IGNORE INTO favorite_parodies (parody_id) VALUES (?)`, parodyID)
 	return err

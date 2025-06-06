@@ -71,15 +71,18 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			GetTagPageDataHandler(ctx, database)
 		})
 
-		// ============================================================================
-		// GROUP ROUTES
-		// ============================================================================
+		// GROUPS
 		api.GET("/groups", func(ctx *gin.Context) {
 			GetAllGroupsHandler(ctx, database)
 		})
 
 		api.GET("/group/:id", func(ctx *gin.Context) {
 			GetGroupPageDataHandler(ctx, database)
+		})
+
+		// CHARACTERS
+		api.GET("/characters", func(ctx *gin.Context) {
+			GetAllCharactersHandler(ctx, database)
 		})
 
 		// ============================================================================
@@ -185,15 +188,13 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteArtist)
 			})
 
-			// ========================================================================
-			// FAVORITE CHARACTER ROUTES
-			// ========================================================================
-			user.POST("/favorite/character", func(ctx *gin.Context) {
-				AddFavoriteByName(ctx, database, "character", "characters", db.AddFavoriteCharacter)
+			// FAVORITE CHARACTER
+			user.POST("/favorite/character/:id", func(ctx *gin.Context) {
+				AddFavoriteByID(ctx, database, db.AddFavoriteCharacter)
 			})
 
-			user.DELETE("/favorite/character", func(ctx *gin.Context) {
-				RemoveFavoriteByName(ctx, database, "character", "characters", db.RemoveFavoriteCharacter)
+			user.DELETE("/favorite/character/:id", func(ctx *gin.Context) {
+				RemoveFavoriteByID(ctx, database, db.RemoveFavoriteCharacter)
 			})
 
 			user.GET("/favorite/characters", func(ctx *gin.Context) {
