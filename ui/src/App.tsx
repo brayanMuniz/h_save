@@ -12,6 +12,9 @@ import ArtistPage from "./pages/ArtistPage";
 import TagsPage from "./pages/TagsPage";
 import TagPage from "./pages/TagPage";
 
+import GroupsPage from "./pages/GroupsPage";
+import GroupPage from "./pages/GroupPage";
+
 function App() {
   return (
     <div className="min-h-screen bg-gray-900">
@@ -58,6 +61,23 @@ function App() {
             <TagPage />
           }
         />
+
+        <Route
+          path="/groups"
+          element={
+            <GroupsPage />
+          }
+        />
+
+        <Route
+          path="/group/:group"
+          element={
+            <GroupPage />
+          }
+        />
+
+
+
 
         <Route
           path="/settings"
