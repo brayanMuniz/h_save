@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
-import type { LinkProps } from "react-router-dom"; // We don't need Link itself, just its props for the CardComponent
+import type { EntitySortKey, SortOrder } from "../types";
+
 import Sidebar from "../components/SideBar";
 import MobileNav from "../components/MobileNav";
+import EntityCard from "../components/EntityCard";
 
-
-// A generic Entity type that all our items (Artist, Tag, etc.) will match.
 interface Entity {
   id: number;
   name: string;
@@ -14,10 +14,6 @@ interface Entity {
   averageRating: number | null;
 }
 
-// The specific keys we can sort any of our entities by.
-type SortKey = "name" | "doujinCount" | "totalOCount" | "averageRating";
-type SortOrder = "asc" | "desc";
-
 interface EntityFilters {
   showFavoritesOnly: boolean;
   minDoujinCount: string;
@@ -26,20 +22,16 @@ interface EntityFilters {
 }
 
 interface EntitySort {
-  key: SortKey;
+  key: EntitySortKey;
   order: SortOrder;
 }
 
-// Props for the generic list page component.
 interface EntityListPageProps {
   entityName: string;
   entityNamePlural: string;
   listApiEndpoint: string;
   favoriteApiEndpointPrefix: string;
-  CardComponent: React.FC<{
-    entity: Entity;
-    onToggleFavorite: (id: number, isFav: boolean) => void;
-  }>;
+  entityLinkPrefix: string;
   icon: string;
 }
 
@@ -48,7 +40,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
   entityNamePlural,
   listApiEndpoint,
   favoriteApiEndpointPrefix,
-  CardComponent,
+  entityLinkPrefix,
   icon,
 }) => {
   const [entities, setEntities] = useState<Entity[]>([]);
@@ -62,6 +54,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
     minRating: "0",
   });
 
+  // The state is now correctly typed with our EntitySort interface
   const [sort, setSort] = useState<EntitySort>({ key: "name", order: "asc" });
 
   useEffect(() => {
@@ -131,7 +124,8 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setSort((prev) => ({ ...prev, [name]: value as SortKey | SortOrder }));
+    // The type assertion now correctly uses EntitySortKey
+    setSort((prev) => ({ ...prev, [name]: value as EntitySortKey | SortOrder }));
   };
 
   const filteredAndSortedEntities = useMemo(() => {
@@ -156,7 +150,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
       );
     }
 
-    // Using a switch statement for type-safe sorting
+    // This switch statement is now type-safe because sort.key is an EntitySortKey
     processed.sort((a, b) => {
       const order = sort.order === "asc" ? 1 : -1;
       switch (sort.key) {
@@ -327,10 +321,11 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
           {filteredAndSortedEntities.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredAndSortedEntities.map((entity) => (
-                <CardComponent
+                <EntityCard
                   key={entity.id}
                   entity={entity}
                   onToggleFavorite={handleToggleFavorite}
+                  linkPrefix={entityLinkPrefix}
                 />
               ))}
             </div>

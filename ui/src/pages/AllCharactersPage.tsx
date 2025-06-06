@@ -1,17 +1,16 @@
 import EntityListPage from "./EntityListPage";
-import CharacterCard from "../components/CharacterCard";
 
-const CharactersPage = () => {
+const AllCharactersPage = () => {
   return (
     <EntityListPage
       entityName="Character"
       entityNamePlural="Characters"
       listApiEndpoint="/api/characters"
       favoriteApiEndpointPrefix="/api/user/favorite/character"
-      CardComponent={CharacterCard}
+      entityLinkPrefix="/character"
       icon="🧑‍🎤"
     />
   );
 };
 
-export default CharactersPage;
+export default AllCharactersPage;

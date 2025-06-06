@@ -6,19 +6,19 @@ import DoujinshiOverview from "./pages/DoujinshiOverview";
 import BrowsePage from "./pages/BrowsePage";
 import Settings from "./pages/Settings";
 
-import Artists from "./pages/Artists";
+import AllArtistsPage from "./pages/AllArtistPage";
 import ArtistPage from "./pages/ArtistPage";
 
-import TagsPage from "./pages/TagsPage";
+import AllTagsPage from "./pages/AllTagsPage";
 import TagPage from "./pages/TagPage";
 
-import GroupsPage from "./pages/GroupsPage";
+import AllGroupsPage from "./pages/AllGroupsPage";
 import GroupPage from "./pages/GroupPage";
 
-import CharactersPage from "./pages/CharactersPage";
+import AllCharactersPage from "./pages/AllCharactersPage";
 import CharacterPage from "./pages/CharacterPage";
 
-import ParodiesPage from "./pages/ParodiesPage";
+import AllParodiesPage from "./pages/AllParodiesPage";
 import ParodyPage from "./pages/ParodyPage";
 
 function App() {
@@ -40,24 +40,13 @@ function App() {
           }
         />
 
-        <Route
-          path="/artists"
-          element={
-            <Artists />
-          }
-        />
-
-        <Route
-          path="/artist/:artist"
-          element={
-            <ArtistPage />
-          }
-        />
+        <Route path="/artists" element={<AllArtistsPage />} />
+        <Route path="/artist/:artist" element={<ArtistPage />} />
 
         <Route
           path="/tags/"
           element={
-            <TagsPage />
+            <AllTagsPage />
           }
         />
 
@@ -71,7 +60,7 @@ function App() {
         <Route
           path="/groups"
           element={
-            <GroupsPage />
+            <AllGroupsPage />
           }
         />
 
@@ -85,7 +74,7 @@ function App() {
         <Route
           path="/characters"
           element={
-            <CharactersPage />
+            <AllCharactersPage />
           }
         />
 
@@ -100,7 +89,7 @@ function App() {
         <Route
           path="/parodies"
           element={
-            <ParodiesPage />
+            <AllParodiesPage />
           }
         />
 

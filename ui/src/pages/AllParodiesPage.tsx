@@ -1,17 +1,17 @@
+import React from "react";
 import EntityListPage from "./EntityListPage";
-import ParodyCard from "../components/ParodyCard";
 
-const ParodiesPage = () => {
+const AllParodiesPage = () => {
   return (
     <EntityListPage
       entityName="Parody"
       entityNamePlural="Parodies"
       listApiEndpoint="/api/parodies"
       favoriteApiEndpointPrefix="/api/user/favorite/parody"
-      CardComponent={ParodyCard}
+      entityLinkPrefix="/parody"
       icon="🎭"
     />
   );
 };
 
-export default ParodiesPage;
+export default AllParodiesPage;
