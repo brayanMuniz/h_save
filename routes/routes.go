@@ -96,9 +96,7 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			GetParodyPageDataHandler(ctx, database)
 		})
 
-		// ============================================================================
-		// SYNC ROUTES
-		// ============================================================================
+		// SYNC
 		api.POST("/sync", func(ctx *gin.Context) {
 			SyncDoujinshi(ctx, database)
 		})

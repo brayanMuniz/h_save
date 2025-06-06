@@ -40,7 +40,7 @@ func DownloadAllFavorites(
 
 	// NOTE: for testing setting a limit
 	page := 1
-	for page < 5 {
+	for page < 20 {
 		log.Println("Downloading page: ", page)
 		favoritesRoute := fmt.Sprintf("%s/favorites/?page=%d", rootURL, page)
 		htmlPage, err := n.GetPageHTML(favoritesRoute, httpConfig)

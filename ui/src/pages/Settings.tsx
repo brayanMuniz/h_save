@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import SyncSettings from "../components/SyncSettings"; // Import the new component
 
+// This interface is specific to the nhentai download results
 interface DownloadResult {
   totalProcessed: number;
   downloaded: string[];
@@ -11,6 +13,7 @@ interface DownloadResult {
 }
 
 const Settings = () => {
+  // This state now controls which settings panel is visible
   const [activeProvider, setActiveProvider] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [csrfToken, setCsrfToken] = useState("");
@@ -20,7 +23,7 @@ const Settings = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadResult, setDownloadResult] = useState<DownloadResult | null>(
-    null
+    null,
   );
   const [authError, setAuthError] = useState("");
 
@@ -31,22 +34,17 @@ const Settings = () => {
       setAuthError("Both Session ID and CSRF Token are required");
       return;
     }
-
     setIsAuthenticating(true);
     setAuthError("");
-
     try {
       const response = await fetch("/nhentai/authCheck", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: sessionId.trim(),
           csrfToken: csrfToken.trim(),
         }),
       });
-
       if (response.ok) {
         const data = await response.json();
         setUserName(data.userName);
@@ -69,16 +67,12 @@ const Settings = () => {
       setAuthError("Please authenticate first");
       return;
     }
-
     setIsDownloading(true);
     setDownloadResult(null);
-
     try {
       const response = await fetch("/nhentai/favorites/download", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: sessionId.trim(),
           csrfToken: csrfToken.trim(),
@@ -86,7 +80,6 @@ const Settings = () => {
           skipOrganized,
         }),
       });
-
       if (response.ok) {
         const result = await response.json();
         setDownloadResult(result);
@@ -108,7 +101,6 @@ const Settings = () => {
         <h3 className="text-xl font-semibold text-gray-200 mb-4">
           nhentai Authentication
         </h3>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -122,7 +114,6 @@ const Settings = () => {
               placeholder="Enter session ID"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               CSRF Token
@@ -136,7 +127,6 @@ const Settings = () => {
             />
           </div>
         </div>
-
         <div className="flex flex-col sm:flex-row gap-4 items-start">
           <button
             onClick={handleAuthCheck}
@@ -145,7 +135,6 @@ const Settings = () => {
           >
             {isAuthenticating ? "Checking..." : "Check"}
           </button>
-
           {userName && (
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-300">
@@ -157,7 +146,6 @@ const Settings = () => {
             </div>
           )}
         </div>
-
         {authError && (
           <div className="mt-4 p-3 bg-red-900 border border-red-600 rounded-lg text-red-200">
             {authError}
@@ -166,15 +154,18 @@ const Settings = () => {
       </div>
 
       {/* Download Configuration */}
-      <div className={`bg-gray-800 rounded-2xl p-6 transition-opacity ${!isAuthenticated ? "opacity-50" : ""
-        }`}>
+      <div
+        className={`bg-gray-800 rounded-2xl p-6 transition-opacity ${!isAuthenticated ? "opacity-50" : ""
+          }`}
+      >
         <h3 className="text-xl font-semibold text-gray-200 mb-4">
           Download Configuration
         </h3>
-
         <div className="space-y-4 mb-6">
-          <label className={`flex items-center gap-3 ${!isAuthenticated ? "cursor-not-allowed" : "cursor-pointer"
-            }`}>
+          <label
+            className={`flex items-center gap-3 ${!isAuthenticated ? "cursor-not-allowed" : "cursor-pointer"
+              }`}
+          >
             <input
               type="checkbox"
               checked={saveMetadata}
@@ -182,14 +173,17 @@ const Settings = () => {
               disabled={!isAuthenticated}
               className="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className={`text-gray-300 ${!isAuthenticated ? "text-gray-500" : ""
-              }`}>
+            <span
+              className={`text-gray-300 ${!isAuthenticated ? "text-gray-500" : ""
+                }`}
+            >
               Save meta data (default true)
             </span>
           </label>
-
-          <label className={`flex items-center gap-3 ${!isAuthenticated ? "cursor-not-allowed" : "cursor-pointer"
-            }`}>
+          <label
+            className={`flex items-center gap-3 ${!isAuthenticated ? "cursor-not-allowed" : "cursor-pointer"
+              }`}
+          >
             <input
               type="checkbox"
               checked={skipOrganized}
@@ -197,13 +191,14 @@ const Settings = () => {
               disabled={!isAuthenticated}
               className="w-4 h-4 text-indigo-600 bg-gray-700 border-gray-600 rounded focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className={`text-gray-300 ${!isAuthenticated ? "text-gray-500" : ""
-              }`}>
+            <span
+              className={`text-gray-300 ${!isAuthenticated ? "text-gray-500" : ""
+                }`}
+            >
               Skip organized (default true)
             </span>
           </label>
         </div>
-
         <button
           onClick={handleDownloadFavorites}
           disabled={!isAuthenticated || isDownloading}
@@ -211,7 +206,6 @@ const Settings = () => {
         >
           {isDownloading ? "Downloading..." : "Download Favorites"}
         </button>
-
       </div>
 
       {/* Results Section */}
@@ -220,17 +214,15 @@ const Settings = () => {
           <h3 className="text-xl font-semibold text-gray-200 mb-4">
             Download Results
           </h3>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-green-900 rounded-lg p-4 border border-green-600">
               <h4 className="text-sm font-medium text-green-200 mb-2">
-                Torrent Files Downloaded
+                Downloaded
               </h4>
               <div className="text-2xl font-bold text-green-400">
                 {downloadResult.downloaded.length}
               </div>
             </div>
-
             <div className="bg-blue-900 rounded-lg p-4 border border-blue-600">
               <h4 className="text-sm font-medium text-blue-200 mb-2">
                 Metadata Saved
@@ -239,7 +231,6 @@ const Settings = () => {
                 {downloadResult.metadataSaved.length}
               </div>
             </div>
-
             <div className="bg-yellow-900 rounded-lg p-4 border border-yellow-600">
               <h4 className="text-sm font-medium text-yellow-200 mb-2">
                 Skipped
@@ -248,7 +239,6 @@ const Settings = () => {
                 {downloadResult.skipped.length}
               </div>
             </div>
-
             <div className="bg-red-900 rounded-lg p-4 border border-red-600">
               <h4 className="text-sm font-medium text-red-200 mb-2">
                 Failed
@@ -258,7 +248,6 @@ const Settings = () => {
               </div>
             </div>
           </div>
-
           <div className="text-sm text-gray-400">
             <p>Total Processed: {downloadResult.totalProcessed}</p>
             <p>Pages Processed: {downloadResult.pagesProcessed}</p>
@@ -270,7 +259,6 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Sidebar */}
       <aside className="hidden lg:flex w-64 h-screen bg-gray-800 text-gray-200 flex-col p-6 rounded-r-2xl fixed top-0 left-0 z-40">
         <Link
           to="/"
@@ -278,34 +266,38 @@ const Settings = () => {
         >
           <h2 className="text-2xl font-bold mb-6">Ecchi</h2>
         </Link>
-
         <nav className="flex flex-col gap-4 mb-auto">
           <button
             type="button"
-            className="text-left hover:text-indigo-400 transition py-1 cursor-pointer"
+            className={`text-left transition py-2 px-3 rounded cursor-pointer w-full ${activeProvider === ""
+              ? "bg-indigo-600 text-white"
+              : "hover:text-indigo-400 hover:bg-gray-700"
+              }`}
             onClick={() => setActiveProvider("")}
           >
             ⚙️ Settings
           </button>
           <button
             type="button"
-            className="text-left hover:text-indigo-400 transition py-1 cursor-pointer"
-            onClick={() => setActiveProvider("")}
+            className={`text-left transition py-2 px-3 rounded cursor-pointer w-full ${activeProvider === "account"
+              ? "bg-indigo-600 text-white"
+              : "hover:text-indigo-400 hover:bg-gray-700"
+              }`}
+            onClick={() => setActiveProvider("account")}
           >
             👤 Account
           </button>
           <button
             type="button"
-            className="text-left hover:text-indigo-400 transition py-1 cursor-pointer"
-            onClick={() => setActiveProvider("")}
+            className={`text-left transition py-2 px-3 rounded cursor-pointer w-full ${activeProvider === "sync"
+              ? "bg-indigo-600 text-white"
+              : "hover:text-indigo-400 hover:bg-gray-700"
+              }`}
+            onClick={() => setActiveProvider("sync")}
           >
             🔄 Sync
           </button>
-
-          {/* Divider */}
           <div className="border-t border-gray-600 my-4"></div>
-
-          {/* External Providers */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wider">
               External Providers
@@ -324,9 +316,7 @@ const Settings = () => {
         </nav>
       </aside>
 
-      {/* Content Area */}
       <div className="lg:ml-64">
-        {/* Mobile Header */}
         <nav className="lg:hidden sticky top-0 z-30 bg-gray-800 text-gray-200 p-3 shadow-md">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold">Settings</h1>
@@ -339,11 +329,12 @@ const Settings = () => {
           </div>
         </nav>
 
-        {/* Main Content */}
         <main className="flex-1 p-6">
           <div className="max-w-4xl mx-auto">
             {activeProvider === "nhentai" ? (
               renderNhentaiContent()
+            ) : activeProvider === "sync" ? (
+              <SyncSettings />
             ) : (
               <div className="bg-gray-800 rounded-2xl p-12 text-center">
                 <div className="text-gray-400 text-lg">
