@@ -158,3 +158,31 @@ export interface SortState {
   key: SortKey;
   order: SortOrder;
 }
+
+export interface Character {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+export interface CharacterPageResponse {
+  characterDetails: Character;
+  doujinshiList: Doujinshi[];
+}
+
+export interface Parody {
+  id: number;
+  name: string;
+  isFavorite: boolean;
+  doujinCount: number;
+  totalOCount: number;
+  averageRating: number | null;
+}
+
+export interface ParodyPageResponse {
+  parodyDetails: Parody;
+  doujinshiList: Doujinshi[];
+}
