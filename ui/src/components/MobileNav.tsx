@@ -13,42 +13,42 @@ const MobileNav: React.FC<MobileNavProps> = () => (
       >
         🏠 Home
       </Link>
+
+
+      <Link to="/tags" className="hover:text-indigo-400 transition py-1">
+        🏷️ Tags
+      </Link>
+
+
       <Link
         to="/browse"
         className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
       >
         🔍 Browse
       </Link>
+
       <Link
         to="/artists"
         className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
       >
         🎨 Artists
       </Link>
+
       <Link
         to="/groups"
         className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
       >
         👥 Groups
       </Link>
-      <button
-        type="button"
-        className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
-      >
-        🏷️ Tags
-      </button>
-      <button
-        type="button"
-        className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
-      >
+
+
+      <Link to="/characters" className="hover:text-indigo-400 transition py-1">
         🧑‍🎤 Characters
-      </button>
-      <button
-        type="button"
-        className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
-      >
+      </Link>
+
+      <Link to="/parodies" className="hover:text-indigo-400 transition py-1">
         🎭 Parodies
-      </button>
+      </Link>
 
       <div className="ml-auto">
         <SettingsButton />
