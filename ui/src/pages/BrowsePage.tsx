@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { Doujinshi, BrowseFilters, SavedFilter } from "../types";
 
 import FilterSidebar from "../components/FilterSideBar";
+import MobileFilterBar from "../components/MobileFilterBar";
 import BrowseContent from "../components/BrowseContent";
 import SelectedFiltersBar from "../components/SelectedFiltersBar";
 
@@ -11,7 +12,6 @@ const BrowsePage = () => {
   const [viewMode, setViewMode] = useState<"card" | "cover">("cover");
   const [sortBy, setSortBy] = useState("uploaded");
 
-  // Updated initial state for filters, without bookmarkCount
   const [filters, setFilters] = useState<BrowseFilters>({
     artists: { included: [], excluded: [] },
     groups: { included: [], excluded: [] },
@@ -28,17 +28,79 @@ const BrowsePage = () => {
     search: "",
   });
 
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+
+  const fetchSavedFilters = async () => {
+    try {
+      const response = await fetch("/api/user/saved-filters");
+      if (!response.ok) throw new Error("Failed to fetch saved filters.");
+      const data = await response.json();
+      setSavedFilters(data.savedFilters || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSavedFilters();
+  }, []);
+
+  const handleSaveFilter = async () => {
+    const name = prompt("Enter a name for this filter set:");
+    if (!name || !name.trim()) return;
+    try {
+      const response = await fetch("/api/user/saved-filters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), filters }),
+      });
+      if (!response.ok) throw new Error("Failed to save filter.");
+      fetchSavedFilters(); // Refresh the list after saving
+    } catch (error) {
+      console.error(error);
+      alert("Error: Could not save the filter.");
+    }
+  };
+
+  const handleLoadFilter = (filtersToLoad: BrowseFilters) => {
+    setFilters(filtersToLoad);
+  };
+
+  const handleDeleteFilter = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this saved filter?"))
+      return;
+    try {
+      const response = await fetch(`/api/user/saved-filters/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete filter.");
+      fetchSavedFilters(); // Refresh the list after deleting
+    } catch (error) {
+      console.error(error);
+      alert("Error: Could not delete the filter.");
+    }
+  };
+
+  const handleClearAllTagFilters = () => {
+    setFilters({
+      ...filters,
+      tags: { included: [], excluded: [] },
+      artists: { included: [], excluded: [] },
+      characters: { included: [], excluded: [] },
+      parodies: { included: [], excluded: [] },
+      groups: { included: [], excluded: [] },
+      currentlyReading: false,
+    });
+  };
+
   const filteredAndSortedDoujinshi = useMemo(() => {
     const filtered = doujinshi.filter((item) => {
-      // Search filter
       if (
         filters.search &&
         !item.title.toLowerCase().includes(filters.search.toLowerCase())
       ) {
         return false;
       }
-
-      // "Currently Reading" Filter
       if (filters.currentlyReading) {
         const lastPage = item.progress?.lastPage ?? 0;
         const totalPages = parseInt(item.pages, 10);
@@ -48,8 +110,6 @@ const BrowsePage = () => {
           return false;
         }
       }
-
-      // Language filter
       if (!filters.languages.includes("all")) {
         const hasLanguage = (item.languages || []).some((lang) =>
           filters.languages.some((filterLang) =>
@@ -58,8 +118,6 @@ const BrowsePage = () => {
         );
         if (!hasLanguage) return false;
       }
-
-      // Range filters (bookmarkCount logic removed)
       const rating = item.progress?.rating ?? 0;
       const totalPages = parseInt(item.pages, 10) || 0;
       if (
@@ -72,8 +130,6 @@ const BrowsePage = () => {
       ) {
         return false;
       }
-
-      // Included/Excluded entity filters
       const filterTypes = [
         "tags",
         "artists",
@@ -84,7 +140,6 @@ const BrowsePage = () => {
       for (const filterType of filterTypes) {
         const itemValues = item[filterType] || [];
         const filterGroup = filters[filterType];
-
         if (filterGroup.excluded.length > 0) {
           const hasExcluded = filterGroup.excluded.some((excludedValue) =>
             itemValues.some((itemValue) =>
@@ -93,7 +148,6 @@ const BrowsePage = () => {
           );
           if (hasExcluded) return false;
         }
-
         if (filterGroup.included.length > 0) {
           const hasAllIncluded = filterGroup.included.every((includedValue) =>
             itemValues.some((itemValue) =>
@@ -103,7 +157,6 @@ const BrowsePage = () => {
           if (!hasAllIncluded) return false;
         }
       }
-
       return true;
     });
 
@@ -139,64 +192,6 @@ const BrowsePage = () => {
       });
   }, []);
 
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
-
-  const fetchSavedFilters = async () => {
-    try {
-      const response = await fetch("/api/user/saved-filters");
-      if (!response.ok) throw new Error("Failed to fetch saved filters.");
-      const data = await response.json();
-      setSavedFilters(data.savedFilters || []);
-    } catch (error) {
-      console.error(error);
-      // Optionally show an error to the user
-    }
-  };
-
-  useEffect(() => {
-    fetchSavedFilters();
-  }, []);
-
-  const handleSaveFilter = async () => {
-    const name = prompt("Enter a name for this filter set:");
-    if (!name || !name.trim()) {
-      return; // User cancelled or entered an empty name
-    }
-
-    try {
-      const response = await fetch("/api/user/saved-filters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), filters }),
-      });
-      if (!response.ok) throw new Error("Failed to save filter.");
-      fetchSavedFilters(); // Refresh the list after saving
-    } catch (error) {
-      console.error(error);
-      alert("Error: Could not save the filter.");
-    }
-  };
-
-  const handleLoadFilter = (filtersToLoad: BrowseFilters) => {
-    setFilters(filtersToLoad);
-  };
-
-  const handleDeleteFilter = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this saved filter?")) {
-      return;
-    }
-    try {
-      const response = await fetch(`/api/user/saved-filters/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete filter.");
-      fetchSavedFilters(); // Refresh the list after deleting
-    } catch (error) {
-      console.error(error);
-      alert("Error: Could not delete the filter.");
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -209,18 +204,27 @@ const BrowsePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 flex">
-      <FilterSidebar
-        filters={filters}
-        setFilters={setFilters}
-        doujinshi={doujinshi}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        savedFilters={savedFilters}
-        onSaveFilter={handleSaveFilter}
-        onLoadFilter={handleLoadFilter}
-        onDeleteFilter={handleDeleteFilter}
-      />
+      <div className="hidden md:block">
+        <FilterSidebar
+          filters={filters}
+          setFilters={setFilters}
+          doujinshi={doujinshi}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          savedFilters={savedFilters}
+          onSaveFilter={handleSaveFilter}
+          onLoadFilter={handleLoadFilter}
+          onDeleteFilter={handleDeleteFilter}
+        />
+      </div>
+
       <div className="flex-1 flex flex-col">
+        <MobileFilterBar
+          savedFilters={savedFilters}
+          onLoadFilter={handleLoadFilter}
+          onDeleteFilter={handleDeleteFilter}
+          onClearAll={handleClearAllTagFilters}
+        />
         <SelectedFiltersBar filters={filters} setFilters={setFilters} />
         <BrowseContent
           doujinshi={filteredAndSortedDoujinshi}
@@ -232,8 +236,6 @@ const BrowsePage = () => {
       </div>
     </div>
   );
-
-
 };
 
 export default BrowsePage;
