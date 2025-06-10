@@ -47,6 +47,8 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
     order: "desc",
   });
 
+  const [isLinkUnlocked, setIsLinkUnlocked] = useState(false);
+
   useEffect(() => {
     if (!entityName) {
       setError(`No ${entityTypeSingular.toLowerCase()} name provided`);
@@ -58,6 +60,7 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
       try {
         setLoading(true);
         setError(null);
+        setIsLinkUnlocked(false); // Reset lock on new page load
         const url = `${apiEndpointPrefix}/0?name=${encodeURIComponent(
           entityName,
         )}`;
@@ -106,6 +109,13 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
       alert(`Error: Could not update favorite status.`);
     }
   };
+
+  const externalLinkUrl = useMemo(() => {
+    if (!data?.details.name || !entityTypeSingular) return "#";
+    const formattedName = data.details.name.toLowerCase().replace(/ /g, "-");
+    const type = entityTypeSingular.toLowerCase();
+    return `https://nhentai.net/${type}/${formattedName}`;
+  }, [data?.details.name, entityTypeSingular]);
 
   const sortedDoujinshi = useMemo(() => {
     if (!data?.doujinshiList) return [];
@@ -265,8 +275,8 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
                     <button
                       onClick={handleToggleFavorite}
                       className={`px-3 py-1 rounded-full font-semibold transition-colors flex items-center gap-1.5 ${details.isFavorite
-                          ? "bg-red-600 text-white hover:bg-red-700"
-                          : "bg-gray-700 text-gray-300 hover:bg-red-600 hover:text-white"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-gray-700 text-gray-300 hover:bg-red-600 hover:text-white"
                         }`}
                       title={
                         details.isFavorite
@@ -279,6 +289,32 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
                         {details.isFavorite ? "Favorited" : "Favorite"}
                       </span>
                     </button>
+                    <div className="flex items-center gap-1 bg-gray-700 rounded-full p-0.5">
+                      <button
+                        onClick={() => setIsLinkUnlocked(!isLinkUnlocked)}
+                        className="px-2 py-1 text-xs rounded-full hover:bg-gray-600 transition"
+                        title={isLinkUnlocked ? "Lock link" : "Unlock link"}
+                      >
+                        {isLinkUnlocked ? "🔓" : "🔒"}
+                      </button>
+                      <a
+                        href={isLinkUnlocked ? externalLinkUrl : undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => !isLinkUnlocked && e.preventDefault()}
+                        className={`px-2 py-1 text-xs rounded-full transition flex items-center gap-1 ${isLinkUnlocked
+                          ? "text-indigo-400 hover:bg-gray-600"
+                          : "text-gray-500 cursor-not-allowed"
+                          }`}
+                        title={
+                          isLinkUnlocked
+                            ? `View on nhentai.net`
+                            : "Unlock to view on external site"
+                        }
+                      >
+                        🌸
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -300,8 +336,8 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
           ) : (
             <div
               className={`grid ${viewMode === "cover"
-                  ? "grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
-                  : "grid-cols-1 md:grid-cols-2 gap-4"
+                ? "grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
+                : "grid-cols-1 md:grid-cols-2 gap-4"
                 }`}
             >
               {sortedDoujinshi.map((d: Doujinshi) =>
