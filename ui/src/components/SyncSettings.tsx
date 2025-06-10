@@ -1,37 +1,64 @@
 import React, { useState } from "react";
+import ManualSyncCard from "./ManualSyncCard";
+
+interface SyncedEntry {
+  id: number;
+  title: string;
+  folderName: string;
+  thumbnailUrl: string;
+}
+
+interface PendingEntry {
+  id: number;
+  title: string;
+}
 
 interface SyncResult {
-  synced: string[];
-  stillPending: string[];
+  synced: SyncedEntry[];
+  stillPending: PendingEntry[];
+  availableFolders: string[];
 }
 
 const SyncSettings = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingItems, setPendingItems] = useState<PendingEntry[]>([]);
 
   const handleSync = async () => {
     setIsSyncing(true);
     setError(null);
     setSyncResult(null);
+    setPendingItems([]);
 
     try {
-      const response = await fetch("/api/sync", {
-        method: "POST",
-      });
-
+      const response = await fetch("/api/sync", { method: "POST" });
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || "Sync failed with an unknown error.");
+        throw new Error(errorData?.error || "Sync failed.");
       }
+      const data = await response.json();
+      if (!data) throw new Error("Received an empty response from the server.");
 
-      const result: SyncResult = await response.json();
+      const result: SyncResult = {
+        synced: Array.isArray(data.synced) ? data.synced : [],
+        stillPending: Array.isArray(data.stillPending) ? data.stillPending : [],
+        availableFolders: Array.isArray(data.availableFolders) ? data.availableFolders : [],
+      };
       setSyncResult(result);
+      setPendingItems(result.stillPending);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setIsSyncing(false);
     }
+
+  };
+
+  const handleManualSyncSuccess = (syncedId: number) => {
+    setPendingItems((currentItems) =>
+      currentItems.filter((item) => item.id !== syncedId),
+    );
   };
 
   return (
@@ -65,17 +92,17 @@ const SyncSettings = () => {
           <h3 className="text-xl font-semibold text-gray-200 mb-4">
             Sync Results
           </h3>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Synced Items */}
             <div className="bg-gray-900/50 p-4 rounded-lg">
               <h4 className="font-semibold text-green-400 mb-3">
                 Synced ({syncResult.synced.length})
               </h4>
               {syncResult.synced.length > 0 ? (
                 <ul className="space-y-2 text-sm text-gray-300 max-h-60 overflow-y-auto">
-                  {syncResult.synced.map((title, index) => (
+                  {syncResult.synced.map((d, index) => (
                     <li key={index} className="truncate">
-                      {title}
+                      {d.title}
                     </li>
                   ))}
                 </ul>
@@ -84,16 +111,15 @@ const SyncSettings = () => {
               )}
             </div>
 
-            {/* Still Pending Items */}
             <div className="bg-gray-900/50 p-4 rounded-lg">
               <h4 className="font-semibold text-yellow-400 mb-3">
                 Still Pending ({syncResult.stillPending.length})
               </h4>
               {syncResult.stillPending.length > 0 ? (
                 <ul className="space-y-2 text-sm text-gray-300 max-h-60 overflow-y-auto">
-                  {syncResult.stillPending.map((title, index) => (
+                  {syncResult.stillPending.map((d, index) => (
                     <li key={index} className="truncate">
-                      {title}
+                      {d.title}
                     </li>
                   ))}
                 </ul>
@@ -103,9 +129,29 @@ const SyncSettings = () => {
                 </p>
               )}
             </div>
+
+
           </div>
         </div>
       )}
+
+      {/* Manual Sync Section */}
+      {pendingItems.length > 0 && syncResult && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-200">
+            Manual Sync Required
+          </h3>
+          {pendingItems.map((item) => (
+            <ManualSyncCard
+              key={item.id}
+              pendingItem={item}
+              availableFolders={syncResult.availableFolders}
+              onSyncSuccess={handleManualSyncSuccess}
+            />
+          ))}
+        </div>
+      )}
+
     </div>
   );
 };

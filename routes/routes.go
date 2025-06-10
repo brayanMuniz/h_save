@@ -98,7 +98,16 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 
 		// SYNC
 		api.POST("/sync", func(ctx *gin.Context) {
-			SyncDoujinshi(ctx, database)
+			SyncDoujinshiHandler(ctx, database)
+		})
+
+		// UTILITY
+		api.GET("/thumbnail", func(ctx *gin.Context) {
+			GetThumbnailByFolderHandler(ctx, database)
+		})
+
+		api.POST("/doujinshi/:id/manual-sync", func(ctx *gin.Context) {
+			ManualSyncHandler(ctx, database)
 		})
 
 		// ============================================================================

@@ -263,51 +263,6 @@ func AuthCheck(c *gin.Context, rootURL string) {
 	c.JSON(http.StatusOK, gin.H{"userName": userName})
 }
 
-func SyncDoujinshi(c *gin.Context, database *sql.DB) {
-	pending, err := db.GetPendingDoujinshi(database)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to fetch pending doujinshi"})
-		return
-	}
-
-	entries, err := os.ReadDir("./doujinshi")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to read doujinshi folder"})
-		return
-	}
-
-	var synced []string
-	stillPending := make([]string, len(pending))
-	for i, d := range pending {
-		stillPending[i] = d.Title
-	}
-
-	for _, d := range pending {
-		for _, entry := range entries {
-			if sanitizeToFilename(entry.Name()) == sanitizeToFilename(d.Title) {
-				_ = db.UpdateFolderName(database, d.ID, entry.Name())
-				synced = append(synced, d.Title)
-
-				// remove from stillPending
-				for i, title := range stillPending {
-					if title == d.Title {
-						stillPending = append(stillPending[:i], stillPending[i+1:]...)
-						break
-					}
-				}
-			}
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"synced":       synced,
-		"stillPending": stillPending,
-	})
-
-}
-
 var nonWord = regexp.MustCompile(`[^\p{L}\p{N}]+`)
 
 func sanitizeToFilename(s string) string {
