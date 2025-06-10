@@ -1,7 +1,14 @@
+# Secrets
 .env
-notes.md
+
+# Temporary files from 'air'
+/tmp/
+
+# OS-specific
 .DS_STORE
+
+# Personal files
+notes.md
 download_me_senpai
 doujinshi
 h_save.db
-/tmp/
