@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import type { BrowseFilters, FilterType } from "../types";
+import type { BrowseFilters, FilterType, SavedFilter } from "../types";
 import type { Doujinshi } from "../types";
 import RangeSlider from "./RangeSlider";
 import TagSelectorModal from "./TagSelectorModal";
@@ -10,6 +10,10 @@ interface Props {
   doujinshi?: Doujinshi[];
   sortBy: string;
   setSortBy: (sortBy: string) => void;
+  savedFilters: SavedFilter[];
+  onSaveFilter: () => void;
+  onLoadFilter: (filters: BrowseFilters) => void;
+  onDeleteFilter: (id: number) => void;
 }
 
 const languages = [
@@ -25,12 +29,17 @@ const FilterSidebar = ({
   doujinshi = [],
   sortBy,
   setSortBy,
+  savedFilters,
+  onSaveFilter,
+  onLoadFilter,
+  onDeleteFilter,
 }: Props) => {
   const [activeModal, setActiveModal] = useState<{
     type: FilterType;
     title: string;
     placeholder: string;
   } | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const availableTags = useMemo(() => {
@@ -79,17 +88,77 @@ const FilterSidebar = ({
   return (
     <div className="relative">
       <aside className="sticky top-0 w-80 h-screen bg-gray-800 text-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
+        <div className="p-4 border-b border-gray-700 space-y-3">
           <h2 className="text-xl font-bold">Browse</h2>
+
+          <div className="relative">
+            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+              <span>💾</span>
+              <span>Saved Filters</span>
+            </h3>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none flex justify-between items-center"
+            >
+              <span>Select a filter...</span>
+              <span
+                className={`transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
+              >
+                ▼
+              </span>
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                {savedFilters.length > 0 ? (
+                  savedFilters.map((saved) => (
+                    <div
+                      key={saved.id}
+                      className="p-2 flex justify-between items-center hover:bg-gray-600"
+                    >
+                      <button
+                        onClick={() => {
+                          onLoadFilter(saved.filters);
+                          setIsDropdownOpen(false);
+                        }}
+                        className="text-left flex-1"
+                      >
+                        {saved.name}
+                      </button>
+                      <button
+                        onClick={() => onDeleteFilter(saved.id)}
+                        className="text-red-400 hover:text-red-300 text-lg p-1"
+                        title="Delete filter"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-2 text-gray-400 text-sm">
+                    No saved filters.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={onSaveFilter}
+            className="w-full p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-sm font-semibold"
+          >
+            Save Current Filter
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           <input
             type="text"
             placeholder="Search titles..."
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="w-full mt-2 px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
+            className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
           />
-        </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>📊</span>
@@ -104,6 +173,7 @@ const FilterSidebar = ({
               <option value="title">Title A-Z</option>
               <option value="rating">Rating (High to Low)</option>
               <option value="ocount">oCount (High to Low)</option>
+              <option value="random">Random</option>
             </select>
           </div>
           <div>
@@ -196,7 +266,6 @@ const FilterSidebar = ({
               label="Pages"
             />
           </div>
-          {/* The Bookmark Count RangeSlider has been removed */}
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>🌐</span>
@@ -208,8 +277,8 @@ const FilterSidebar = ({
                   key={lang.code}
                   onClick={() => toggleLanguage(lang.code)}
                   className={`px-3 py-1 rounded flex items-center gap-1 text-sm transition ${filters.languages.includes(lang.code)
-                      ? "bg-indigo-500 text-white"
-                      : "bg-gray-700 hover:bg-indigo-600"
+                    ? "bg-indigo-500 text-white"
+                    : "bg-gray-700 hover:bg-indigo-600"
                     }`}
                 >
                   <span>{lang.flag}</span>

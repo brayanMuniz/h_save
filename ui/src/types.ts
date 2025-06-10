@@ -76,6 +76,13 @@ export interface RangeFilter {
   max: number;
 }
 
+export interface SavedFilter {
+  id: number;
+  name: string;
+  filters: BrowseFilters;
+  createdAt: string; // The backend provides this as an ISO string
+}
+
 export interface FilterSection {
   id: keyof BrowseFilters;
   label: string;
