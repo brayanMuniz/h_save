@@ -51,7 +51,6 @@ export interface FilterState {
   };
 }
 
-// Filter browsing page
 export interface BrowseFilters {
   artists: FilterGroup;
   groups: FilterGroup;
@@ -59,16 +58,22 @@ export interface BrowseFilters {
   characters: FilterGroup;
   parodies: FilterGroup;
   languages: string[];
-  rating: { min: number; max: number };
-  oCount: { min: number; max: number };
   formats: string[];
   genres: string[];
   search: string;
+  rating: RangeFilter;
+  oCount: RangeFilter;
+  pageCount: RangeFilter;
+  currentlyReading: boolean;
 }
 
 export interface FilterGroup {
   included: string[];
   excluded: string[];
+}
+export interface RangeFilter {
+  min: number;
+  max: number;
 }
 
 export interface FilterSection {

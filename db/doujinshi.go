@@ -341,7 +341,7 @@ func linkManyToMany(tx *sql.Tx, doujinshiID int64, values []string, entityTable,
 	return nil
 }
 
-func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) { // Ensure Doujinshi struct matches this expectation
+func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) {
 	err := db.QueryRow(
 		`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
 	).Scan(&d.OCount)
@@ -361,7 +361,7 @@ func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) { // Ensure Doujinshi st
 	progress, err := GetDoujinshiProgress(db, idString)
 	if err == nil {
 		d.Progress = &progress
-	} else if err != sql.ErrNoRows { // Don't treat "no progress found" as a critical error
+	} else if err != sql.ErrNoRows {
 		d.Progress = nil
 	}
 }

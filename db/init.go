@@ -200,6 +200,13 @@ func createUserAndProgressTables(db *sql.DB) error {
 	    FOREIGN KEY (doujinshi_id) REFERENCES doujinshi(id)
 	);
 
+	CREATE TABLE IF NOT EXISTS saved_filters (
+	    id INTEGER PRIMARY KEY AUTOINCREMENT,
+	    name TEXT NOT NULL UNIQUE,
+	    filters_json TEXT NOT NULL,
+	    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
 `)
 	return err
 }

@@ -10,6 +10,8 @@ const BrowsePage = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"card" | "cover">("cover");
   const [sortBy, setSortBy] = useState("uploaded");
+
+  // Updated initial state for filters, without bookmarkCount
   const [filters, setFilters] = useState<BrowseFilters>({
     artists: { included: [], excluded: [] },
     groups: { included: [], excluded: [] },
@@ -19,24 +21,37 @@ const BrowsePage = () => {
     languages: ["all"],
     rating: { min: 0, max: 5 },
     oCount: { min: 0, max: 100 },
+    pageCount: { min: 0, max: 500 },
+    currentlyReading: false,
     formats: [],
     genres: [],
     search: "",
   });
 
   const filteredAndSortedDoujinshi = useMemo(() => {
-    // First filter
     const filtered = doujinshi.filter((item) => {
       // Search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        if (!item.title.toLowerCase().includes(searchLower)) return false;
+      if (
+        filters.search &&
+        !item.title.toLowerCase().includes(filters.search.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // "Currently Reading" Filter
+      if (filters.currentlyReading) {
+        const lastPage = item.progress?.lastPage ?? 0;
+        const totalPages = parseInt(item.pages, 10);
+        const isReading =
+          !isNaN(totalPages) && lastPage > 0 && lastPage < totalPages;
+        if (!isReading) {
+          return false;
+        }
       }
 
       // Language filter
       if (!filters.languages.includes("all")) {
-        const itemLanguages = item.languages || [];
-        const hasLanguage = itemLanguages.some((lang) =>
+        const hasLanguage = (item.languages || []).some((lang) =>
           filters.languages.some((filterLang) =>
             lang.toLowerCase().includes(filterLang),
           ),
@@ -44,18 +59,21 @@ const BrowsePage = () => {
         if (!hasLanguage) return false;
       }
 
-      // Rating range
+      // Range filters (bookmarkCount logic removed)
       const rating = item.progress?.rating ?? 0;
-      if (rating < filters.rating.min || rating > filters.rating.max) {
+      const totalPages = parseInt(item.pages, 10) || 0;
+      if (
+        rating < filters.rating.min ||
+        rating > filters.rating.max ||
+        item.oCount < filters.oCount.min ||
+        item.oCount > filters.oCount.max ||
+        totalPages < filters.pageCount.min ||
+        totalPages > filters.pageCount.max
+      ) {
         return false;
       }
 
-      // oCount range
-      if (item.oCount < filters.oCount.min || item.oCount > filters.oCount.max) {
-        return false;
-      }
-
-      // Filter groups (tags, artists, etc.) with proper null safety
+      // Included/Excluded entity filters
       const filterTypes = [
         "tags",
         "artists",
@@ -63,30 +81,23 @@ const BrowsePage = () => {
         "parodies",
         "groups",
       ] as const;
-
       for (const filterType of filterTypes) {
-        const itemValues = item[filterType] || []; // e.g., item.tags or item.artists
+        const itemValues = item[filterType] || [];
         const filterGroup = filters[filterType];
 
-        // Check exclusions first (this is an OR relationship - if any excluded tag is present, filter out)
         if (filterGroup.excluded.length > 0) {
           const hasExcluded = filterGroup.excluded.some((excludedValue) =>
-            itemValues.some(
-              (itemValue) =>
-                itemValue &&
-                itemValue.toLowerCase().includes(excludedValue.toLowerCase()),
+            itemValues.some((itemValue) =>
+              itemValue?.toLowerCase().includes(excludedValue.toLowerCase()),
             ),
           );
           if (hasExcluded) return false;
         }
 
         if (filterGroup.included.length > 0) {
-          // Use .every() to ensure ALL included filters are present
           const hasAllIncluded = filterGroup.included.every((includedValue) =>
-            itemValues.some(
-              (itemValue) =>
-                itemValue &&
-                itemValue.toLowerCase().includes(includedValue.toLowerCase()),
+            itemValues.some((itemValue) =>
+              itemValue?.toLowerCase().includes(includedValue.toLowerCase()),
             ),
           );
           if (!hasAllIncluded) return false;
@@ -96,8 +107,7 @@ const BrowsePage = () => {
       return true;
     });
 
-
-    // Then sort
+    // Sorting logic remains the same
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case "title":
@@ -108,7 +118,9 @@ const BrowsePage = () => {
           return b.oCount - a.oCount;
         case "uploaded":
         default:
-          return new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime();
+          return (
+            new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime()
+          );
       }
     });
 
@@ -143,7 +155,6 @@ const BrowsePage = () => {
         sortBy={sortBy}
         setSortBy={setSortBy}
       />
-
       <div className="flex-1 flex flex-col">
         <SelectedFiltersBar filters={filters} setFilters={setFilters} />
         <BrowseContent

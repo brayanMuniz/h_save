@@ -278,6 +278,25 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			user.GET("/favorite/categories", func(ctx *gin.Context) {
 				GetFavoriteNames(ctx, database, "favorite_categories", "category_id", "categories", "categories")
 			})
+
+			savedFilters := user.Group("/saved-filters")
+			{
+				savedFilters.POST("", func(ctx *gin.Context) {
+					CreateSavedFilterHandler(ctx, database)
+				})
+
+				savedFilters.GET("", func(ctx *gin.Context) {
+					GetAllSavedFiltersHandler(ctx, database)
+				})
+
+				savedFilters.PUT("/:id", func(ctx *gin.Context) {
+					UpdateSavedFilterHandler(ctx, database)
+				})
+
+				savedFilters.DELETE("/:id", func(ctx *gin.Context) {
+					DeleteSavedFilterHandler(ctx, database)
+				})
+			}
 		}
 	}
 

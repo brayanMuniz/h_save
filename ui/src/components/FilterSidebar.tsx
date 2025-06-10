@@ -1,8 +1,6 @@
 import { useMemo, useState, useRef } from "react";
-
 import type { BrowseFilters, FilterType } from "../types";
 import type { Doujinshi } from "../types";
-
 import RangeSlider from "./RangeSlider";
 import TagSelectorModal from "./TagSelectorModal";
 
@@ -33,17 +31,11 @@ const FilterSidebar = ({
     title: string;
     placeholder: string;
   } | null>(null);
-
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const availableTags = useMemo(() => {
     const safeFilter = (items: string[]) =>
-      [
-        ...new Set(
-          items.filter((item) => item != null && item.trim() !== "")
-        ),
-      ].sort();
-
+      [...new Set(items.filter((item) => item != null && item.trim() !== ""))].sort();
     return {
       tags: safeFilter(doujinshi.flatMap((d) => d.tags || [])),
       artists: safeFilter(doujinshi.flatMap((d) => d.artists || [])),
@@ -53,42 +45,28 @@ const FilterSidebar = ({
     };
   }, [doujinshi]);
 
-  const updateFilterGroup = (type: FilterType, filterGroup: any) => {
-    setFilters({
-      ...filters,
-      [type]: filterGroup,
-    });
-  };
-
+  const updateFilterGroup = (type: FilterType, filterGroup: any) =>
+    setFilters({ ...filters, [type]: filterGroup });
   const toggleLanguage = (langCode: string) => {
     if (langCode === "all") {
       setFilters({ ...filters, languages: ["all"] });
     } else {
       const currentLangs = filters.languages.filter((l) => l !== "all");
-      if (currentLangs.includes(langCode)) {
-        const newLangs = currentLangs.filter((l) => l !== langCode);
-        setFilters({
-          ...filters,
-          languages: newLangs.length === 0 ? ["all"] : newLangs,
-        });
-      } else {
-        setFilters({ ...filters, languages: [...currentLangs, langCode] });
-      }
+      const newLangs = currentLangs.includes(langCode)
+        ? currentLangs.filter((l) => l !== langCode)
+        : [...currentLangs, langCode];
+      setFilters({
+        ...filters,
+        languages: newLangs.length === 0 ? ["all"] : newLangs,
+      });
     }
   };
-
   const openModal = (
     type: FilterType,
     title: string,
-    placeholder: string
-  ) => {
-    setActiveModal({ type, title, placeholder });
-  };
-
-  const closeModal = () => {
-    setActiveModal(null);
-  };
-
+    placeholder: string,
+  ) => setActiveModal({ type, title, placeholder });
+  const closeModal = () => setActiveModal(null);
   const renderTagCount = (filterGroup: any) => {
     const total = filterGroup.included.length + filterGroup.excluded.length;
     return total > 0 ? (
@@ -101,23 +79,17 @@ const FilterSidebar = ({
   return (
     <div className="relative">
       <aside className="sticky top-0 w-80 h-screen bg-gray-800 text-gray-200 flex flex-col">
-        {/* Header */}
         <div className="p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold">Browse</h2>
           <input
             type="text"
             placeholder="Search titles..."
             value={filters.search}
-            onChange={(e) =>
-              setFilters({ ...filters, search: e.target.value })
-            }
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             className="w-full mt-2 px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
           />
         </div>
-
-        {/* Scrollable Filter Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Sort By */}
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>📊</span>
@@ -134,39 +106,27 @@ const FilterSidebar = ({
               <option value="ocount">oCount (High to Low)</option>
             </select>
           </div>
-
-          {/* Clickable Filter Categories */}
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-700 hover:bg-gray-600 rounded transition">
+              <input
+                type="checkbox"
+                checked={filters.currentlyReading}
+                onChange={(e) =>
+                  setFilters({ ...filters, currentlyReading: e.target.checked })
+                }
+                className="w-4 h-4 text-blue-500 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
+              />
+              <span className="text-lg font-semibold flex items-center gap-2">
+                📖 Show In Progress
+              </span>
+            </label>
+          </div>
           {[
-            {
-              key: "tags" as FilterType,
-              icon: "🏷️",
-              title: "Tags",
-              placeholder: "Search tags...",
-            },
-            {
-              key: "artists" as FilterType,
-              icon: "🎨",
-              title: "Artists",
-              placeholder: "Search artists...",
-            },
-            {
-              key: "characters" as FilterType,
-              icon: "🧑‍🎤",
-              title: "Characters",
-              placeholder: "Search characters...",
-            },
-            {
-              key: "parodies" as FilterType,
-              icon: "🎭",
-              title: "Parodies",
-              placeholder: "Search parodies...",
-            },
-            {
-              key: "groups" as FilterType,
-              icon: "👥",
-              title: "Groups",
-              placeholder: "Search groups...",
-            },
+            { key: "tags", icon: "🏷️", title: "Tags", placeholder: "Search tags..." },
+            { key: "artists", icon: "🎨", title: "Artists", placeholder: "Search artists..." },
+            { key: "characters", icon: "🧑‍🎤", title: "Characters", placeholder: "Search characters..." },
+            { key: "parodies", icon: "🎭", title: "Parodies", placeholder: "Search parodies..." },
+            { key: "groups", icon: "👥", title: "Groups", placeholder: "Search groups..." },
           ].map((category) => (
             <div key={category.key}>
               <button
@@ -174,21 +134,23 @@ const FilterSidebar = ({
                   buttonRefs.current[category.key] = el;
                 }}
                 onClick={() =>
-                  openModal(category.key, category.title, category.placeholder)
+                  openModal(
+                    category.key as FilterType,
+                    category.title,
+                    category.placeholder,
+                  )
                 }
                 className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <span>{category.icon}</span>
-                  <span className="text-lg font-semibold">{category.title}</span>
-                  {renderTagCount(filters[category.key])}
+                  <span className="text-lg">{category.icon}</span>
+                  <span className="font-semibold">{category.title}</span>
+                  {renderTagCount(filters[category.key as FilterType])}
                 </div>
                 <span className="text-gray-400">›</span>
               </button>
             </div>
           ))}
-
-          {/* Rating Range */}
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>⭐</span>
@@ -203,8 +165,6 @@ const FilterSidebar = ({
               label="Rating"
             />
           </div>
-
-          {/* oCount Range */}
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>💖</span>
@@ -219,8 +179,24 @@ const FilterSidebar = ({
               label="oCount"
             />
           </div>
-
-          {/* Language */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <span>📖</span>
+              <span>Page Count Range</span>
+            </h3>
+            <RangeSlider
+              min={0}
+              max={Math.max(
+                100,
+                ...doujinshi.map((d) => parseInt(d.pages, 10) || 0),
+              )}
+              value={filters.pageCount}
+              onChange={(pageCount) => setFilters({ ...filters, pageCount })}
+              step={10}
+              label="Pages"
+            />
+          </div>
+          {/* The Bookmark Count RangeSlider has been removed */}
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>🌐</span>
@@ -231,8 +207,7 @@ const FilterSidebar = ({
                 <button
                   key={lang.code}
                   onClick={() => toggleLanguage(lang.code)}
-                  className={`px-3 py-1 rounded flex items-center gap-1 text-sm transition
-                    ${filters.languages.includes(lang.code)
+                  className={`px-3 py-1 rounded flex items-center gap-1 text-sm transition ${filters.languages.includes(lang.code)
                       ? "bg-indigo-500 text-white"
                       : "bg-gray-700 hover:bg-indigo-600"
                     }`}
@@ -245,8 +220,6 @@ const FilterSidebar = ({
           </div>
         </div>
       </aside>
-
-      {/* Modal */}
       {activeModal && buttonRefs.current[activeModal.type] && (
         <TagSelectorModal
           isOpen={true}
