@@ -315,10 +315,20 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				CsrfToken     string `json:"csrfToken"`
 				SaveMetadata  bool   `json:"saveMetadata"`
 				SkipOrganized bool   `json:"skipOrganized"`
+				StartPage     int    `json:"startPage"`
+				MaxPages      int    `json:"maxPages"`
 			}
+
 			if err := ctx.ShouldBindJSON(&req); err != nil {
 				ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 				return
+			}
+
+			if req.StartPage <= 0 {
+				req.StartPage = 1
+			}
+			if req.MaxPages <= 0 {
+				req.MaxPages = 20
 			}
 
 			httpConfig := n.HTTPConfig{
@@ -327,7 +337,7 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 			}
 
 			result := DownloadAllFavorites(ctx, rootURL, httpConfig, database,
-				req.SaveMetadata, req.SkipOrganized)
+				req.SaveMetadata, req.SkipOrganized, req.StartPage, req.MaxPages)
 			ctx.JSON(http.StatusOK, result)
 		})
 

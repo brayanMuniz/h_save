@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import SyncSettings from "../components/SyncSettings"; // Import the new component
+import SyncSettings from "../components/SyncSettings";
 
 // This interface is specific to the nhentai download results
 interface DownloadResult {
@@ -20,6 +20,8 @@ const Settings = () => {
   const [userName, setUserName] = useState("");
   const [saveMetadata, setSaveMetadata] = useState(true);
   const [skipOrganized, setSkipOrganized] = useState(true);
+  const [startPage, setStartPage] = useState(1);
+  const [maxPages, setMaxPages] = useState(20);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadResult, setDownloadResult] = useState<DownloadResult | null>(
@@ -67,8 +69,21 @@ const Settings = () => {
       setAuthError("Please authenticate first");
       return;
     }
+
+    if (startPage < 1) {
+      setAuthError("Start page must be at least 1");
+      return;
+    }
+
+    if (maxPages < 1) {
+      setAuthError("Max pages must be at least 1");
+      return;
+    }
+
     setIsDownloading(true);
     setDownloadResult(null);
+    setAuthError("");
+
     try {
       const response = await fetch("/nhentai/favorites/download", {
         method: "POST",
@@ -78,6 +93,8 @@ const Settings = () => {
           csrfToken: csrfToken.trim(),
           saveMetadata,
           skipOrganized,
+          startPage,
+          maxPages,
         }),
       });
       if (response.ok) {
@@ -161,6 +178,55 @@ const Settings = () => {
         <h3 className="text-xl font-semibold text-gray-200 mb-4">
           Download Configuration
         </h3>
+
+        {/* Page Range Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Start Page
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={startPage}
+              onChange={(e) => setStartPage(Math.max(1, parseInt(e.target.value) || 1))}
+              disabled={!isAuthenticated}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="1"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Which page to start downloading from
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Max Pages
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={maxPages}
+              onChange={(e) => setMaxPages(Math.max(1, parseInt(e.target.value) || 1))}
+              disabled={!isAuthenticated}
+              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="20"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Maximum number of pages to process
+            </p>
+          </div>
+        </div>
+
+        {/* Page Range Summary */}
+        <div className="mb-6 p-3 bg-gray-700 rounded-lg border border-gray-600">
+          <div className="text-sm text-gray-300">
+            <span className="font-medium">Range:</span> Will process pages {startPage} through {startPage + maxPages - 1}
+            <span className="text-gray-400 ml-2">
+              (up to {maxPages} page{maxPages !== 1 ? 's' : ''})
+            </span>
+          </div>
+        </div>
+
         <div className="space-y-4 mb-6">
           <label
             className={`flex items-center gap-3 ${!isAuthenticated ? "cursor-not-allowed" : "cursor-pointer"

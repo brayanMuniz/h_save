@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,14 +16,14 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	FROM doujinshi d
 	LEFT JOIN doujinshi_page_o o ON d.id = o.doujinshi_id
 	GROUP BY d.id
-`)
+	`)
 
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var results []Doujinshi
+	var doujinshiList []Doujinshi
 	for rows.Next() {
 		var d Doujinshi
 		err := rows.Scan(
@@ -31,24 +32,86 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		// Fetch related data for each doujinshi
-		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
-		d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
-		d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
-		d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
-		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
-		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
-		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
-
-		idString := strconv.FormatInt(d.ID, 10)
-		progress, err := GetDoujinshiProgress(db, idString)
-		if err == nil {
-			d.Progress = &progress
-		}
-
-		results = append(results, d)
+		doujinshiList = append(doujinshiList, d)
 	}
+
+	// Process each doujinshi's metadata concurrently
+	results := make([]Doujinshi, len(doujinshiList))
+	semaphore := make(chan struct{}, 50)
+
+	var wg sync.WaitGroup
+	for i, d := range doujinshiList {
+		wg.Add(1)
+		go func(index int, douj Doujinshi) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			type result struct {
+				field string
+				data  []string
+			}
+
+			resultsChan := make(chan result, 7)
+
+			queries := []struct {
+				field       string
+				entityTable string
+				joinTable   string
+				entityIDCol string
+			}{
+				{"tags", "tags", "doujinshi_tags", "tag_id"},
+				{"artists", "artists", "doujinshi_artists", "artist_id"},
+				{"characters", "characters", "doujinshi_characters", "character_id"},
+				{"parodies", "parodies", "doujinshi_parodies", "parody_id"},
+				{"groups", "groups", "doujinshi_groups", "group_id"},
+				{"languages", "languages", "doujinshi_languages", "language_id"},
+				{"categories", "categories", "doujinshi_categories", "category_id"},
+			}
+
+			for _, q := range queries {
+				go func(query struct {
+					field       string
+					entityTable string
+					joinTable   string
+					entityIDCol string
+				}) {
+					data, _ := getRelatedNames(db, douj.ID, query.entityTable, query.joinTable, query.entityIDCol)
+					resultsChan <- result{field: query.field, data: data}
+				}(q)
+			}
+
+			for i := 0; i < len(queries); i++ {
+				res := <-resultsChan
+				switch res.field {
+				case "tags":
+					douj.Tags = res.data
+				case "artists":
+					douj.Artists = res.data
+				case "characters":
+					douj.Characters = res.data
+				case "parodies":
+					douj.Parodies = res.data
+				case "groups":
+					douj.Groups = res.data
+				case "languages":
+					douj.Languages = res.data
+				case "categories":
+					douj.Categories = res.data
+				}
+			}
+
+			idString := strconv.FormatInt(douj.ID, 10)
+			progress, err := GetDoujinshiProgress(db, idString)
+			if err == nil {
+				douj.Progress = &progress
+			}
+
+			results[index] = douj
+		}(i, d)
+	}
+
+	wg.Wait()
 	return results, nil
 }
 
@@ -86,28 +149,7 @@ func GetDoujinshi(db *sql.DB, id string) (Doujinshi, error) {
 		return d, err
 	}
 
-	// Fetch total o count
-	err = db.QueryRow(
-		`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
-	).Scan(&d.OCount)
-	if err != nil {
-		d.OCount = 0 // fallback
-	}
-
-	// Fetch related data for each doujinshi
-	d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
-	d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
-	d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
-	d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
-	d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
-	d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
-	d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
-
-	progress, err := GetDoujinshiProgress(db, id)
-	if err == nil {
-		d.Progress = &progress
-	}
-
+	populateDoujinshiDetails(db, &d)
 	return d, nil
 }
 
@@ -196,27 +238,7 @@ func GetSimilarDoujinshiByMetaData(
 			&d.Title, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
 			return nil, err
 		}
-
-		err := db.QueryRow(
-			`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
-		).Scan(&d.OCount)
-		if err != nil {
-			d.OCount = 0
-		}
-
-		d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
-		d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
-		d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
-		d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
-		d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
-		d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
-		d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
-
-		idString := strconv.FormatInt(d.ID, 10)
-		progress, err := GetDoujinshiProgress(db, idString)
-		if err == nil {
-			d.Progress = &progress
-		}
+		populateDoujinshiDetails(db, &d)
 
 		results = append(results, d)
 	}
@@ -341,6 +363,7 @@ func linkManyToMany(tx *sql.Tx, doujinshiID int64, values []string, entityTable,
 	return nil
 }
 
+// concurrency ftw
 func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) {
 	err := db.QueryRow(
 		`SELECT COALESCE(SUM(o_count), 0) FROM doujinshi_page_o WHERE doujinshi_id = ?`, d.ID,
@@ -349,13 +372,60 @@ func populateDoujinshiDetails(db *sql.DB, d *Doujinshi) {
 		d.OCount = 0
 	}
 
-	d.Tags, _ = getRelatedNames(db, d.ID, "tags", "doujinshi_tags", "tag_id")
-	d.Artists, _ = getRelatedNames(db, d.ID, "artists", "doujinshi_artists", "artist_id")
-	d.Characters, _ = getRelatedNames(db, d.ID, "characters", "doujinshi_characters", "character_id")
-	d.Parodies, _ = getRelatedNames(db, d.ID, "parodies", "doujinshi_parodies", "parody_id")
-	d.Groups, _ = getRelatedNames(db, d.ID, "groups", "doujinshi_groups", "group_id")
-	d.Languages, _ = getRelatedNames(db, d.ID, "languages", "doujinshi_languages", "language_id")
-	d.Categories, _ = getRelatedNames(db, d.ID, "categories", "doujinshi_categories", "category_id")
+	type result struct {
+		field string
+		data  []string
+	}
+
+	resultsChan := make(chan result, 7)
+
+	queries := []struct {
+		field       string
+		entityTable string
+		joinTable   string
+		entityIDCol string
+	}{
+		{"tags", "tags", "doujinshi_tags", "tag_id"},
+		{"artists", "artists", "doujinshi_artists", "artist_id"},
+		{"characters", "characters", "doujinshi_characters", "character_id"},
+		{"parodies", "parodies", "doujinshi_parodies", "parody_id"},
+		{"groups", "groups", "doujinshi_groups", "group_id"},
+		{"languages", "languages", "doujinshi_languages", "language_id"},
+		{"categories", "categories", "doujinshi_categories", "category_id"},
+	}
+
+	for _, q := range queries {
+		go func(query struct {
+			field       string
+			entityTable string
+			joinTable   string
+			entityIDCol string
+		}) {
+			data, _ := getRelatedNames(db, d.ID, query.entityTable, query.joinTable, query.entityIDCol)
+			resultsChan <- result{field: query.field, data: data}
+		}(q)
+
+	}
+
+	for i := 0; i < len(queries); i++ {
+		res := <-resultsChan
+		switch res.field {
+		case "tags":
+			d.Tags = res.data
+		case "artists":
+			d.Artists = res.data
+		case "characters":
+			d.Characters = res.data
+		case "parodies":
+			d.Parodies = res.data
+		case "groups":
+			d.Groups = res.data
+		case "languages":
+			d.Languages = res.data
+		case "categories":
+			d.Categories = res.data
+		}
+	}
 
 	idString := strconv.FormatInt(d.ID, 10)
 	progress, err := GetDoujinshiProgress(db, idString)

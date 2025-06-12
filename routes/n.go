@@ -29,7 +29,9 @@ func DownloadAllFavorites(
 	httpConfig n.HTTPConfig,
 	database *sql.DB,
 	saveMetadata bool,
-	skipOrganized bool) DownloadResult {
+	skipOrganized bool,
+	startPage int,
+	maxPages int) DownloadResult {
 
 	result := DownloadResult{
 		Downloaded:    make([]string, 0),
@@ -38,9 +40,10 @@ func DownloadAllFavorites(
 		Failed:        make([]string, 0),
 	}
 
-	// NOTE: for testing setting a limit
-	page := 1
-	for page < 20 {
+	page := startPage
+	pagesProcessed := 0
+
+	for pagesProcessed < maxPages {
 		log.Println("Downloading page: ", page)
 		favoritesRoute := fmt.Sprintf("%s/favorites/?page=%d", rootURL, page)
 		htmlPage, err := n.GetPageHTML(favoritesRoute, httpConfig)
@@ -65,6 +68,7 @@ func DownloadAllFavorites(
 			saveMetadata, skipOrganized, &result)
 
 		result.PagesProcessed++
+		pagesProcessed++
 		page++
 
 		time.Sleep(2 * time.Second)

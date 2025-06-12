@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { Doujinshi } from "../types";
 import { Link } from "react-router-dom";
 
@@ -31,7 +31,11 @@ const Home = () => {
     fetchDoujinshi();
   }, []);
 
-  const itemsToDisplay = doujinshi;
+  const shuffledDoujinshi = useMemo(() => {
+    return [...doujinshi].sort(() => Math.random() - 0.5);
+  }, [doujinshi]);
+
+  const itemsToDisplay = shuffledDoujinshi;
 
   if (loading) {
     return (
