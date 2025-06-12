@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ManualSyncCard from "./ManualSyncCard";
 
 interface SyncedEntry {
@@ -11,6 +11,8 @@ interface SyncedEntry {
 interface PendingEntry {
   id: number;
   title: string;
+  source: string;
+  external_id: string;
 }
 
 interface SyncResult {
@@ -52,7 +54,6 @@ const SyncSettings = () => {
     } finally {
       setIsSyncing(false);
     }
-
   };
 
   const handleManualSyncSuccess = (syncedId: number) => {
@@ -129,8 +130,6 @@ const SyncSettings = () => {
                 </p>
               )}
             </div>
-
-
           </div>
         </div>
       )}
@@ -151,7 +150,6 @@ const SyncSettings = () => {
           ))}
         </div>
       )}
-
     </div>
   );
 };

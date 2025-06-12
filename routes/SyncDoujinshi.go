@@ -20,8 +20,10 @@ type SyncedEntry struct {
 }
 
 type PendingEntry struct {
-	ID    int64  `json:"id"`
-	Title string `json:"title"`
+	ID         int64  `json:"id"`
+	Title      string `json:"title"`
+	Source     string `json:"source"`
+	ExternalID string `json:"external_id"`
 }
 
 type SyncResponse struct {
@@ -69,8 +71,10 @@ func SyncDoujinshiHandler(c *gin.Context, database *sql.DB) {
 		} else {
 			// No match found
 			response.StillPending = append(response.StillPending, PendingEntry{
-				ID:    d.ID,
-				Title: d.Title,
+				ID:         d.ID,
+				Title:      d.Title,
+				Source:     d.Source,
+				ExternalID: d.ExternalID,
 			})
 		}
 	}
@@ -123,7 +127,6 @@ func GetThumbnailByFolderHandler(c *gin.Context, database *sql.DB) {
 		}
 	}
 
-	// Sort them alphabetically/numerically to ensure a consistent "first" image
 	sort.Strings(imageFiles)
 
 	if len(imageFiles) == 0 {
@@ -133,7 +136,6 @@ func GetThumbnailByFolderHandler(c *gin.Context, database *sql.DB) {
 
 	thumbnailPath := filepath.Join(dir, imageFiles[0])
 
-	// Serve the file
 	c.Header("Cache-Control", "no-store")
 	c.File(thumbnailPath)
 }

@@ -289,6 +289,7 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
                         {details.isFavorite ? "Favorited" : "Favorite"}
                       </span>
                     </button>
+
                     <div className="flex items-center gap-1 bg-gray-700 rounded-full p-0.5">
                       <button
                         onClick={() => setIsLinkUnlocked(!isLinkUnlocked)}
@@ -315,6 +316,7 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
                         🌸
                       </a>
                     </div>
+
                   </div>
                 </div>
               </div>

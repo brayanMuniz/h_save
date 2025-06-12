@@ -3,6 +3,8 @@ import React, { useState } from "react";
 interface PendingEntry {
   id: number;
   title: string;
+  source: string;
+  external_id: string;
 }
 
 interface ManualSyncCardProps {
@@ -69,19 +71,46 @@ const ManualSyncCard: React.FC<ManualSyncCardProps> = ({
     }
   };
 
+  const handleViewSource = () => {
+    if (pendingItem.source === "nhentai" && pendingItem.external_id) {
+      const url = `https://nhentai.net/g/${pendingItem.external_id}/`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div
       className={`bg-gray-900/50 p-4 rounded-lg border transition-colors ${isSynced
-          ? "border-green-500"
-          : "border-gray-700 hover:border-gray-600"
+        ? "border-green-500"
+        : "border-gray-700 hover:border-gray-600"
         }`}
     >
       <div className="flex gap-4">
         {/* Left Side: Info and Controls */}
         <div className="flex-1 space-y-3">
-          <h5 className="font-semibold text-gray-200 truncate" title={pendingItem.title}>
-            {pendingItem.title}
-          </h5>
+          <div className="flex items-start justify-between gap-2">
+            <h5
+              className="font-semibold text-gray-200 truncate flex-1"
+              title={pendingItem.title}
+            >
+              {pendingItem.title}
+            </h5>
+            {pendingItem.source === "nhentai" && pendingItem.external_id && (
+              <button
+                onClick={handleViewSource}
+                className="px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white rounded-md text-xs transition flex-shrink-0"
+                title="View on nhentai"
+              >
+                🌸 View Source
+              </button>
+            )}
+          </div>
+
+          <div className="text-xs text-gray-400 flex gap-4">
+            <span>Source: {pendingItem.source}</span>
+            <span>ID: {pendingItem.external_id}</span>
+          </div>
+
           <input
             type="text"
             list="available-folders"
@@ -96,6 +125,7 @@ const ManualSyncCard: React.FC<ManualSyncCardProps> = ({
               <option key={folder} value={folder} />
             ))}
           </datalist>
+
           <div className="flex items-center gap-2">
             <button
               onClick={handleFetchThumbnail}
