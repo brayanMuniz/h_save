@@ -44,6 +44,33 @@ func GetPageHTML(route string, http_config HTTPConfig) (string, error) {
 	return string(htmlString), nil
 }
 
+func GetPublicHTML(route string) (string, error) {
+
+	req, _ := http.NewRequest("GET", route, nil)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf("Error was of status code 400+")
+	}
+
+	if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
+		return "", fmt.Errorf("Content-Type is not html")
+	}
+
+	htmlString, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(htmlString), nil
+
+}
+
 // Download the .torrent file in the ./download_me_senpai folder
 func DownloadTorrentFile(downloadRoute, titleName string, http_config HTTPConfig) error {
 	req, _ := http.NewRequest("GET", downloadRoute, nil)

@@ -282,3 +282,21 @@ func DownloadFavorites(
 		"metadataSaved": metadataSaved,
 	})
 }
+
+func GetDoujinshiCoverHandler(c *gin.Context) {
+	id := c.Param("id")
+
+	url := fmt.Sprintf("https://nhentai.net/g/%s/", id)
+	htmlPage, err := n.GetPublicHTML(url)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "At the end of the favorites page"})
+	}
+
+	coverURL, err := n.GetCoverImageURL(htmlPage)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"coverUrl": coverURL})
+}

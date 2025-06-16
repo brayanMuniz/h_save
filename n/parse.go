@@ -200,3 +200,27 @@ func ReturnUserNameFromHTML(html_page string) (string, error) {
 	userName := doc.Find(".username").First().Text()
 	return userName, nil
 }
+
+func GetCoverImageURL(html_page string) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html_page))
+	if err != nil {
+		return "", err
+	}
+
+	coverImg := doc.Find("#cover img").First()
+	if coverImg.Length() == 0 {
+		return "", fmt.Errorf("cover image not found")
+	}
+
+	dataSrc, exists := coverImg.Attr("data-src")
+	if exists && dataSrc != "" {
+		return dataSrc, nil
+	}
+
+	src, exists := coverImg.Attr("src")
+	if exists && src != "" {
+		return src, nil
+	}
+
+	return "", fmt.Errorf("cover image URL not found")
+}

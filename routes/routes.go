@@ -342,6 +342,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			ctx.JSON(http.StatusOK, result)
 		})
 
+		nhentai.GET("/doujinshi/:id/cover", func(ctx *gin.Context) {
+			GetDoujinshiCoverHandler(ctx)
+		})
+
 	}
 
 	return r
