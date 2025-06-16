@@ -64,3 +64,9 @@ export function getLanguageFlag(
   return <span>🏳️</span>;
 }
 
+
+export const getDisplayTitle = (doujinshi: { title: string; secondTitle: string }): string => {
+  return doujinshi.secondTitle && doujinshi.secondTitle.trim() !== ''
+    ? doujinshi.secondTitle
+    : doujinshi.title;
+};

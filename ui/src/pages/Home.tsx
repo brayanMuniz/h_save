@@ -8,7 +8,7 @@ import DoujinshiCard from "../components/DoujinshiCard";
 import Sidebar from "../components/SideBar";
 import MobileNav from "../components/MobileNav";
 
-import { getLanguageFlag } from "../utils/utils";
+import { getLanguageFlag, getDisplayTitle } from "../utils/utils";
 
 const Home = () => {
   const [doujinshi, setDoujinshi] = useState<Doujinshi[]>([]);
@@ -84,7 +84,7 @@ const Home = () => {
                     <CoverImage
                       imgUrl={d.thumbnail_url}
                       flag={getLanguageFlag(d.languages)}
-                      title={d.title}
+                      title={getDisplayTitle(d)}
                       characters={d.characters ?? []}
                       tags={d.tags ?? []}
                       parodies={d.parodies ?? []}

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import type { Doujinshi } from "../types";
 import { Link } from "react-router-dom";
 
+import { getDisplayTitle } from "../utils/utils";
+
 function getLanguageFlag(languages: string[]) {
   if (!languages || languages.length === 0) return "🏳️";
   if (languages.some((l) => l.toLowerCase().includes("jap"))) return "🇯🇵";
@@ -120,7 +122,7 @@ const DoujinshiCard: React.FC<{ doujinshi: Doujinshi }> = ({ doujinshi }) => {
       <div className="flex-1 flex flex-col justify-between">
         <div className="text-left">
           <h3 className="text-lg font-bold text-white mb-2">
-            {doujinshi.title}
+            {getDisplayTitle(doujinshi)}
           </h3>
 
           <div className="text-gray-300 text-sm mb-1">

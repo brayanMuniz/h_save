@@ -14,6 +14,7 @@ export type Doujinshi = {
 
 
   title: string;
+  secondTitle: string;
   pages: string;
   uploaded: string; // ISO string from backend
   folderName: string;
