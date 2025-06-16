@@ -11,7 +11,7 @@ import (
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	rows, err := db.Query(`
 	SELECT
-		d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name,
+		d.id, d.source, d.external_id, d.title, COALESCE(d.second_title, '') as second_title, d.pages, d.uploaded, d.folder_name,
 		COALESCE(SUM(o.o_count), 0) AS o_count
 	FROM doujinshi d
 	LEFT JOIN doujinshi_page_o o ON d.id = o.doujinshi_id
@@ -27,7 +27,8 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	for rows.Next() {
 		var d Doujinshi
 		err := rows.Scan(
-			&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages, &d.Uploaded, &d.FolderName, &d.OCount,
+			&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.SecondTitle, &d.Pages,
+			&d.Uploaded, &d.FolderName, &d.OCount,
 		)
 		if err != nil {
 			return nil, err
@@ -142,9 +143,9 @@ func getRelatedNames(db *sql.DB, doujinshiID int64, entityTable, joinTable, enti
 func GetDoujinshi(db *sql.DB, id string) (Doujinshi, error) {
 	var d Doujinshi
 	err := db.QueryRow(
-		`SELECT id, source, external_id, title, pages, uploaded, folder_name FROM doujinshi WHERE id = ?`,
-		id,
-	).Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.Pages, &d.Uploaded, &d.FolderName)
+		`SELECT id, source, external_id, title, COALESCE(second_title, '') as second_title, 
+		pages, uploaded, folder_name FROM doujinshi WHERE id = ?`, id,
+	).Scan(&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.SecondTitle, &d.Pages, &d.Uploaded, &d.FolderName)
 	if err != nil {
 		return d, err
 	}
@@ -220,8 +221,8 @@ func GetSimilarDoujinshiByMetaData(
 	args = append(args, excludedDoujinshiID)
 
 	query := `
-	SELECT d.id, d.source, d.external_id, d.title, d.pages, d.uploaded, d.folder_name
-	FROM doujinshi d
+	SELECT d.id, d.source, d.external_id, d.title, COALESCE(d.second_title, '') as second_title, 
+	d.pages, d.uploaded, d.folder_name FROM doujinshi d
 	WHERE ` + whereClause + `d.id != ? AND d.folder_name IS NOT NULL AND d.folder_name != ''
 `
 
@@ -235,7 +236,7 @@ func GetSimilarDoujinshiByMetaData(
 	for rows.Next() {
 		var d Doujinshi
 		if err := rows.Scan(&d.ID, &d.Source, &d.ExternalID,
-			&d.Title, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
+			&d.Title, &d.SecondTitle, &d.Pages, &d.Uploaded, &d.FolderName); err != nil {
 			return nil, err
 		}
 		populateDoujinshiDetails(db, &d)
@@ -297,11 +298,13 @@ func InsertDoujinshiWithMetadata(db *sql.DB, meta Doujinshi, folderName string) 
 	defer tx.Rollback()
 
 	_, err = tx.Exec(`
-        INSERT INTO doujinshi (source, external_id, title, pages, uploaded, folder_name)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO doujinshi (source, external_id, title, second_title, pages, uploaded, folder_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(source, external_id) DO UPDATE SET
-            title=excluded.title, pages=excluded.pages, uploaded=excluded.uploaded, folder_name=excluded.folder_name
-    `, meta.Source, meta.ExternalID, meta.Title, meta.Pages, meta.Uploaded.Format(time.RFC3339), folderName)
+            title=excluded.title, second_title=excluded.second_title, pages=excluded.pages, 
+		uploaded=excluded.uploaded, folder_name=excluded.folder_name
+    `, meta.Source, meta.ExternalID, meta.Title, meta.SecondTitle, meta.Pages,
+		meta.Uploaded.Format(time.RFC3339), folderName)
 	if err != nil {
 		return err
 	}

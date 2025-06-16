@@ -14,6 +14,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const rootURL = "https://nhentai.net"
+
 type DownloadResult struct {
 	TotalProcessed int      `json:"totalProcessed"`
 	Downloaded     []string `json:"downloaded"`
@@ -25,7 +27,6 @@ type DownloadResult struct {
 
 func DownloadAllFavorites(
 	c *gin.Context,
-	rootURL string,
 	httpConfig n.HTTPConfig,
 	database *sql.DB,
 	saveMetadata bool,

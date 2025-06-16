@@ -2,7 +2,6 @@ package routes
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,9 +138,6 @@ func GetArtistDoujins(c *gin.Context, database *sql.DB) {
 
 func GetDoujinshiPages(c *gin.Context, database *sql.DB) {
 	id := c.Param("id")
-
-	log.Println("Request path:", c.Request.URL.Path)
-	log.Println("ID IS:", id)
 
 	doujinshiData, err := db.GetDoujinshi(database, id)
 	if err != nil {

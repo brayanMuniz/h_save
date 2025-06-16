@@ -50,6 +50,11 @@ func GetMetaDataFromPage(html_page string) (db.Doujinshi, error) {
 	afterTitle := doc.Find("#info .title .after").First().Text()
 	fullTitle := beforeTitle + mainTitle + afterTitle
 
+	beforeSecondTitle := doc.Find("#info h2.title .before").First().Text()
+	mainSecondTitle := doc.Find("#info h2.title .pretty").First().Text()
+	afterSecondTitle := doc.Find("#info h2.title .after").First().Text()
+	fullSecondTitle := beforeSecondTitle + mainSecondTitle + afterSecondTitle
+
 	galleryId := ""
 	doc.Find("h3#gallery_id").Each(func(i int, s *goquery.Selection) {
 		s.Contents().Each(func(j int, node *goquery.Selection) {
@@ -161,16 +166,17 @@ func GetMetaDataFromPage(html_page string) (db.Doujinshi, error) {
 		Source:     "nhentai",
 		ExternalID: strings.TrimSpace(galleryId),
 
-		Title:      strings.TrimSpace(fullTitle),
-		Tags:       trimSlice(tagsList),
-		Artists:    trimSlice(artistList),
-		Characters: trimSlice(charactersList),
-		Parodies:   trimSlice(parodiesList),
-		Groups:     trimSlice(groupsList),
-		Languages:  trimSlice(languagesList),
-		Categories: trimSlice(categoriesList),
-		Pages:      strings.TrimSpace(pages),
-		Uploaded:   uploaded,
+		Title:       strings.TrimSpace(fullTitle),
+		SecondTitle: strings.TrimSpace(fullSecondTitle),
+		Tags:        trimSlice(tagsList),
+		Artists:     trimSlice(artistList),
+		Characters:  trimSlice(charactersList),
+		Parodies:    trimSlice(parodiesList),
+		Groups:      trimSlice(groupsList),
+		Languages:   trimSlice(languagesList),
+		Categories:  trimSlice(categoriesList),
+		Pages:       strings.TrimSpace(pages),
+		Uploaded:    uploaded,
 	}, nil
 
 }

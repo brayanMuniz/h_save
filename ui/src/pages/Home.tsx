@@ -79,7 +79,7 @@ const Home = () => {
                   <Link
                     key={d.id}
                     to={`/doujinshi/${d.id}`}
-                    className="block" // Removed fixed width to allow grid to control it
+                    className="block"
                   >
                     <CoverImage
                       imgUrl={d.thumbnail_url}

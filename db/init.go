@@ -2,8 +2,9 @@ package db
 
 import (
 	"database/sql"
-	"golang.org/x/crypto/bcrypt"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func InitDB(filepath string) (*sql.DB, error) {
@@ -15,6 +16,7 @@ func InitDB(filepath string) (*sql.DB, error) {
 	if err := createDoujinshiAndMetadataTables(db); err != nil {
 		log.Fatal(err)
 	}
+
 	if err := createUserAndProgressTables(db); err != nil {
 		log.Fatal(err)
 	}
@@ -46,6 +48,7 @@ func createDoujinshiAndMetadataTables(db *sql.DB) error {
 	    source TEXT NOT NULL,
 	    external_id TEXT NOT NULL,
 	    title TEXT,
+	    second_title TEXT,
 	    pages TEXT,
 	    uploaded DATETIME,
 	    folder_name TEXT,

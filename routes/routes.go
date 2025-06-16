@@ -10,7 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
+func SetupRouter(database *sql.DB) *gin.Engine {
 	r := gin.Default()
 
 	api := r.Group("/api")
@@ -324,6 +324,7 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				return
 			}
 
+			// defaults
 			if req.StartPage <= 0 {
 				req.StartPage = 1
 			}
@@ -336,7 +337,7 @@ func SetupRouter(database *sql.DB, rootURL string) *gin.Engine {
 				CsrfToken: req.CsrfToken,
 			}
 
-			result := DownloadAllFavorites(ctx, rootURL, httpConfig, database,
+			result := DownloadAllFavorites(ctx, httpConfig, database,
 				req.SaveMetadata, req.SkipOrganized, req.StartPage, req.MaxPages)
 			ctx.JSON(http.StatusOK, result)
 		})

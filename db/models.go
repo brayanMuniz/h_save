@@ -9,16 +9,17 @@ type Doujinshi struct {
 	FolderName string `json:"folderName"`
 	OCount     int    `json:"oCount"`
 
-	Title      string    `json:"title"`
-	Tags       []string  `json:"tags"`
-	Artists    []string  `json:"artists"`
-	Characters []string  `json:"characters"`
-	Parodies   []string  `json:"parodies"`
-	Groups     []string  `json:"groups"`
-	Languages  []string  `json:"languages"`
-	Categories []string  `json:"categories"`
-	Pages      string    `json:"pages"`
-	Uploaded   time.Time `json:"uploaded"`
+	Title       string    `json:"title"`
+	SecondTitle string    `json:"secondTitle"`
+	Tags        []string  `json:"tags"`
+	Artists     []string  `json:"artists"`
+	Characters  []string  `json:"characters"`
+	Parodies    []string  `json:"parodies"`
+	Groups      []string  `json:"groups"`
+	Languages   []string  `json:"languages"`
+	Categories  []string  `json:"categories"`
+	Pages       string    `json:"pages"`
+	Uploaded    time.Time `json:"uploaded"`
 
 	Progress *DoujinshiProgress `json:"progress,omitempty"`
 }
