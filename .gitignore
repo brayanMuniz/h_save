@@ -7,8 +7,9 @@
 # OS-specific
 .DS_STORE
 
-# Personal files
+# Personal files and folders
 notes.md
 download_me_senpai
 doujinshi
+images
 h_save.db

@@ -21,6 +21,14 @@ func InitDB(filepath string) (*sql.DB, error) {
 		log.Fatal(err)
 	}
 
+	if err := createImageAndMetadataTables(db); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := createImageProgressTables(db); err != nil {
+		log.Fatal(err)
+	}
+
 	// Set default password
 	var count int
 	err = db.QueryRow(`SELECT COUNT(*) FROM user`).Scan(&count)
@@ -211,5 +219,118 @@ func createUserAndProgressTables(db *sql.DB) error {
 	);
 
 `)
+	return err
+}
+
+func createImageAndMetadataTables(db *sql.DB) error {
+	_, err := db.Exec(`
+    CREATE TABLE IF NOT EXISTS images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source TEXT, -- nullable for local imports
+        external_id TEXT, -- nullable for local imports
+        filename TEXT NOT NULL,
+        file_path TEXT NOT NULL UNIQUE,
+        file_size INTEGER,
+        width INTEGER,
+        height INTEGER,
+        format TEXT, -- jpg, png, webp, etc.
+        uploaded DATETIME DEFAULT CURRENT_TIMESTAMP,
+        hash TEXT, -- for duplicate detection
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS image_tags (
+        image_id INTEGER,
+        tag_id INTEGER,
+        PRIMARY KEY (image_id, tag_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_artists (
+        image_id INTEGER,
+        artist_id INTEGER,
+        PRIMARY KEY (image_id, artist_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_characters (
+        image_id INTEGER,
+        character_id INTEGER,
+        PRIMARY KEY (image_id, character_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_parodies (
+        image_id INTEGER,
+        parody_id INTEGER,
+        PRIMARY KEY (image_id, parody_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (parody_id) REFERENCES parodies(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_groups (
+        image_id INTEGER,
+        group_id INTEGER,
+        PRIMARY KEY (image_id, group_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_categories (
+        image_id INTEGER,
+        category_id INTEGER,
+        PRIMARY KEY (image_id, category_id),
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+    );
+    `)
+	return err
+}
+
+func createImageProgressTables(db *sql.DB) error {
+	_, err := db.Exec(`
+    CREATE TABLE IF NOT EXISTS image_progress (
+        image_id INTEGER PRIMARY KEY,
+        rating INTEGER,
+        o_count INTEGER DEFAULT 0,
+        view_count INTEGER DEFAULT 0,
+        last_viewed DATETIME,
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS favorite_images (
+        image_id INTEGER PRIMARY KEY,
+        added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS image_collections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS image_collection_items (
+        collection_id INTEGER,
+        image_id INTEGER,
+        order_index INTEGER DEFAULT 0,
+        added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (collection_id, image_id),
+        FOREIGN KEY (collection_id) REFERENCES image_collections(id) ON DELETE CASCADE,
+        FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS collection_bookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        collection_id INTEGER NOT NULL,
+        name TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (collection_id) REFERENCES image_collections(id) ON DELETE CASCADE
+    );
+    `)
 	return err
 }
