@@ -24,15 +24,7 @@ type DoujinshiWithThumb struct {
 func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 	doujinshi, err := db.GetAllDoujinshi(database)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to fetch doujinshi from the database"})
-		return
-	}
-
-	entries, err := os.ReadDir("./doujinshi")
-	if err != nil || len(entries) == 0 {
-		c.JSON(http.StatusInternalServerError,
-			gin.H{"error": "Failed to read the doujinshi folder"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
@@ -40,8 +32,7 @@ func GetAllDoujinshi(c *gin.Context, database *sql.DB) {
 	for _, d := range doujinshi {
 		if d.FolderName != "" {
 			result = append(result, DoujinshiWithThumb{
-				Doujinshi: d,
-				// How to deal with this?
+				Doujinshi:    d,
 				ThumbnailURL: "/api/doujinshi/" + strconv.FormatInt(d.ID, 10) + "/thumbnail",
 			})
 		}

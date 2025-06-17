@@ -11,12 +11,20 @@ import (
 func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 	rows, err := db.Query(`
 	SELECT
-		d.id, d.source, d.external_id, d.title, COALESCE(d.second_title, '') as second_title, d.pages, d.uploaded, d.folder_name,
-		COALESCE(SUM(o.o_count), 0) AS o_count
+		d.id, d.source, d.external_id, d.title, COALESCE(d.second_title, '') as second_title, 
+		d.pages, d.uploaded, d.folder_name,
+		COALESCE(SUM(o.o_count), 0) AS o_count,
+		COALESCE(b.bookmark_count, 0) AS bookmark_count
 	FROM doujinshi d
 	LEFT JOIN doujinshi_page_o o ON d.id = o.doujinshi_id
+	LEFT JOIN (
+		SELECT doujinshi_id, COUNT(*) as bookmark_count
+		FROM doujinshi_bookmarks
+		GROUP BY doujinshi_id
+	) b ON d.id = b.doujinshi_id
 	GROUP BY d.id
 	`)
+	println(err)
 
 	if err != nil {
 		return nil, err
@@ -28,7 +36,7 @@ func GetAllDoujinshi(db *sql.DB) ([]Doujinshi, error) {
 		var d Doujinshi
 		err := rows.Scan(
 			&d.ID, &d.Source, &d.ExternalID, &d.Title, &d.SecondTitle, &d.Pages,
-			&d.Uploaded, &d.FolderName, &d.OCount,
+			&d.Uploaded, &d.FolderName, &d.OCount, &d.BookmarkCount,
 		)
 		if err != nil {
 			return nil, err

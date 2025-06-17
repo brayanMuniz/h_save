@@ -15,16 +15,12 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 
 	api := r.Group("/api")
 	{
-		// ============================================================================
 		// AUTHENTICATION ROUTES
-		// ============================================================================
 		api.POST("/user/login", func(ctx *gin.Context) {
 			LoginHandler(ctx, database)
 		})
 
-		// ============================================================================
 		// DOUJINSHI CORE ROUTES
-		// ============================================================================
 		api.GET("/doujinshi", func(ctx *gin.Context) {
 			GetAllDoujinshi(ctx, database)
 		})
@@ -58,9 +54,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			GetArtistPageDataHandler(ctx, database)
 		})
 
-		// ============================================================================
 		// TAG ROUTES
-		// ============================================================================
 		api.GET("/tags", func(ctx *gin.Context) {
 			GetAllTagsHandler(ctx, database)
 		})
@@ -119,9 +113,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetUserProfile(ctx, database)
 			})
 
-			// ========================================================================
 			// DOUJINSHI PROGRESS ROUTES
-			// ========================================================================
 			user.GET("/doujinshi/:id/progress", func(ctx *gin.Context) {
 				GetDoujinshiProgress(ctx, database)
 			})
@@ -134,9 +126,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				SetDoujinshiProgress(ctx, database) // Same handler for PUT
 			})
 
-			// ========================================================================
 			// BOOKMARK ROUTES
-			// ========================================================================
 			user.POST("/doujinshi/:id/bookmark", func(ctx *gin.Context) {
 				AddBookmark(ctx, database)
 			})
@@ -153,9 +143,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				UpdateBookmark(ctx, database)
 			})
 
-			// ========================================================================
 			// O-COUNT ROUTES (Page-specific tracking)
-			// ========================================================================
 			user.POST("/doujinshi/:id/o", func(ctx *gin.Context) {
 				SetOCountHandler(ctx, database)
 			})
@@ -168,9 +156,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetTotalOCountHandler(ctx, database)
 			})
 
-			// ========================================================================
 			// FAVORITE TAG ROUTES
-			// ========================================================================
 			user.GET("/favorite/tags", func(ctx *gin.Context) {
 				GetFavoriteNames(ctx, database, "favorite_tags", "tag_id", "tags", "tags")
 			})
@@ -191,9 +177,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				RemoveFavoriteByName(ctx, database, "tag", "tags", db.RemoveFavoriteTag)
 			})
 
-			// ========================================================================
 			// FAVORITE ARTIST ROUTES
-			// ========================================================================
 			user.GET("/favorite/artists", func(ctx *gin.Context) {
 				GetFavoriteNames(ctx, database, "favorite_artists", "artist_id", "artists", "artists")
 			})
@@ -219,9 +203,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetFavoriteNames(ctx, database, "favorite_characters", "character_id", "characters", "characters")
 			})
 
-			// ========================================================================
 			// FAVORITE PARODY ROUTES
-			// ========================================================================
 			user.POST("/favorite/parody/:id", func(ctx *gin.Context) {
 				AddFavoriteByID(ctx, database, db.AddFavoriteParody)
 			})
@@ -234,9 +216,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetFavoriteNames(ctx, database, "favorite_parodies", "parody_id", "parodies", "parodies")
 			})
 
-			// ========================================================================
 			// FAVORITE GROUP ROUTES
-			// ========================================================================
 			user.POST("/favorite/group/:id", func(ctx *gin.Context) {
 				AddFavoriteByID(ctx, database, db.AddFavoriteGroup)
 			})
@@ -249,9 +229,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetFavoriteNames(ctx, database, "favorite_groups", "group_id", "groups", "groups")
 			})
 
-			// ========================================================================
 			// FAVORITE LANGUAGE ROUTES
-			// ========================================================================
 			user.POST("/favorite/language", func(ctx *gin.Context) {
 				AddFavoriteByName(ctx, database, "language", "languages", db.AddFavoriteLanguage)
 			})
@@ -264,9 +242,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				GetFavoriteNames(ctx, database, "favorite_languages", "language_id", "languages", "languages")
 			})
 
-			// ========================================================================
 			// FAVORITE CATEGORY ROUTES
-			// ========================================================================
 			user.POST("/favorite/category", func(ctx *gin.Context) {
 				AddFavoriteByName(ctx, database, "category", "categories", db.AddFavoriteCategory)
 			})
@@ -300,9 +276,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 		}
 	}
 
-	// ============================================================================
 	// EXTERNAL SOURCE ROUTES
-	// ============================================================================
 	nhentai := r.Group("/nhentai")
 	{
 		nhentai.POST("/authCheck", func(ctx *gin.Context) {

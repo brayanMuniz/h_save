@@ -21,7 +21,8 @@ type Doujinshi struct {
 	Pages       string    `json:"pages"`
 	Uploaded    time.Time `json:"uploaded"`
 
-	Progress *DoujinshiProgress `json:"progress,omitempty"`
+	BookmarkCount int                `json:"bookmarkCount"`
+	Progress      *DoujinshiProgress `json:"progress,omitempty"`
 }
 
 type DoujinshiBookmark struct {

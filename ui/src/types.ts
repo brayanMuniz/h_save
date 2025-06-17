@@ -19,6 +19,7 @@ export type Doujinshi = {
   uploaded: string; // ISO string from backend
   folderName: string;
   oCount: number;
+  bookmarkCount: number;
 
   tags: string[];
   artists: string[];
@@ -65,6 +66,7 @@ export interface BrowseFilters {
   rating: RangeFilter;
   oCount: RangeFilter;
   pageCount: RangeFilter;
+  bookmarkCount: RangeFilter;
   currentlyReading: boolean;
 }
 

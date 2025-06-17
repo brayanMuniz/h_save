@@ -268,6 +268,20 @@ const FilterSidebar = ({
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <span>🔖</span>
+              <span>Bookmark Count Range</span>
+            </h3>
+            <RangeSlider
+              min={0}
+              max={Math.max(5, ...doujinshi.map((d) => d.bookmarkCount || 0))}
+              value={filters.bookmarkCount}
+              onChange={(bookmarkCount) => setFilters({ ...filters, bookmarkCount })}
+              step={1}
+              label="Bookmarks"
+            />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <span>🌐</span>
               <span>Language</span>
             </h3>

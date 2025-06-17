@@ -6,28 +6,29 @@ import MobileFilterBar from "../components/MobileFilterBar";
 import BrowseContent from "../components/BrowseContent";
 import SelectedFiltersBar from "../components/SelectedFiltersBar";
 
+const initialFilters: BrowseFilters = {
+  artists: { included: [], excluded: [] },
+  groups: { included: [], excluded: [] },
+  tags: { included: [], excluded: [] },
+  characters: { included: [], excluded: [] },
+  parodies: { included: [], excluded: [] },
+  languages: ["all"],
+  rating: { min: 0, max: 5 },
+  oCount: { min: 0, max: 100 },
+  pageCount: { min: 0, max: 500 },
+  currentlyReading: false,
+  formats: [],
+  genres: [],
+  search: "",
+  bookmarkCount: { min: 0, max: 50 },
+};
+
 const BrowsePage = () => {
   const [doujinshi, setDoujinshi] = useState<Doujinshi[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"card" | "cover">("cover");
   const [sortBy, setSortBy] = useState("uploaded");
-
-  const [filters, setFilters] = useState<BrowseFilters>({
-    artists: { included: [], excluded: [] },
-    groups: { included: [], excluded: [] },
-    tags: { included: [], excluded: [] },
-    characters: { included: [], excluded: [] },
-    parodies: { included: [], excluded: [] },
-    languages: ["all"],
-    rating: { min: 0, max: 5 },
-    oCount: { min: 0, max: 100 },
-    pageCount: { min: 0, max: 500 },
-    currentlyReading: false,
-    formats: [],
-    genres: [],
-    search: "",
-  });
-
+  const [filters, setFilters] = useState<BrowseFilters>(initialFilters);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
 
   const fetchSavedFilters = async () => {
@@ -62,8 +63,8 @@ const BrowsePage = () => {
     }
   };
 
-  const handleLoadFilter = (filtersToLoad: BrowseFilters) => {
-    setFilters(filtersToLoad);
+  const handleLoadFilter = (filtersToLoad: Partial<BrowseFilters>) => {
+    setFilters({ ...initialFilters, ...filtersToLoad });
   };
 
   const handleDeleteFilter = async (id: number) => {
@@ -126,7 +127,9 @@ const BrowsePage = () => {
         item.oCount < filters.oCount.min ||
         item.oCount > filters.oCount.max ||
         totalPages < filters.pageCount.min ||
-        totalPages > filters.pageCount.max
+        totalPages > filters.pageCount.max ||
+        item.bookmarkCount < filters.bookmarkCount.min ||
+        item.bookmarkCount > filters.bookmarkCount.max
       ) {
         return false;
       }
@@ -218,7 +221,7 @@ const BrowsePage = () => {
         />
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         <MobileFilterBar
           savedFilters={savedFilters}
           onLoadFilter={handleLoadFilter}
