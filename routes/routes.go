@@ -104,6 +104,33 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			ManualSyncHandler(ctx, database)
 		})
 
+		images := api.Group("/images")
+		{
+			images.GET("", func(ctx *gin.Context) {
+				GetAllImages(ctx, database)
+			})
+
+			images.GET("/:id", func(ctx *gin.Context) {
+				GetImage(ctx, database)
+			})
+
+			images.GET("/:id/file", func(ctx *gin.Context) {
+				GetImageFile(ctx, database)
+			})
+
+			images.GET("/:id/thumbnail", func(ctx *gin.Context) {
+				GetImageThumbnail(ctx, database)
+			})
+
+			images.GET("/:id/similar/metadata", func(ctx *gin.Context) {
+				GetSimilarImagesByMetadata(ctx, database)
+			})
+
+			images.POST("/scan", func(ctx *gin.Context) {
+				ScanImagesFolder(ctx, database)
+			})
+		}
+
 		// ============================================================================
 		// USER PROFILE ROUTES
 		// ============================================================================

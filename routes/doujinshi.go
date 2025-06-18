@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/brayanMuniz/h_save/db"
-	"github.com/brayanMuniz/h_save/n"
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -218,36 +217,6 @@ func GetSimilarDoujinshiByMetadata(c *gin.Context, database *sql.DB) {
 	}
 	c.JSON(http.StatusOK, gin.H{"similarDoujins": result})
 
-}
-
-func AuthCheck(c *gin.Context, rootURL string) {
-	var req struct {
-		SessionId string `json:"sessionId"`
-		CsrfToken string `json:"csrfToken"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	httpConfig := n.HTTPConfig{
-		SessionId: req.SessionId,
-		CsrfToken: req.CsrfToken,
-	}
-
-	html_page, err := n.GetPageHTML(rootURL, httpConfig)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get favorites page"})
-		return
-	}
-
-	userName, err := n.ReturnUserNameFromHTML(html_page)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get username"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"userName": userName})
 }
 
 var nonWord = regexp.MustCompile(`[^\p{L}\p{N}]+`)
