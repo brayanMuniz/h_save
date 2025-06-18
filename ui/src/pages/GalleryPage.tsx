@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { Image } from "../types";
-import { Link } from "react-router-dom";
 
 import HeaderBar from "../components/HeaderBar";
 import Sidebar from "../components/SideBar";
 import MobileNav from "../components/MobileNav";
+import ImageViewer from "../components/ImageViewer";
 
 interface ImageWithLayout extends Image {
   displayWidth: number;
@@ -26,11 +26,30 @@ const GalleryPage = () => {
   const [layoutRows, setLayoutRows] = useState<LayoutRow[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [containerWidth, setContainerWidth] = useState(1200);
   const observer = useRef<IntersectionObserver | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Image viewer state
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const IMAGES_PER_PAGE = 200;
-  const TARGET_ROW_HEIGHT = 250; // Target height for each row
-  const CONTAINER_WIDTH = 1200; // Approximate container width, adjust as needed
+  const TARGET_ROW_HEIGHT = 250;
+
+  // Update container width on resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth - 48; // Account for padding
+        setContainerWidth(Math.max(300, width)); // Minimum width of 300px
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   const fetchImages = async () => {
     try {
@@ -52,7 +71,6 @@ const GalleryPage = () => {
     return [...images].sort(() => Math.random() - 0.5);
   }, [images]);
 
-  // Calculate display dimensions for images
   const imagesWithLayout = useMemo(() => {
     return shuffledImages.map(image => {
       const aspectRatio = image.width / image.height;
@@ -68,17 +86,14 @@ const GalleryPage = () => {
     });
   }, [shuffledImages]);
 
-  // Pack images into rows using a greedy algorithm
   const packImagesIntoRows = useCallback((images: ImageWithLayout[]): LayoutRow[] => {
     const rows: LayoutRow[] = [];
     let currentRow: ImageWithLayout[] = [];
     let currentRowWidth = 0;
 
     for (const image of images) {
-      // If adding this image would exceed container width, finish current row
-      if (currentRowWidth + image.displayWidth > CONTAINER_WIDTH && currentRow.length > 0) {
-        // Scale the row to fit exactly
-        const scaleFactor = CONTAINER_WIDTH / currentRowWidth;
+      if (currentRowWidth + image.displayWidth > containerWidth && currentRow.length > 0) {
+        const scaleFactor = containerWidth / currentRowWidth;
         const scaledImages = currentRow.map(img => ({
           ...img,
           displayWidth: img.displayWidth * scaleFactor,
@@ -87,11 +102,10 @@ const GalleryPage = () => {
 
         rows.push({
           images: scaledImages,
-          totalWidth: CONTAINER_WIDTH,
+          totalWidth: containerWidth,
           maxHeight: Math.max(...scaledImages.map(img => img.displayHeight))
         });
 
-        // Start new row
         currentRow = [image];
         currentRowWidth = image.displayWidth;
       } else {
@@ -100,9 +114,8 @@ const GalleryPage = () => {
       }
     }
 
-    // Handle remaining images in current row
     if (currentRow.length > 0) {
-      const scaleFactor = Math.min(1, CONTAINER_WIDTH / currentRowWidth);
+      const scaleFactor = Math.min(1, containerWidth / currentRowWidth);
       const scaledImages = currentRow.map(img => ({
         ...img,
         displayWidth: img.displayWidth * scaleFactor,
@@ -117,9 +130,8 @@ const GalleryPage = () => {
     }
 
     return rows;
-  }, []);
+  }, [containerWidth]);
 
-  // Update displayed images and layout
   useEffect(() => {
     if (imagesWithLayout.length > 0) {
       const startIndex = 0;
@@ -133,7 +145,6 @@ const GalleryPage = () => {
     }
   }, [imagesWithLayout, page, packImagesIntoRows, shuffledImages]);
 
-  // Intersection observer for infinite scroll
   const lastRowElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
@@ -147,6 +158,32 @@ const GalleryPage = () => {
     );
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
+
+  const handleImageClick = (imageId: number) => {
+    const index = shuffledImages.findIndex(img => img.id === imageId);
+    if (index !== -1) {
+      setSelectedImageIndex(index);
+      setIsViewerOpen(true);
+    }
+  };
+
+  const handleCloseViewer = () => {
+    setIsViewerOpen(false);
+    setSelectedImageIndex(null);
+  };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (selectedImageIndex === null) return;
+
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = selectedImageIndex > 0 ? selectedImageIndex - 1 : shuffledImages.length - 1;
+    } else {
+      newIndex = selectedImageIndex < shuffledImages.length - 1 ? selectedImageIndex + 1 : 0;
+    }
+
+    setSelectedImageIndex(newIndex);
+  };
 
   if (loading) {
     return (
@@ -175,8 +212,7 @@ const GalleryPage = () => {
             </div>
           ) : (
             <>
-              {/* Tetris-style packed layout */}
-              <div className="w-full max-w-7xl mx-auto">
+              <div ref={containerRef} className="w-full max-w-7xl mx-auto">
                 {layoutRows.map((row, rowIndex) => (
                   <div
                     key={rowIndex}
@@ -185,10 +221,10 @@ const GalleryPage = () => {
                     style={{ height: `${row.maxHeight}px` }}
                   >
                     {row.images.map((image) => (
-                      <Link
+                      <button
                         key={image.id}
-                        to={`/gallery/${image.id}`}
-                        className="block hover:opacity-75 transition-opacity mr-1 last:mr-0"
+                        onClick={() => handleImageClick(image.id)}
+                        className="block hover:opacity-75 transition-opacity mr-1 last:mr-0 cursor-pointer"
                         style={{
                           width: `${image.displayWidth}px`,
                           height: `${image.displayHeight}px`,
@@ -201,7 +237,7 @@ const GalleryPage = () => {
                           loading="lazy"
                           decoding="async"
                         />
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 ))}
@@ -216,6 +252,16 @@ const GalleryPage = () => {
           )}
         </main>
       </div>
+
+      {/* Image Viewer Modal */}
+      {isViewerOpen && selectedImageIndex !== null && (
+        <ImageViewer
+          images={shuffledImages}
+          currentIndex={selectedImageIndex}
+          onClose={handleCloseViewer}
+          onNavigate={handleNavigate}
+        />
+      )}
     </div>
   );
 };
