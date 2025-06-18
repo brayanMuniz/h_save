@@ -201,3 +201,33 @@ export interface ParodyPageResponse {
   parodyDetails: Parody;
   doujinshiList: Doujinshi[];
 }
+
+export interface Image {
+  id: number;
+  source: string;
+  external_id: string;
+  filename: string;
+  file_path: string;
+  file_size: number;
+  width: number;
+  height: number;
+  format: string;
+  uploaded: string;
+  hash: string;
+
+  // Metadata
+  tags: string[];
+  artists: string[];
+  characters: string[];
+  parodies: string[];
+  groups: string[];
+  categories: string[];
+
+  // Progress
+  rating: number;
+  o_count: number;
+  view_count: number;
+
+  // From API wrapper
+  thumbnail_url: string;
+}

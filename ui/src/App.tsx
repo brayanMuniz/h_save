@@ -21,6 +21,8 @@ import CharacterPage from "./pages/CharacterPage";
 import AllParodiesPage from "./pages/AllParodiesPage";
 import ParodyPage from "./pages/ParodyPage";
 
+import GalleryPage from "./pages/GalleryPage";
+
 function App() {
   return (
     <div className="min-h-screen bg-gray-900">
@@ -99,6 +101,8 @@ function App() {
             <ParodyPage />
           }
         />
+
+        <Route path="/gallery" element={<GalleryPage />} />
 
         <Route
           path="/settings"
