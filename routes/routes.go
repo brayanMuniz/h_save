@@ -129,6 +129,14 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			images.POST("/scan", func(ctx *gin.Context) {
 				ScanImagesFolder(ctx, database)
 			})
+
+			images.GET("/artists", func(ctx *gin.Context) {
+				GetAllImageArtists(ctx, database)
+			})
+
+			images.GET("/artist/:id", func(ctx *gin.Context) {
+				GetImageArtistPageData(ctx, database)
+			})
 		}
 
 		// ============================================================================
@@ -280,6 +288,31 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 
 			user.GET("/favorite/categories", func(ctx *gin.Context) {
 				GetFavoriteNames(ctx, database, "favorite_categories", "category_id", "categories", "categories")
+			})
+
+			user.GET("/images/:id/progress", func(ctx *gin.Context) {
+				GetImageProgress(ctx, database)
+			})
+
+			user.POST("/images/:id/progress", func(ctx *gin.Context) {
+				UpdateImageProgress(ctx, database)
+			})
+
+			user.PUT("/images/:id/progress", func(ctx *gin.Context) {
+				UpdateImageProgress(ctx, database) // Same handler for PUT
+			})
+
+			// IMAGE FAVORITE ROUTES
+			user.POST("/images/:id/favorite", func(ctx *gin.Context) {
+				ToggleImageFavorite(ctx, database)
+			})
+
+			user.GET("/images/:id/favorite", func(ctx *gin.Context) {
+				GetImageFavoriteStatus(ctx, database)
+			})
+
+			user.GET("/favorite/images", func(ctx *gin.Context) {
+				GetFavoriteImages(ctx, database)
 			})
 
 			savedFilters := user.Group("/saved-filters")
