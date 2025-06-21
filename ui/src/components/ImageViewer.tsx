@@ -18,14 +18,11 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   const [showUI, setShowUI] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [imageRatings, setImageRatings] = useState<Record<number, number>>({});
   const hideUITimer = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastInteractionTime = useRef<number>(Date.now());
 
   const currentImage = images[currentIndex];
-  // Get the current rating from our local state or the original image data
-  const currentRating = imageRatings[currentImage.id] ?? currentImage.rating;
 
   // Detect if device supports touch
   useEffect(() => {
@@ -49,40 +46,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     };
   }, []);
 
-  // Handle keyboard rating update
-  const handleKeyboardRating = async (ratingValue: number) => {
-    if (!currentImage) return;
-
-    // If same rating as current, remove it (set to 0), otherwise set new rating
-    const newRating = ratingValue === currentRating ? 0 : ratingValue;
-
-    try {
-      // Update local state immediately for responsive UI
-      setImageRatings(prev => ({
-        ...prev,
-        [currentImage.id]: newRating
-      }));
-
-      // Make API call
-      await fetch(`/api/user/images/${currentImage.id}/progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating: newRating })
-      });
-
-      // Trigger UI timer reset
-      resetUITimer();
-    } catch (error) {
-      console.error('Failed to update rating:', error);
-      // Revert local state on error
-      setImageRatings(prev => ({
-        ...prev,
-        [currentImage.id]: currentImage.rating
-      }));
-    }
-  };
-
-  // Keyboard navigation
+  // Keyboard navigation (removed rating logic)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Show UI on any keyboard interaction
@@ -105,16 +69,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           event.preventDefault();
           toggleUI();
           break;
-        // Quick rating with number keys
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-          event.preventDefault();
-          const rating = parseInt(event.key);
-          handleKeyboardRating(rating);
-          break;
+        // Rating keys are now handled in ImageControls component
         default:
           break;
       }
@@ -124,7 +79,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onNavigate, onClose, currentImage, currentRating]);
+  }, [onNavigate, onClose]);
 
   // Toggle UI visibility
   const toggleUI = useCallback(() => {
@@ -220,12 +175,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   }, [currentIndex, resetUITimer]);
 
   if (!currentImage) return null;
-
-  // Create a modified image object with the current rating
-  const imageWithCurrentRating = {
-    ...currentImage,
-    rating: currentRating
-  };
 
   return (
     <div
@@ -372,7 +321,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           {/* Image Controls with proper z-index */}
           <div style={{ zIndex: 65 }}>
             <ImageControls
-              image={imageWithCurrentRating}
+              image={currentImage}
               onUpdate={resetUITimer}
             />
           </div>
@@ -389,19 +338,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
         </div>
       )}
 
-      {/* Visual click zones indicator (optional - you can remove this) */}
-      {showUI && (
-        <>
-          <div
-            className="absolute top-0 left-0 w-1/3 h-full pointer-events-none border-r border-white/10"
-            style={{ zIndex: 45 }}
-          />
-          <div
-            className="absolute top-0 right-0 w-1/3 h-full pointer-events-none border-l border-white/10"
-            style={{ zIndex: 45 }}
-          />
-        </>
-      )}
     </div>
   );
 };

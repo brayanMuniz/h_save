@@ -231,3 +231,32 @@ export interface Image {
   // From API wrapper
   thumbnail_url: string;
 }
+
+export interface ImageBrowseFilters {
+  artists: FilterGroup;
+  groups: FilterGroup;
+  tags: FilterGroup;
+  characters: FilterGroup;
+  parodies: FilterGroup;
+  categories: FilterGroup;
+  search: string;
+  rating: RangeFilter;
+  oCount: RangeFilter;
+  unratedOnly: boolean; // For quick rating workflow
+  formats: string[]; // jpg, png, webp, etc.
+}
+
+export interface ImageCollection {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+  image_count?: number; // Optional, populated by backend
+}
+
+export interface SavedImageFilter {
+  id: number;
+  name: string;
+  filters: ImageBrowseFilters;
+  createdAt: string;
+}

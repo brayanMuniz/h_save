@@ -47,19 +47,13 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate }) => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
-  // Update local state when image changes
+  // Sync state when image changes
   useEffect(() => {
     setOCount(image.o_count);
     setRating(image.rating);
   }, [image.id, image.o_count, image.rating]);
 
-  // Ensure rating state stays in sync with prop changes
-  useEffect(() => {
-    if (rating !== image.rating) {
-      setRating(image.rating);
-    }
-  }, [image.rating]);
-
+  // Check favorite status when image changes
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
@@ -73,8 +67,56 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate }) => {
     checkFavoriteStatus();
   }, [image.id]);
 
+  // Handle keyboard rating update
+  const handleKeyboardRating = async (ratingValue: number) => {
+    if (!image) return;
+
+    // If same rating as current, remove it (set to 0), otherwise set new rating
+    const newRating = ratingValue === rating ? 0 : ratingValue;
+
+    try {
+      // Update local state immediately for responsive UI
+      setRating(newRating);
+
+      // Make API call
+      await fetch(`/api/user/images/${image.id}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: newRating })
+      });
+
+      // Trigger UI timer reset
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to update rating:', error);
+      // Revert local state on error
+      setRating(image.rating);
+    }
+  };
+
+  // NOTE: Turn off vimium if you are using it
+
+  // Keyboard event handling
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Quick rating with number keys
+      if (['1', '2', '3', '4', '5'].includes(event.key)) {
+        event.preventDefault();
+        const ratingValue = parseInt(event.key);
+        handleKeyboardRating(ratingValue);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [rating, image.id]); // Dependencies include rating and image.id
+
   const updateOCount = async (newCount: number) => {
+    const previousCount = oCount;
     setOCount(newCount);
+
     try {
       await fetch(`/api/user/images/${image.id}/progress`, {
         method: 'POST',
@@ -84,12 +126,15 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate }) => {
       onUpdate?.();
     } catch (error) {
       console.error('Failed to update O count:', error);
+      // Revert on error
+      setOCount(previousCount);
     }
   };
 
   const updateRating = async (newRating: number) => {
-    // Update local state immediately for responsive UI
+    const previousRating = rating;
     setRating(newRating);
+
     try {
       await fetch(`/api/user/images/${image.id}/progress`, {
         method: 'POST',
@@ -100,11 +145,14 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate }) => {
     } catch (error) {
       console.error('Failed to update rating:', error);
       // Revert on error
-      setRating(image.rating);
+      setRating(previousRating);
     }
   };
 
   const toggleFavorite = async () => {
+    const previousFavorited = isFavorited;
+    setIsFavorited(!isFavorited);
+
     try {
       const response = await fetch(`/api/user/images/${image.id}/favorite`, {
         method: 'POST'
@@ -114,6 +162,8 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate }) => {
       onUpdate?.();
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
+      // Revert on error
+      setIsFavorited(previousFavorited);
     }
   };
 
