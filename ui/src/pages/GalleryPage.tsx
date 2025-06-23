@@ -28,7 +28,6 @@ const initialFilters: ImageBrowseFilters = {
   search: "",
   rating: { min: 0, max: 5 },
   oCount: { min: 0, max: 100 },
-  unratedOnly: false,
   formats: [],
 };
 
@@ -36,7 +35,7 @@ const GalleryPage = () => {
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"card" | "cover">("cover");
-  const [sortBy, setSortBy] = useState("uploaded");
+  const [sortBy, setSortBy] = useState("random");
   const [filters, setFilters] = useState<ImageBrowseFilters>(initialFilters);
   const [savedFilters, setSavedFilters] = useState<SavedImageFilter[]>([]);
   const [collections, setCollections] = useState<ImageCollection[]>([]);
@@ -45,8 +44,10 @@ const GalleryPage = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [containerWidth, setContainerWidth] = useState(1200);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Image viewer state
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -55,19 +56,70 @@ const GalleryPage = () => {
   const IMAGES_PER_PAGE = 200;
   const TARGET_ROW_HEIGHT = 250;
 
-  // Update container width on resize
+  // Update container width with better calculation
+  const updateWidth = useCallback(() => {
+    if (mainContentRef.current) {
+      // Get the actual available width of the main content area
+      const rect = mainContentRef.current.getBoundingClientRect();
+      const availableWidth = rect.width - 48; // Account for padding (24px on each side)
+      const newWidth = Math.max(300, availableWidth);
+
+      // Only update if the width has actually changed significantly (avoid constant re-renders)
+      if (Math.abs(newWidth - containerWidth) > 10) {
+        setContainerWidth(newWidth);
+      }
+    }
+  }, [containerWidth]);
+
+  // Handle resize and sidebar changes with proper timing
   useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.offsetWidth - 24; // Reduced padding
-        setContainerWidth(Math.max(300, width));
+    const handleResize = () => {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(updateWidth);
+    };
+
+    // Initial width calculation
+    handleResize();
+
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateWidth]);
+
+
+  useEffect(() => {
+    // Force immediate recalculation
+    const recalculate = () => {
+      if (mainContentRef.current) {
+        const rect = mainContentRef.current.getBoundingClientRect();
+        const availableWidth = rect.width - 48;
+        const newWidth = Math.max(300, availableWidth);
+        setContainerWidth(newWidth);
       }
     };
 
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
+    // Multiple recalculations to ensure it catches the layout change
+    const timeouts = [
+      setTimeout(recalculate, 50),   // Immediate
+      setTimeout(recalculate, 150),  // Early
+      setTimeout(recalculate, 350),  // After transition
+      setTimeout(recalculate, 500),  // Safety net
+    ];
+
+    // Also trigger on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(recalculate);
+    });
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [isSidebarCollapsed]);
+
 
   const fetchImages = async () => {
     try {
@@ -109,16 +161,11 @@ const GalleryPage = () => {
     fetchCollections();
   }, []);
 
-  // Filter and sort images (removed view count filtering)
+  // Filter and sort images
   const filteredAndSortedImages = useMemo(() => {
     const filtered = images.filter((image) => {
       // Search filter
       if (filters.search && !image.filename.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-
-      // Unrated only filter
-      if (filters.unratedOnly && image.rating > 0) {
         return false;
       }
 
@@ -203,14 +250,22 @@ const GalleryPage = () => {
     });
   }, [filteredAndSortedImages]);
 
+  // Improved packing algorithm that better fills available space
   const packImagesIntoRows = useCallback((images: ImageWithLayout[]): LayoutRow[] => {
     const rows: LayoutRow[] = [];
     let currentRow: ImageWithLayout[] = [];
     let currentRowWidth = 0;
+    const GAP_SIZE = 4; // Account for gap between images
 
     for (const image of images) {
-      if (currentRowWidth + image.displayWidth > containerWidth && currentRow.length > 0) {
-        const scaleFactor = containerWidth / currentRowWidth;
+      const imageWidthWithGap = image.displayWidth + (currentRow.length > 0 ? GAP_SIZE : 0);
+
+      // Check if adding this image would exceed container width
+      if (currentRowWidth + imageWidthWithGap > containerWidth && currentRow.length > 0) {
+        // Scale current row to fit exactly
+        const availableWidth = containerWidth - (currentRow.length - 1) * GAP_SIZE;
+        const scaleFactor = availableWidth / currentRowWidth;
+
         const scaledImages = currentRow.map(img => ({
           ...img,
           displayWidth: img.displayWidth * scaleFactor,
@@ -223,16 +278,20 @@ const GalleryPage = () => {
           maxHeight: Math.max(...scaledImages.map(img => img.displayHeight))
         });
 
+        // Start new row
         currentRow = [image];
         currentRowWidth = image.displayWidth;
       } else {
         currentRow.push(image);
-        currentRowWidth += image.displayWidth;
+        currentRowWidth += imageWidthWithGap;
       }
     }
 
+    // Handle last row
     if (currentRow.length > 0) {
-      const scaleFactor = Math.min(1, containerWidth / currentRowWidth);
+      const availableWidth = containerWidth - (currentRow.length - 1) * GAP_SIZE;
+      const scaleFactor = Math.min(1.2, availableWidth / currentRowWidth); // Allow slight upscaling
+
       const scaledImages = currentRow.map(img => ({
         ...img,
         displayWidth: img.displayWidth * scaleFactor,
@@ -241,7 +300,7 @@ const GalleryPage = () => {
 
       rows.push({
         images: scaledImages,
-        totalWidth: currentRowWidth * scaleFactor,
+        totalWidth: Math.min(containerWidth, currentRowWidth * scaleFactor + (currentRow.length - 1) * GAP_SIZE),
         maxHeight: Math.max(...scaledImages.map(img => img.displayHeight))
       });
     }
@@ -302,7 +361,7 @@ const GalleryPage = () => {
     setSelectedImageIndex(newIndex);
   };
 
-  // Filter management
+  // Filter management functions (unchanged)
   const handleSaveFilter = async () => {
     const name = prompt("Enter a name for this filter set:");
     if (!name || !name.trim()) return;
@@ -313,7 +372,7 @@ const GalleryPage = () => {
         body: JSON.stringify({ name: name.trim(), filters }),
       });
       if (!response.ok) throw new Error("Failed to save filter.");
-      fetchSavedFilters(); // Refresh the list after saving
+      fetchSavedFilters();
     } catch (error) {
       console.error(error);
       alert("Error: Could not save the filter.");
@@ -322,7 +381,7 @@ const GalleryPage = () => {
 
   const handleLoadFilter = (filtersToLoad: ImageBrowseFilters) => {
     setFilters(filtersToLoad);
-    setPage(1); // Reset pagination
+    setPage(1);
   };
 
   const handleDeleteFilter = async (id: number) => {
@@ -333,14 +392,13 @@ const GalleryPage = () => {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete filter.");
-      fetchSavedFilters(); // Refresh the list after deleting
+      fetchSavedFilters();
     } catch (error) {
       console.error(error);
       alert("Error: Could not delete the filter.");
     }
   };
 
-  // Collection management
   const handleCreateCollection = async (name: string, description?: string) => {
     try {
       const response = await fetch("/api/user/collections", {
@@ -349,7 +407,7 @@ const GalleryPage = () => {
         body: JSON.stringify({ name, description }),
       });
       if (!response.ok) throw new Error("Failed to create collection");
-      await fetchCollections(); // Refresh collections
+      await fetchCollections();
       alert("Collection created successfully!");
     } catch (error) {
       console.error("Failed to create collection:", error);
@@ -396,21 +454,21 @@ const GalleryPage = () => {
           onDeleteFilter={handleDeleteFilter}
           onCreateCollection={handleCreateCollection}
           onAddToCollection={handleAddToCollection}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
       </div>
 
-      <div className="ml-80 flex-1">
+      <div
+        ref={mainContentRef}
+        className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-80'}`}
+      >
         <MobileNav />
-        <main className="p-3">
+        <main className="p-6">
           <HeaderBar viewMode={viewMode} setViewMode={setViewMode} />
 
           <div className="mb-4 text-gray-400 text-sm">
             Showing {displayedImages.length} of {filteredAndSortedImages.length} images
-            {filters.unratedOnly && (
-              <span className="ml-2 px-2 py-1 text-xs bg-yellow-600 text-white rounded">
-                Quick Rating Mode
-              </span>
-            )}
           </div>
 
           {displayedImages.length === 0 && !loading ? (
@@ -429,17 +487,18 @@ const GalleryPage = () => {
                   <div
                     key={rowIndex}
                     ref={rowIndex === layoutRows.length - 1 ? lastRowElementRef : null}
-                    className="flex mb-1"
+                    className="flex mb-1 justify-start"
                     style={{ height: `${row.maxHeight}px` }}
                   >
-                    {row.images.map((image) => (
+                    {row.images.map((image, imageIndex) => (
                       <button
                         key={image.id}
                         onClick={() => handleImageClick(image.id)}
-                        className="block hover:opacity-75 transition-opacity mr-1 last:mr-0 cursor-pointer"
+                        className="block hover:opacity-75 transition-opacity cursor-pointer"
                         style={{
                           width: `${image.displayWidth}px`,
                           height: `${image.displayHeight}px`,
+                          marginRight: imageIndex < row.images.length - 1 ? '4px' : '0',
                         }}
                       >
                         <img

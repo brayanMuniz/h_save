@@ -242,7 +242,6 @@ export interface ImageBrowseFilters {
   search: string;
   rating: RangeFilter;
   oCount: RangeFilter;
-  unratedOnly: boolean; // For quick rating workflow
   formats: string[]; // jpg, png, webp, etc.
 }
 

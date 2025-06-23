@@ -63,8 +63,6 @@ func GetImageFile(c *gin.Context, database *sql.DB) {
 }
 
 func GetImageThumbnail(c *gin.Context, database *sql.DB) {
-	// For now, just serve the original image
-	// Later you can implement thumbnail generation
 	GetImageFile(c, database)
 }
 

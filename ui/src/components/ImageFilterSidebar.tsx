@@ -17,6 +17,8 @@ interface Props {
   onDeleteFilter: (id: number) => void;
   onCreateCollection: (name: string, description?: string) => void;
   onAddToCollection: (collectionId: number, imageIds: number[]) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 const formats = [
@@ -40,6 +42,8 @@ const ImageFilterSidebar = ({
   onDeleteFilter,
   onCreateCollection,
   onAddToCollection,
+  isCollapsed,
+  onToggleCollapse,
 }: Props) => {
   const [activeModal, setActiveModal] = useState<{
     type: FilterType | "categories";
@@ -63,7 +67,6 @@ const ImageFilterSidebar = ({
     };
   }, [images]);
 
-  // Get images rated 4 or 5 for collection creation
   const highRatedImages = useMemo(() => {
     return images.filter(img => img.rating >= 4);
   }, [images]);
@@ -120,32 +123,43 @@ const ImageFilterSidebar = ({
     }
   };
 
+  if (isCollapsed) {
+    return (
+      <div className="fixed left-0 top-0 z-10">
+        <aside className="w-16 h-screen bg-gray-800 text-gray-200 flex flex-col items-center py-4">
+          <button
+            onClick={onToggleCollapse}
+            className="p-3 bg-gray-700 hover:bg-gray-600 rounded transition mb-4"
+            title="Expand Sidebar"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div className="text-sm text-gray-400 writing-mode-vertical text-center">
+            <span className="block transform rotate-90 whitespace-nowrap">Gallery Filters</span>
+          </div>
+        </aside>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed left-0 top-0 z-10">
       <aside className="w-80 h-screen bg-gray-800 text-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-700 space-y-3">
-          <h2 className="text-xl font-bold">Image Gallery</h2>
-
-          {/* Quick Rating Toggle */}
-          <div>
-            <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-700 hover:bg-gray-600 rounded transition">
-              <input
-                type="checkbox"
-                checked={filters.unratedOnly}
-                onChange={(e) =>
-                  setFilters({ ...filters, unratedOnly: e.target.checked })
-                }
-                className="w-4 h-4 text-blue-500 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
-              />
-              <span className="text-lg font-semibold flex items-center gap-2">
-                ⚡ Quick Rating Mode
-              </span>
-            </label>
-            {filters.unratedOnly && (
-              <p className="text-xs text-gray-400 mt-1 px-3">
-                Showing only unrated images. Use 1-5 keys to rate quickly!
-              </p>
-            )}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Image Gallery</h2>
+            <button
+              onClick={onToggleCollapse}
+              className="p-2 bg-gray-700 hover:bg-gray-600 rounded transition"
+              title="Collapse Sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
 
           {/* Saved Filters */}
@@ -287,12 +301,12 @@ const ImageFilterSidebar = ({
               className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
               onChange={(e) => setSortBy(e.target.value)}
             >
+              <option value="random">Random</option>
               <option value="uploaded">Recently Uploaded</option>
               <option value="filename">Filename A-Z</option>
               <option value="rating">Rating (High to Low)</option>
               <option value="ocount">O Count (High to Low)</option>
               <option value="filesize">File Size (Large to Small)</option>
-              <option value="random">Random</option>
             </select>
           </div>
 
@@ -373,12 +387,12 @@ const ImageFilterSidebar = ({
                   key={format.code}
                   onClick={() => toggleFormat(format.code)}
                   className={`px-3 py-1 rounded text-sm transition ${format.code === "all"
-                      ? filters.formats.length === 0
-                        ? "bg-indigo-500 text-white"
-                        : "bg-gray-700 hover:bg-indigo-600"
-                      : filters.formats.includes(format.code)
-                        ? "bg-indigo-500 text-white"
-                        : "bg-gray-700 hover:bg-indigo-600"
+                    ? filters.formats.length === 0
+                      ? "bg-indigo-500 text-white"
+                      : "bg-gray-700 hover:bg-indigo-600"
+                    : filters.formats.includes(format.code)
+                      ? "bg-indigo-500 text-white"
+                      : "bg-gray-700 hover:bg-indigo-600"
                     }`}
                 >
                   {format.label}

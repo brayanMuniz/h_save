@@ -14,11 +14,16 @@ const MobileNav: React.FC<MobileNavProps> = () => (
         🏠 Home
       </Link>
 
+      <Link
+        to="/gallery"
+        className="px-2 py-1 text-sm rounded hover:bg-indigo-600 transition"
+      >
+        🖼️ Gallery
+      </Link>
 
       <Link to="/tags" className="hover:text-indigo-400 transition py-1">
         🏷️ Tags
       </Link>
-
 
       <Link
         to="/browse"
@@ -40,7 +45,6 @@ const MobileNav: React.FC<MobileNavProps> = () => (
       >
         👥 Groups
       </Link>
-
 
       <Link to="/characters" className="hover:text-indigo-400 transition py-1">
         🧑‍🎤 Characters

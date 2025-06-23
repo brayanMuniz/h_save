@@ -46,10 +46,9 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     };
   }, []);
 
-  // Keyboard navigation (removed rating logic)
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Show UI on any keyboard interaction
       resetUITimer();
 
       switch (event.key) {
@@ -69,7 +68,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           event.preventDefault();
           toggleUI();
           break;
-        // Rating keys are now handled in ImageControls component
         default:
           break;
       }
@@ -84,11 +82,9 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   // Toggle UI visibility
   const toggleUI = useCallback(() => {
     if (showUI) {
-      // Hide UI immediately
       if (hideUITimer.current) clearTimeout(hideUITimer.current);
       setShowUI(false);
     } else {
-      // Show UI and start timer
       resetUITimer();
     }
   }, [showUI]);
@@ -99,7 +95,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     setShowUI(true);
     lastInteractionTime.current = Date.now();
 
-    // Longer timeout for touch devices
     const timeout = isTouchDevice ? 8000 : 6000;
     hideUITimer.current = window.setTimeout(() => {
       setShowUI(false);
@@ -110,7 +105,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   const handleMouseMove = useCallback(() => {
     if (!isTouchDevice) {
       const now = Date.now();
-      // Throttle mouse movement events to avoid too frequent updates
       if (now - lastInteractionTime.current > 100) {
         resetUITimer();
       }
@@ -123,7 +117,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   }, [resetUITimer]);
 
   const handleTouchMove = useCallback(() => {
-    // Show UI on touch move (scrolling, swiping)
     resetUITimer();
   }, [resetUITimer]);
 
@@ -143,20 +136,16 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     const x = clientX - rect.left;
     const width = rect.width;
 
-    // Define the three zones
     const leftThird = width / 3;
     const rightThird = (2 * width) / 3;
 
     if (x < leftThird) {
-      // Left third - Previous image
       resetUITimer();
       onNavigate('prev');
     } else if (x > rightThird) {
-      // Right third - Next image  
       resetUITimer();
       onNavigate('next');
     } else {
-      // Middle third - Toggle UI
       toggleUI();
     }
   }, [onNavigate, resetUITimer, toggleUI]);
@@ -191,13 +180,19 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
         WebkitUserSelect: "none"
       }}
     >
-      {/* Main Image */}
+      {/* Main Image - Better mobile styling */}
       <img
         src={`/api/images/${currentImage.id}/file`}
         alt={currentImage.filename}
-        className="w-screen h-screen object-contain"
+        className="max-w-full max-h-full object-contain"
+        style={{
+          zIndex: 50,
+          width: 'auto',
+          height: 'auto',
+          maxWidth: '100vw',
+          maxHeight: '100vh'
+        }}
         draggable={false}
-        style={{ zIndex: 50 }}
       />
 
       {/* UI Overlay */}
@@ -209,13 +204,13 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-6 left-8 bg-black/60 rounded p-2 hover:bg-black/80 transition touch-manipulation"
+            className="absolute top-4 left-4 md:top-6 md:left-8 bg-black/60 rounded p-2 md:p-2 hover:bg-black/80 transition touch-manipulation"
             style={{ zIndex: 60 }}
             aria-label="Close viewer"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
+              className="h-5 w-5 md:h-6 md:w-6 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -236,13 +231,13 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
                 e.stopPropagation();
                 enterFullscreen();
               }}
-              className="absolute top-6 left-24 bg-black/60 rounded p-2 hover:bg-black/80 transition text-white touch-manipulation"
+              className="absolute top-4 left-16 md:top-6 md:left-24 bg-black/60 rounded p-2 hover:bg-black/80 transition text-white touch-manipulation"
               style={{ zIndex: 60 }}
               aria-label="Enter Fullscreen"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 md:h-6 md:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -259,26 +254,25 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
 
           {/* Image Counter */}
           <span
-            className="absolute top-6 right-8 text-white bg-black/60 px-4 py-2 rounded text-lg"
+            className="absolute top-4 right-4 md:top-6 md:right-8 text-white bg-black/60 px-3 py-1 md:px-4 md:py-2 rounded text-sm md:text-lg"
             style={{ pointerEvents: "none", zIndex: 60 }}
           >
             {currentIndex + 1} / {images.length}
           </span>
 
-          {/* Navigation Arrows - Larger on mobile */}
+          {/* Navigation Arrows - Responsive sizing */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onNavigate('prev');
             }}
-            className={`absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/60 rounded-full hover:bg-black/80 transition text-white touch-manipulation ${isTouchDevice ? 'p-4' : 'p-3'
-              }`}
+            className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-black/60 rounded-full hover:bg-black/80 transition text-white touch-manipulation p-3 md:p-3"
             style={{ zIndex: 60 }}
             aria-label="Previous image"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className={isTouchDevice ? 'h-10 w-10' : 'h-8 w-8'}
+              className="h-6 w-6 md:h-8 md:w-8"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -297,14 +291,13 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
               e.stopPropagation();
               onNavigate('next');
             }}
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/60 rounded-full hover:bg-black/80 transition text-white touch-manipulation ${isTouchDevice ? 'p-4' : 'p-3'
-              }`}
+            className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-black/60 rounded-full hover:bg-black/80 transition text-white touch-manipulation p-3 md:p-3"
             style={{ zIndex: 60 }}
             aria-label="Next image"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className={isTouchDevice ? 'h-10 w-10' : 'h-8 w-8'}
+              className="h-6 w-6 md:h-8 md:w-8"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -318,7 +311,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
             </svg>
           </button>
 
-          {/* Image Controls with proper z-index */}
+          {/* Image Controls */}
           <div style={{ zIndex: 65 }}>
             <ImageControls
               image={currentImage}
@@ -337,7 +330,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           Tap center to show controls
         </div>
       )}
-
     </div>
   );
 };
