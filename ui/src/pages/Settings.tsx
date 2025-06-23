@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import SyncSettings from "../components/SyncSettings";
 
-// This interface is specific to the nhentai download results
 interface DownloadResult {
   totalProcessed: number;
   downloaded: string[];
@@ -13,7 +12,6 @@ interface DownloadResult {
 }
 
 const Settings = () => {
-  // This state now controls which settings panel is visible
   const [activeProvider, setActiveProvider] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [csrfToken, setCsrfToken] = useState("");

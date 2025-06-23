@@ -139,9 +139,7 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			})
 		}
 
-		// ============================================================================
 		// USER PROFILE ROUTES
-		// ============================================================================
 		user := api.Group("/user")
 		{
 			user.GET("/profile", func(ctx *gin.Context) {
