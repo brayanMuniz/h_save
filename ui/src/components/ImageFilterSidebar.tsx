@@ -219,7 +219,7 @@ const ImageFilterSidebar = ({
     if (!hasFilters) return null;
 
     return (
-      <div className="mt-2 mb-2 space-y-2">
+      <div className="px-3 pb-2 space-y-2">
         {/* Included filters (green) */}
         {filterGroup.included.length > 0 && (
           <div>
@@ -233,7 +233,7 @@ const ImageFilterSidebar = ({
                   title="Click to remove"
                 >
                   <span className="mr-1">+</span>
-                  <span className="truncate max-w-24">{filterValue}</span>
+                  <span className="truncate max-w-20">{filterValue}</span>
                   <span className="ml-1 text-green-200 hover:text-white">×</span>
                 </button>
               ))}
@@ -254,7 +254,7 @@ const ImageFilterSidebar = ({
                   title="Click to remove"
                 >
                   <span className="mr-1">−</span>
-                  <span className="truncate max-w-24">{filterValue}</span>
+                  <span className="truncate max-w-20">{filterValue}</span>
                   <span className="ml-1 text-red-200 hover:text-white">×</span>
                 </button>
               ))}
@@ -315,7 +315,8 @@ const ImageFilterSidebar = ({
   return (
     <div className="fixed left-0 top-0 z-10">
       <aside className="w-80 h-screen bg-gray-800 text-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-700 space-y-3">
+        {/* Fixed header section */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-700 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Image Gallery</h2>
             <button
@@ -456,157 +457,167 @@ const ImageFilterSidebar = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <input
-            type="text"
-            placeholder="Search filenames..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
-          />
+        {/* Scrollable content section */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-4 pb-8">
+            <input
+              type="text"
+              placeholder="Search filenames..."
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
+            />
 
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span>📊</span>
-              <span>Sort By</span>
-            </h3>
-            <select
-              value={sortBy}
-              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="random">Random</option>
-              <option value="uploaded">Recently Uploaded</option>
-              <option value="filename">Filename A-Z</option>
-              <option value="rating">Rating (High to Low)</option>
-              <option value="ocount">O Count (High to Low)</option>
-              <option value="filesize">File Size (Large to Small)</option>
-            </select>
-          </div>
-
-          {/* Loading state for tag categories */}
-          {isLoading ? (
-            <div className="text-center text-gray-400 py-4">
-              <div className="animate-spin w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-              Loading filters...
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span>📊</span>
+                <span>Sort By</span>
+              </h3>
+              <select
+                value={sortBy}
+                className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-indigo-500 focus:outline-none"
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="random">Random</option>
+                <option value="uploaded">Recently Uploaded</option>
+                <option value="filename">Filename A-Z</option>
+                <option value="rating">Rating (High to Low)</option>
+                <option value="ocount">O Count (High to Low)</option>
+                <option value="filesize">File Size (Large to Small)</option>
+              </select>
             </div>
-          ) : (
-            <>
-              {/* Tag Categories */}
-              {[
-                { key: "tags", icon: "🏷️", title: "Tags", placeholder: "Search tags..." },
-                { key: "artists", icon: "🎨", title: "Artists", placeholder: "Search artists..." },
-                { key: "characters", icon: "🧑‍🎤", title: "Characters", placeholder: "Search characters..." },
-                { key: "parodies", icon: "🎭", title: "Parodies", placeholder: "Search parodies..." },
-                { key: "groups", icon: "👥", title: "Groups", placeholder: "Search groups..." },
-                { key: "categories", icon: "📂", title: "Categories", placeholder: "Search categories..." },
-              ].map((category) => {
-                const filterGroup = filters[category.key as keyof ImageBrowseFilters] as FilterGroup;
-                const hasActiveFilters = filterGroup.included.length > 0 || filterGroup.excluded.length > 0;
 
-                return (
-                  <div key={category.key} className="bg-gray-750 rounded-lg p-1">
-                    <button
-                      ref={(el) => {
-                        buttonRefs.current[category.key] = el;
-                      }}
-                      onClick={() =>
-                        openModal(
-                          category.key as FilterType | "categories",
-                          category.title,
-                          category.placeholder,
-                        )
-                      }
-                      className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{category.icon}</span>
-                        <span className="font-semibold">{category.title}</span>
-                        {renderTagCount(filterGroup)}
-                        <span className="text-xs text-gray-400">
-                          ({availableTags[category.key as keyof typeof availableTags]?.length || 0})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
+            {/* Loading state for tag categories */}
+            {isLoading ? (
+              <div className="text-center text-gray-400 py-4">
+                <div className="animate-spin w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                Loading filters...
+              </div>
+            ) : (
+              <>
+                {/* Tag Categories */}
+                <div className="space-y-3">
+                  {[
+                    { key: "tags", icon: "🏷️", title: "Tags", placeholder: "Search tags..." },
+                    { key: "artists", icon: "🎨", title: "Artists", placeholder: "Search artists..." },
+                    { key: "characters", icon: "🧑‍🎤", title: "Characters", placeholder: "Search characters..." },
+                    { key: "parodies", icon: "🎭", title: "Parodies", placeholder: "Search parodies..." },
+                    { key: "groups", icon: "👥", title: "Groups", placeholder: "Search groups..." },
+                    { key: "categories", icon: "📂", title: "Categories", placeholder: "Search categories..." },
+                  ].map((category) => {
+                    const filterGroup = filters[category.key as keyof ImageBrowseFilters] as FilterGroup;
+                    const hasActiveFilters = filterGroup.included.length > 0 || filterGroup.excluded.length > 0;
+
+                    return (
+                      <div key={category.key} className="bg-gray-750 rounded-lg overflow-hidden">
+                        <button
+                          ref={(el) => {
+                            buttonRefs.current[category.key] = el;
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openModal(
+                              category.key as FilterType | "categories",
+                              category.title,
+                              category.placeholder,
+                            );
+                          }}
+                          className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-t-lg transition flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{category.icon}</span>
+                            <span className="font-semibold">{category.title}</span>
+                            {renderTagCount(filterGroup)}
+                            <span className="text-xs text-gray-400">
+                              ({availableTags[category.key as keyof typeof availableTags]?.length || 0})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {hasActiveFilters && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  clearFiltersForType(category.key as FilterType | "categories");
+                                }}
+                                className="text-xs text-gray-400 hover:text-red-400 px-2 py-1 rounded bg-gray-600 hover:bg-gray-500 transition-colors"
+                                title="Clear all filters for this category"
+                              >
+                                Clear
+                              </button>
+                            )}
+                            <span className="text-gray-400">›</span>
+                          </div>
+                        </button>
+
+                        {/* Active filter tags */}
                         {hasActiveFilters && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              clearFiltersForType(category.key as FilterType | "categories");
-                            }}
-                            className="text-xs text-gray-400 hover:text-red-400 px-2 py-1 rounded bg-gray-600 hover:bg-gray-500 transition-colors"
-                            title="Clear all filters for this category"
-                          >
-                            Clear
-                          </button>
+                          <div className="bg-gray-750">
+                            {renderActiveFilters(category.key as FilterType | "categories")}
+                          </div>
                         )}
-                        <span className="text-gray-400">›</span>
                       </div>
-                    </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
-                    {/* Active filter tags */}
-                    {renderActiveFilters(category.key as FilterType | "categories")}
-                  </div>
-                );
-              })}
-            </>
-          )}
+            {/* Rating Range */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span>⭐</span>
+                <span>Rating Range</span>
+              </h3>
+              <RangeSlider
+                min={0}
+                max={5}
+                value={filters.rating}
+                onChange={(rating) => setFilters({ ...filters, rating })}
+                step={1}
+                label="Rating"
+              />
+            </div>
 
-          {/* Rating Range */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span>⭐</span>
-              <span>Rating Range</span>
-            </h3>
-            <RangeSlider
-              min={0}
-              max={5}
-              value={filters.rating}
-              onChange={(rating) => setFilters({ ...filters, rating })}
-              step={1}
-              label="Rating"
-            />
-          </div>
+            {/* O Count Range */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span>💖</span>
+                <span>O Count Range</span>
+              </h3>
+              <RangeSlider
+                min={0}
+                max={Math.max(10, ...images.map((img) => img.o_count))}
+                value={filters.oCount}
+                onChange={(oCount) => setFilters({ ...filters, oCount })}
+                step={1}
+                label="O Count"
+              />
+            </div>
 
-          {/* O Count Range */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span>💖</span>
-              <span>O Count Range</span>
-            </h3>
-            <RangeSlider
-              min={0}
-              max={Math.max(10, ...images.map((img) => img.o_count))}
-              value={filters.oCount}
-              onChange={(oCount) => setFilters({ ...filters, oCount })}
-              step={1}
-              label="O Count"
-            />
-          </div>
-
-          {/* File Formats */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span>🖼️</span>
-              <span>File Format</span>
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {formats.map((format) => (
-                <button
-                  key={format.code}
-                  onClick={() => toggleFormat(format.code)}
-                  className={`px-3 py-1 rounded text-sm transition ${format.code === "all"
-                    ? filters.formats.length === 0
-                      ? "bg-indigo-500 text-white"
-                      : "bg-gray-700 hover:bg-indigo-600"
-                    : filters.formats.includes(format.code)
-                      ? "bg-indigo-500 text-white"
-                      : "bg-gray-700 hover:bg-indigo-600"
-                    }`}
-                >
-                  {format.label}
-                </button>
-              ))}
+            {/* File Formats */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span>🖼️</span>
+                <span>File Format</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {formats.map((format) => (
+                  <button
+                    key={format.code}
+                    onClick={() => toggleFormat(format.code)}
+                    className={`px-3 py-1 rounded text-sm transition ${format.code === "all"
+                      ? filters.formats.length === 0
+                        ? "bg-indigo-500 text-white"
+                        : "bg-gray-700 hover:bg-indigo-600"
+                      : filters.formats.includes(format.code)
+                        ? "bg-indigo-500 text-white"
+                        : "bg-gray-700 hover:bg-indigo-600"
+                      }`}
+                  >
+                    {format.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
