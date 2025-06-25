@@ -1,4 +1,4 @@
-export type SortKey = "uploaded" | "rating" | "oCount" | "title";
+export type SortKey = "uploaded" | "rating" | "oCount" | "title" | "random";
 export type SortOrder = "asc" | "desc";
 
 export interface SortState {
@@ -146,7 +146,8 @@ export interface Entity {
   averageRating: number | null;
 }
 
-export type EntitySortKey = "name" | "doujinCount" | "totalOCount" | "averageRating";
+
+export type EntitySortKey = "name" | "doujinCount" | "totalOCount" | "averageRating" | "random";
 
 export interface EntitySortState {
   key: EntitySortKey;

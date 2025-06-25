@@ -90,7 +90,6 @@ const GalleryPage = () => {
     };
   }, [updateWidth]);
 
-
   useEffect(() => {
     // Force immediate recalculation
     const recalculate = () => {
@@ -120,7 +119,6 @@ const GalleryPage = () => {
     };
   }, [isSidebarCollapsed]);
 
-
   const fetchImages = async () => {
     try {
       const response = await fetch("/api/images");
@@ -135,7 +133,7 @@ const GalleryPage = () => {
 
   const fetchSavedFilters = async () => {
     try {
-      const response = await fetch("/api/user/image-saved-filters");
+      const response = await fetch("/api/user/saved-filters");
       if (!response.ok) throw new Error("Failed to fetch saved filters.");
       const data = await response.json();
       setSavedFilters(data.savedFilters || []);
@@ -146,12 +144,10 @@ const GalleryPage = () => {
 
   const fetchCollections = async () => {
     try {
-      const response = await fetch("/api/user/collections");
-      if (!response.ok) throw new Error("Failed to fetch collections");
-      const data = await response.json();
-      setCollections(data.collections || []);
+      setCollections([]);
     } catch (error) {
       console.error("Failed to fetch collections:", error);
+      setCollections([]);
     }
   };
 
@@ -163,6 +159,9 @@ const GalleryPage = () => {
 
   // Filter and sort images
   const filteredAndSortedImages = useMemo(() => {
+    console.log("Filtering images. Total images:", images.length);
+    console.log("Current filters:", filters);
+
     const filtered = images.filter((image) => {
       // Search filter
       if (filters.search && !image.filename.toLowerCase().includes(filters.search.toLowerCase())) {
@@ -190,6 +189,11 @@ const GalleryPage = () => {
         const imageValues = image[filterType] || [];
         const filterGroup = filters[filterType];
 
+        // Skip if no filters are set for this type
+        if (filterGroup.excluded.length === 0 && filterGroup.included.length === 0) {
+          continue;
+        }
+
         if (filterGroup.excluded.length > 0) {
           const hasExcluded = filterGroup.excluded.some((excludedValue) =>
             imageValues.some((imageValue) =>
@@ -212,26 +216,30 @@ const GalleryPage = () => {
       return true;
     });
 
+    console.log("Filtered images count:", filtered.length);
+
+    let sorted;
     if (sortBy === "random") {
-      return [...filtered].sort(() => Math.random() - 0.5);
+      sorted = [...filtered].sort(() => Math.random() - 0.5);
+    } else {
+      sorted = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+          case "filename":
+            return a.filename.localeCompare(b.filename);
+          case "rating":
+            return b.rating - a.rating;
+          case "ocount":
+            return b.o_count - a.o_count;
+          case "filesize":
+            return b.file_size - a.file_size;
+          case "uploaded":
+          default:
+            return new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime();
+        }
+      });
     }
 
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "filename":
-          return a.filename.localeCompare(b.filename);
-        case "rating":
-          return b.rating - a.rating;
-        case "ocount":
-          return b.o_count - a.o_count;
-        case "filesize":
-          return b.file_size - a.file_size;
-        case "uploaded":
-        default:
-          return new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime();
-      }
-    });
-
+    console.log("Final sorted images count:", sorted.length);
     return sorted;
   }, [images, filters, sortBy]);
 
@@ -308,18 +316,27 @@ const GalleryPage = () => {
     return rows;
   }, [containerWidth]);
 
+  // Reset page when filters or sorting changes
   useEffect(() => {
-    if (imagesWithLayout.length > 0) {
-      const startIndex = 0;
-      const endIndex = page * IMAGES_PER_PAGE;
-      const newDisplayed = filteredAndSortedImages.slice(startIndex, endIndex);
-      const newDisplayedWithLayout = imagesWithLayout.slice(startIndex, endIndex);
+    console.log("Filters or sorting changed, resetting page to 1");
+    setPage(1);
+  }, [filters, sortBy]);
 
-      setDisplayedImages(newDisplayed);
-      setLayoutRows(packImagesIntoRows(newDisplayedWithLayout));
-      setHasMore(endIndex < filteredAndSortedImages.length);
-    }
-  }, [imagesWithLayout, page, packImagesIntoRows, filteredAndSortedImages]);
+  // Update displayed images when filtered images change
+  useEffect(() => {
+    console.log("Updating displayed images. Filtered count:", filteredAndSortedImages.length, "Page:", page);
+
+    const startIndex = 0;
+    const endIndex = page * IMAGES_PER_PAGE;
+    const newDisplayed = filteredAndSortedImages.slice(startIndex, endIndex);
+    const newDisplayedWithLayout = imagesWithLayout.slice(startIndex, endIndex);
+
+    console.log("Setting displayed images count:", newDisplayed.length);
+
+    setDisplayedImages(newDisplayed);
+    setLayoutRows(packImagesIntoRows(newDisplayedWithLayout));
+    setHasMore(endIndex < filteredAndSortedImages.length);
+  }, [filteredAndSortedImages, imagesWithLayout, page, packImagesIntoRows]);
 
   const lastRowElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
@@ -361,12 +378,12 @@ const GalleryPage = () => {
     setSelectedImageIndex(newIndex);
   };
 
-  // Filter management functions (unchanged)
+  // Filter management functions
   const handleSaveFilter = async () => {
     const name = prompt("Enter a name for this filter set:");
     if (!name || !name.trim()) return;
     try {
-      const response = await fetch("/api/user/image-saved-filters", {
+      const response = await fetch("/api/user/saved-filters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), filters }),
@@ -388,7 +405,7 @@ const GalleryPage = () => {
     if (!window.confirm("Are you sure you want to delete this saved filter?"))
       return;
     try {
-      const response = await fetch(`/api/user/image-saved-filters/${id}`, {
+      const response = await fetch(`/api/user/saved-filters/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete filter.");
@@ -399,16 +416,11 @@ const GalleryPage = () => {
     }
   };
 
+  // Collection functions (need backend endpoints)
   const handleCreateCollection = async (name: string, description?: string) => {
     try {
-      const response = await fetch("/api/user/collections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description }),
-      });
-      if (!response.ok) throw new Error("Failed to create collection");
-      await fetchCollections();
-      alert("Collection created successfully!");
+      alert("Collection feature not implemented yet - backend endpoint needed");
+      return;
     } catch (error) {
       console.error("Failed to create collection:", error);
       alert("Error: Could not create collection.");
@@ -417,18 +429,19 @@ const GalleryPage = () => {
 
   const handleAddToCollection = async (collectionId: number, imageIds: number[]) => {
     try {
-      const response = await fetch(`/api/user/collections/${collectionId}/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageIds }),
-      });
-      if (!response.ok) throw new Error("Failed to add images to collection");
-      alert(`Successfully added ${imageIds.length} images to collection!`);
+      alert("Add to collection feature not implemented yet - backend endpoint needed");
+      return;
     } catch (error) {
       console.error("Failed to add to collection:", error);
       alert("Error: Could not add images to collection.");
     }
   };
+
+  // Custom setFilters wrapper that ensures page reset
+  const handleSetFilters = useCallback((newFilters: ImageBrowseFilters) => {
+    console.log("Setting new filters:", newFilters);
+    setFilters(newFilters);
+  }, []);
 
   if (loading) {
     return (
@@ -443,7 +456,7 @@ const GalleryPage = () => {
       <div className="hidden md:block">
         <ImageFilterSidebar
           filters={filters}
-          setFilters={setFilters}
+          setFilters={handleSetFilters}
           images={images}
           sortBy={sortBy}
           setSortBy={setSortBy}
@@ -471,7 +484,15 @@ const GalleryPage = () => {
             Showing {displayedImages.length} of {filteredAndSortedImages.length} images
           </div>
 
-          {displayedImages.length === 0 && !loading ? (
+          {/* Debug info */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-4 text-xs text-gray-500 bg-gray-800 p-2 rounded">
+              Debug: Total: {images.length}, Filtered: {filteredAndSortedImages.length},
+              Displayed: {displayedImages.length}, Page: {page}, Layout Rows: {layoutRows.length}
+            </div>
+          )}
+
+          {filteredAndSortedImages.length === 0 && !loading ? (
             <div className="text-center py-10">
               <p className="text-gray-400 text-lg">
                 No images found matching your filters.

@@ -70,7 +70,7 @@ const Home = () => {
           ) : (
             <div
               className={`grid ${viewMode === "cover"
-                ? "grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
+                ? "grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 lg:gap-0"
                 : "grid-cols-1 md:grid-cols-2 gap-4"
                 }`}
             >

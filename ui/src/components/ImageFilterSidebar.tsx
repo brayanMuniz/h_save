@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import type { ImageBrowseFilters, FilterType, SavedImageFilter, ImageCollection, FilterGroup } from "../types";
 import type { Image } from "../types";
 import RangeSlider from "./RangeSlider";
@@ -52,20 +52,115 @@ const ImageFilterSidebar = ({
   } | null>(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isCollectionDropdownOpen, setIsCollectionDropdownOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<{
+    tags: string[];
+    artists: string[];
+    characters: string[];
+    parodies: string[];
+    groups: string[];
+    categories: string[];
+  }>({
+    tags: [],
+    artists: [],
+    characters: [],
+    parodies: [],
+    groups: [],
+    categories: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
-  const availableTags = useMemo(() => {
-    const safeFilter = (items: string[]) =>
-      [...new Set(items.filter((item) => item != null && item.trim() !== ""))].sort();
-    return {
-      tags: safeFilter(images.flatMap((img) => img.tags || [])),
-      artists: safeFilter(images.flatMap((img) => img.artists || [])),
-      characters: safeFilter(images.flatMap((img) => img.characters || [])),
-      parodies: safeFilter(images.flatMap((img) => img.parodies || [])),
-      groups: safeFilter(images.flatMap((img) => img.groups || [])),
-      categories: safeFilter(images.flatMap((img) => img.categories || [])),
+  // Fetch all available metadata on component mount
+  useEffect(() => {
+    const fetchAllMetadata = async () => {
+      setIsLoading(true);
+      setLoadingError(null);
+      try {
+        console.log("Fetching metadata from API...");
+
+        // Fetch each metadata type
+        const fetchPromises = [
+          fetch('/api/tags').then(res => {
+            if (!res.ok) throw new Error(`Tags API failed: ${res.status}`);
+            return res.json();
+          }),
+          fetch('/api/artists').then(res => {
+            if (!res.ok) throw new Error(`Artists API failed: ${res.status}`);
+            return res.json();
+          }),
+          fetch('/api/characters').then(res => {
+            if (!res.ok) throw new Error(`Characters API failed: ${res.status}`);
+            return res.json();
+          }),
+          fetch('/api/parodies').then(res => {
+            if (!res.ok) throw new Error(`Parodies API failed: ${res.status}`);
+            return res.json();
+          }),
+          fetch('/api/groups').then(res => {
+            if (!res.ok) throw new Error(`Groups API failed: ${res.status}`);
+            return res.json();
+          }),
+        ];
+
+        const [tags, artists, characters, parodies, groups] = await Promise.all(fetchPromises);
+
+        console.log("API responses:", { tags, artists, characters, parodies, groups });
+
+        // Extract categories from current images as fallback (no API endpoint exists)
+        const categories = [...new Set(images.flatMap((img) => img.categories || [])
+          .filter((cat) => cat != null && cat.trim() !== ""))].sort();
+
+        // Handle different possible response structures
+        const extractNames = (data: any): string[] => {
+          if (Array.isArray(data)) {
+            return data.map(item =>
+              typeof item === 'string' ? item : (item.name || item.Name || String(item))
+            ).filter(Boolean).sort();
+          }
+          if (data && Array.isArray(data.tags)) return data.tags.map((t: any) => t.name || t.Name || String(t)).filter(Boolean).sort();
+          if (data && Array.isArray(data.artists)) return data.artists.map((a: any) => a.name || a.Name || String(a)).filter(Boolean).sort();
+          if (data && Array.isArray(data.characters)) return data.characters.map((c: any) => c.name || c.Name || String(c)).filter(Boolean).sort();
+          if (data && Array.isArray(data.parodies)) return data.parodies.map((p: any) => p.name || p.Name || String(p)).filter(Boolean).sort();
+          if (data && Array.isArray(data.groups)) return data.groups.map((g: any) => g.name || g.Name || String(g)).filter(Boolean).sort();
+          return [];
+        };
+
+        const newAvailableTags = {
+          tags: extractNames(tags),
+          artists: extractNames(artists),
+          characters: extractNames(characters),
+          parodies: extractNames(parodies),
+          groups: extractNames(groups),
+          categories: categories,
+        };
+
+        console.log("Processed metadata:", newAvailableTags);
+        setAvailableTags(newAvailableTags);
+
+      } catch (error) {
+        console.error('Failed to fetch metadata:', error);
+        setLoadingError(error instanceof Error ? error.message : 'Failed to fetch metadata');
+
+        // Fallback to calculating from current images
+        const safeFilter = (items: string[]) =>
+          [...new Set(items.filter((item) => item != null && item.trim() !== ""))].sort();
+
+        setAvailableTags({
+          tags: safeFilter(images.flatMap((img) => img.tags || [])),
+          artists: safeFilter(images.flatMap((img) => img.artists || [])),
+          characters: safeFilter(images.flatMap((img) => img.characters || [])),
+          parodies: safeFilter(images.flatMap((img) => img.parodies || [])),
+          groups: safeFilter(images.flatMap((img) => img.groups || [])),
+          categories: safeFilter(images.flatMap((img) => img.categories || [])),
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [images]);
+
+    fetchAllMetadata();
+  }, []); // Empty dependency array - only fetch once on mount
 
   const highRatedImages = useMemo(() => {
     return images.filter(img => img.rating >= 4);
@@ -101,6 +196,78 @@ const ImageFilterSidebar = ({
         {total}
       </span>
     ) : null;
+  };
+
+  // Function to remove a filter from included or excluded arrays
+  const removeFilter = (filterType: FilterType | "categories", filterValue: string, isIncluded: boolean) => {
+    const currentFilterGroup = filters[filterType] as FilterGroup;
+
+    if (isIncluded) {
+      const newIncluded = currentFilterGroup.included.filter(item => item !== filterValue);
+      updateFilterGroup(filterType, { ...currentFilterGroup, included: newIncluded });
+    } else {
+      const newExcluded = currentFilterGroup.excluded.filter(item => item !== filterValue);
+      updateFilterGroup(filterType, { ...currentFilterGroup, excluded: newExcluded });
+    }
+  };
+
+  // Function to render active filter tags
+  const renderActiveFilters = (filterType: FilterType | "categories") => {
+    const filterGroup = filters[filterType] as FilterGroup;
+    const hasFilters = filterGroup.included.length > 0 || filterGroup.excluded.length > 0;
+
+    if (!hasFilters) return null;
+
+    return (
+      <div className="mt-2 mb-2 space-y-2">
+        {/* Included filters (green) */}
+        {filterGroup.included.length > 0 && (
+          <div>
+            <div className="text-xs text-green-400 font-medium mb-1">Including:</div>
+            <div className="flex flex-wrap gap-1">
+              {filterGroup.included.map((filterValue) => (
+                <button
+                  key={`inc-${filterValue}`}
+                  onClick={() => removeFilter(filterType, filterValue, true)}
+                  className="inline-flex items-center px-2 py-1 text-xs bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
+                  title="Click to remove"
+                >
+                  <span className="mr-1">+</span>
+                  <span className="truncate max-w-24">{filterValue}</span>
+                  <span className="ml-1 text-green-200 hover:text-white">×</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Excluded filters (red) */}
+        {filterGroup.excluded.length > 0 && (
+          <div>
+            <div className="text-xs text-red-400 font-medium mb-1">Excluding:</div>
+            <div className="flex flex-wrap gap-1">
+              {filterGroup.excluded.map((filterValue) => (
+                <button
+                  key={`exc-${filterValue}`}
+                  onClick={() => removeFilter(filterType, filterValue, false)}
+                  className="inline-flex items-center px-2 py-1 text-xs bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                  title="Click to remove"
+                >
+                  <span className="mr-1">−</span>
+                  <span className="truncate max-w-24">{filterValue}</span>
+                  <span className="ml-1 text-red-200 hover:text-white">×</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Function to clear all filters for a specific type
+  const clearFiltersForType = (filterType: FilterType | "categories") => {
+    updateFilterGroup(filterType, { included: [], excluded: [] });
   };
 
   const handleCreateCollection = () => {
@@ -161,6 +328,13 @@ const ImageFilterSidebar = ({
               </svg>
             </button>
           </div>
+
+          {/* Debug info */}
+          {loadingError && (
+            <div className="text-red-400 text-xs p-2 bg-red-900 rounded">
+              API Error: {loadingError}
+            </div>
+          )}
 
           {/* Saved Filters */}
           <div className="relative">
@@ -310,38 +484,73 @@ const ImageFilterSidebar = ({
             </select>
           </div>
 
-          {/* Tag Categories */}
-          {[
-            { key: "tags", icon: "🏷️", title: "Tags", placeholder: "Search tags..." },
-            { key: "artists", icon: "🎨", title: "Artists", placeholder: "Search artists..." },
-            { key: "characters", icon: "🧑‍🎤", title: "Characters", placeholder: "Search characters..." },
-            { key: "parodies", icon: "🎭", title: "Parodies", placeholder: "Search parodies..." },
-            { key: "groups", icon: "👥", title: "Groups", placeholder: "Search groups..." },
-            { key: "categories", icon: "📂", title: "Categories", placeholder: "Search categories..." },
-          ].map((category) => (
-            <div key={category.key}>
-              <button
-                ref={(el) => {
-                  buttonRefs.current[category.key] = el;
-                }}
-                onClick={() =>
-                  openModal(
-                    category.key as FilterType | "categories",
-                    category.title,
-                    category.placeholder,
-                  )
-                }
-                className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{category.icon}</span>
-                  <span className="font-semibold">{category.title}</span>
-                  {renderTagCount(filters[category.key as keyof ImageBrowseFilters])}
-                </div>
-                <span className="text-gray-400">›</span>
-              </button>
+          {/* Loading state for tag categories */}
+          {isLoading ? (
+            <div className="text-center text-gray-400 py-4">
+              <div className="animate-spin w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+              Loading filters...
             </div>
-          ))}
+          ) : (
+            <>
+              {/* Tag Categories */}
+              {[
+                { key: "tags", icon: "🏷️", title: "Tags", placeholder: "Search tags..." },
+                { key: "artists", icon: "🎨", title: "Artists", placeholder: "Search artists..." },
+                { key: "characters", icon: "🧑‍🎤", title: "Characters", placeholder: "Search characters..." },
+                { key: "parodies", icon: "🎭", title: "Parodies", placeholder: "Search parodies..." },
+                { key: "groups", icon: "👥", title: "Groups", placeholder: "Search groups..." },
+                { key: "categories", icon: "📂", title: "Categories", placeholder: "Search categories..." },
+              ].map((category) => {
+                const filterGroup = filters[category.key as keyof ImageBrowseFilters] as FilterGroup;
+                const hasActiveFilters = filterGroup.included.length > 0 || filterGroup.excluded.length > 0;
+
+                return (
+                  <div key={category.key} className="bg-gray-750 rounded-lg p-1">
+                    <button
+                      ref={(el) => {
+                        buttonRefs.current[category.key] = el;
+                      }}
+                      onClick={() =>
+                        openModal(
+                          category.key as FilterType | "categories",
+                          category.title,
+                          category.placeholder,
+                        )
+                      }
+                      className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{category.icon}</span>
+                        <span className="font-semibold">{category.title}</span>
+                        {renderTagCount(filterGroup)}
+                        <span className="text-xs text-gray-400">
+                          ({availableTags[category.key as keyof typeof availableTags]?.length || 0})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasActiveFilters && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearFiltersForType(category.key as FilterType | "categories");
+                            }}
+                            className="text-xs text-gray-400 hover:text-red-400 px-2 py-1 rounded bg-gray-600 hover:bg-gray-500 transition-colors"
+                            title="Clear all filters for this category"
+                          >
+                            Clear
+                          </button>
+                        )}
+                        <span className="text-gray-400">›</span>
+                      </div>
+                    </button>
+
+                    {/* Active filter tags */}
+                    {renderActiveFilters(category.key as FilterType | "categories")}
+                  </div>
+                );
+              })}
+            </>
+          )}
 
           {/* Rating Range */}
           <div>

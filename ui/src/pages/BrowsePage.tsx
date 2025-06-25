@@ -208,6 +208,7 @@ const BrowsePage = () => {
   return (
     <div className="min-h-screen bg-gray-900 flex">
       <div className="hidden md:block">
+
         <FilterSidebar
           filters={filters}
           setFilters={setFilters}
@@ -219,16 +220,20 @@ const BrowsePage = () => {
           onLoadFilter={handleLoadFilter}
           onDeleteFilter={handleDeleteFilter}
         />
+
       </div>
 
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+
         <MobileFilterBar
           savedFilters={savedFilters}
           onLoadFilter={handleLoadFilter}
           onDeleteFilter={handleDeleteFilter}
           onClearAll={handleClearAllTagFilters}
         />
+
         <SelectedFiltersBar filters={filters} setFilters={setFilters} />
+
         <BrowseContent
           doujinshi={filteredAndSortedDoujinshi}
           viewMode={viewMode}

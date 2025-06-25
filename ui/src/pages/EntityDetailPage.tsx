@@ -120,27 +120,39 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
   const sortedDoujinshi = useMemo(() => {
     if (!data?.doujinshiList) return [];
     const sorted = [...data.doujinshiList];
-    sorted.sort((a, b) => {
-      const order = sort.order === "asc" ? 1 : -1;
-      switch (sort.key) {
-        case "title":
-          return a.title.localeCompare(b.title) * order;
-        case "uploaded":
-          return (
-            (new Date(a.uploaded).getTime() -
-              new Date(b.uploaded).getTime()) *
-            order
-          );
-        case "rating":
-          return ((a.progress?.rating ?? 0) - (b.progress?.rating ?? 0)) * order;
-        case "oCount":
-          return (a.oCount - b.oCount) * order;
-        default:
-          return 0;
+
+    if (sort.key === "random") {
+      // Fisher-Yates shuffle for true randomness
+      for (let i = sorted.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
       }
-    });
+    } else {
+      // Regular sorting logic
+      sorted.sort((a, b) => {
+        const order = sort.order === "asc" ? 1 : -1;
+        switch (sort.key) {
+          case "title":
+            return a.title.localeCompare(b.title) * order;
+          case "uploaded":
+            return (
+              (new Date(a.uploaded).getTime() -
+                new Date(b.uploaded).getTime()) *
+              order
+            );
+          case "rating":
+            return ((a.progress?.rating ?? 0) - (b.progress?.rating ?? 0)) * order;
+          case "oCount":
+            return (a.oCount - b.oCount) * order;
+          default:
+            return 0;
+        }
+      });
+    }
+
     return sorted;
   }, [data?.doujinshiList, sort]);
+
 
   const getLanguageFlag = (languages: string[]): React.ReactNode => {
     if (!languages || languages.length === 0) return <span>🌐</span>;

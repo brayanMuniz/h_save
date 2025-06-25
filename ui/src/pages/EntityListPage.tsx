@@ -130,6 +130,8 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
 
   const filteredAndSortedEntities = useMemo(() => {
     let processed = [...entities];
+
+    // Apply filters first
     if (filters.showFavoritesOnly) {
       processed = processed.filter((e) => e.isFavorite);
     }
@@ -150,27 +152,37 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
       );
     }
 
-    // This switch statement is now type-safe because sort.key is an EntitySortKey
-    processed.sort((a, b) => {
-      const order = sort.order === "asc" ? 1 : -1;
-      switch (sort.key) {
-        case "name":
-          return a.name.localeCompare(b.name) * order;
-        case "doujinCount":
-          return (a.doujinCount - b.doujinCount) * order;
-        case "totalOCount":
-          return (a.totalOCount - b.totalOCount) * order;
-        case "averageRating":
-          const ratingA = a.averageRating ?? -1;
-          const ratingB = b.averageRating ?? -1;
-          return (ratingA - ratingB) * order;
-        default:
-          return 0;
+    // Handle sorting
+    if (sort.key === "random") {
+      // Fisher-Yates shuffle for true randomness
+      for (let i = processed.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [processed[i], processed[j]] = [processed[j], processed[i]];
       }
-    });
+    } else {
+      // Regular sorting logic
+      processed.sort((a, b) => {
+        const order = sort.order === "asc" ? 1 : -1;
+        switch (sort.key) {
+          case "name":
+            return a.name.localeCompare(b.name) * order;
+          case "doujinCount":
+            return (a.doujinCount - b.doujinCount) * order;
+          case "totalOCount":
+            return (a.totalOCount - b.totalOCount) * order;
+          case "averageRating":
+            const ratingA = a.averageRating ?? -1;
+            const ratingB = b.averageRating ?? -1;
+            return (ratingA - ratingB) * order;
+          default:
+            return 0;
+        }
+      });
+    }
 
     return processed;
   }, [entities, filters, sort]);
+
 
   if (loading) {
     return (
@@ -195,12 +207,16 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
   return (
     <div className="min-h-screen bg-gray-900">
       <Sidebar />
+
       <div className="lg:ml-64">
         <MobileNav />
+
         <main className="flex-1 p-6">
+
           <h1 className="text-3xl font-bold text-gray-100 mb-6">
             {icon} {entityNamePlural}
           </h1>
+
           <div className="bg-gray-800 p-4 rounded-lg mb-6 shadow">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-end">
               <div className="flex items-center">
@@ -294,6 +310,8 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                     <option value="doujinCount">Works</option>
                     <option value="totalOCount">Total ♥</option>
                     <option value="averageRating">Avg. Rating</option>
+
+                    <option value="random">Random</option>
                   </select>
                 </div>
                 <div>
@@ -303,16 +321,23 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                   >
                     Order
                   </label>
+
                   <select
                     id="sortOrder"
                     name="order"
                     value={sort.order}
                     onChange={handleSortChange}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-sm focus:ring-indigo-500 focus:border-transparent"
+                    disabled={sort.key === "random"}
+                    className={`w-full px-3 py-2 border border-gray-600 rounded-lg text-gray-200 text-sm focus:ring-indigo-500 focus:border-transparent ${sort.key === "random"
+                        ? "bg-gray-600 cursor-not-allowed"
+                        : "bg-gray-700"
+                      }`}
                   >
                     <option value="asc">Asc</option>
                     <option value="desc">Desc</option>
                   </select>
+
+
                 </div>
               </div>
             </div>

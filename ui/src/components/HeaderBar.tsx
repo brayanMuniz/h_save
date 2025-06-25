@@ -62,6 +62,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             <option value="rating">Rating</option>
             <option value="oCount">♥ Count</option>
             <option value="title">Title</option>
+            <option value="random">Random</option>
           </select>
           <select
             value={sort.order}
@@ -80,8 +81,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         <button
           onClick={() => setViewMode("card")}
           className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "card"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:bg-gray-800"
+            ? "bg-gray-700 text-white"
+            : "text-gray-400 hover:bg-gray-800"
             }`}
         >
           Card
@@ -89,8 +90,8 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         <button
           onClick={() => setViewMode("cover")}
           className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "cover"
-              ? "bg-gray-700 text-white"
-              : "text-gray-400 hover:bg-gray-800"
+            ? "bg-gray-700 text-white"
+            : "text-gray-400 hover:bg-gray-800"
             }`}
         >
           Cover
