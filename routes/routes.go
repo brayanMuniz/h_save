@@ -137,6 +137,19 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			images.GET("/artist/:id", func(ctx *gin.Context) {
 				GetImageArtistPageData(ctx, database)
 			})
+
+			// IMAGE TAG MANAGEMENT ROUTES
+			images.PUT("/:id/tags", func(ctx *gin.Context) {
+				UpdateImageTags(ctx, database)
+			})
+
+			images.POST("/:id/tags", func(ctx *gin.Context) {
+				AddImageTags(ctx, database)
+			})
+
+			images.DELETE("/:id/tags", func(ctx *gin.Context) {
+				RemoveImageTags(ctx, database)
+			})
 		}
 
 		// USER PROFILE ROUTES

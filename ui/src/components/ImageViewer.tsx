@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import type { Image } from '../types';
 import ImageControls from './ImageControls';
+import EntityEditor from './EntityEditor';
 
 interface ImageViewerProps {
   images: Image[];
   currentIndex: number;
   onClose: () => void;
   onNavigate: (direction: 'prev' | 'next') => void;
+  onImageUpdate?: () => void;
 }
 
 const ImageViewer: React.FC<ImageViewerProps> = ({
@@ -14,10 +16,12 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   currentIndex,
   onClose,
   onNavigate,
+  onImageUpdate,
 }) => {
   const [showUI, setShowUI] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isTagEditorOpen, setIsTagEditorOpen] = useState(false);
   const hideUITimer = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastInteractionTime = useRef<number>(Date.now());
@@ -46,39 +50,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     };
   }, []);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      resetUITimer();
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          onNavigate('prev');
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          onNavigate('next');
-          break;
-        case 'Escape':
-          event.preventDefault();
-          onClose();
-          break;
-        case ' ': // Spacebar to toggle UI
-          event.preventDefault();
-          toggleUI();
-          break;
-        default:
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onNavigate, onClose]);
-
   // Toggle UI visibility
   const toggleUI = useCallback(() => {
     if (showUI) {
@@ -100,6 +71,43 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
       setShowUI(false);
     }, timeout);
   }, [isTouchDevice]);
+
+  // Keyboard navigation and shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Open tag modal with 'a' if not open and no input is focused
+      if (event.key === 'a' && !isTagEditorOpen && document.activeElement?.tagName !== 'INPUT') {
+        event.preventDefault();
+        setIsTagEditorOpen(true);
+        return;
+      }
+      resetUITimer();
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          onNavigate('prev');
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          onNavigate('next');
+          break;
+        case 'Escape':
+          event.preventDefault();
+          onClose();
+          break;
+        case ' ': // Spacebar to toggle UI
+          event.preventDefault();
+          toggleUI();
+          break;
+        default:
+          break;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onNavigate, onClose, isTagEditorOpen, resetUITimer, toggleUI]);
 
   // Handle mouse movement (desktop)
   const handleMouseMove = useCallback(() => {
@@ -162,6 +170,11 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   useEffect(() => {
     resetUITimer();
   }, [currentIndex, resetUITimer]);
+
+  // Force showUI to true when tag editor is open
+  useEffect(() => {
+    if (isTagEditorOpen) setShowUI(true);
+  }, [isTagEditorOpen]);
 
   if (!currentImage) return null;
 
@@ -315,7 +328,13 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           <div style={{ zIndex: 65 }}>
             <ImageControls
               image={currentImage}
-              onUpdate={resetUITimer}
+              onUpdate={() => {
+                resetUITimer();
+                onImageUpdate?.();
+              }}
+              onUITimerReset={resetUITimer}
+              isTagEditorOpen={isTagEditorOpen}
+              setIsTagEditorOpen={setIsTagEditorOpen}
             />
           </div>
         </>
@@ -330,6 +349,15 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
           Tap center to show controls
         </div>
       )}
+
+      {/* Tag Editor Modal */}
+      <EntityEditor
+        image={currentImage}
+        isOpen={isTagEditorOpen}
+        onClose={() => setIsTagEditorOpen(false)}
+        onUpdate={onImageUpdate}
+        entityType="tag"
+      />
     </div>
   );
 };

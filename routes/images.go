@@ -285,3 +285,79 @@ func GetImageArtistPageData(c *gin.Context, database *sql.DB) {
 
 	c.JSON(http.StatusOK, gin.H{"images": result})
 }
+
+// Image tag management handlers
+func UpdateImageTags(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Tags []string `json:"tags"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.UpdateImageTags(database, imageID, req.Tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update image tags"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image tags updated successfully"})
+}
+
+func AddImageTags(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Tags []string `json:"tags"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.AddImageTags(database, imageID, req.Tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add image tags"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image tags added successfully"})
+}
+
+func RemoveImageTags(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Tags []string `json:"tags"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.RemoveImageTags(database, imageID, req.Tags); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove image tags"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image tags removed successfully"})
+}

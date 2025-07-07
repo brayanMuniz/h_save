@@ -157,6 +157,27 @@ const GalleryPage = () => {
     fetchCollections();
   }, []);
 
+  // Clean up observer when viewer opens/closes
+  useEffect(() => {
+    if (isViewerOpen && observer.current) {
+      observer.current.disconnect();
+      observer.current = null;
+    }
+  }, [isViewerOpen]);
+
+  // Prevent scrolling when viewer is open
+  useEffect(() => {
+    if (isViewerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isViewerOpen]);
+
   // Filter and sort images
   const filteredAndSortedImages = useMemo(() => {
     console.log("Filtering images. Total images:", images.length);
@@ -339,7 +360,7 @@ const GalleryPage = () => {
   }, [filteredAndSortedImages, imagesWithLayout, page, packImagesIntoRows]);
 
   const lastRowElementRef = useCallback((node: HTMLDivElement) => {
-    if (loading) return;
+    if (loading || isViewerOpen) return; // Disable infinite scroll when viewer is open
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(
       entries => {
@@ -350,7 +371,7 @@ const GalleryPage = () => {
       { threshold: 0.1 }
     );
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, isViewerOpen]);
 
   const handleImageClick = (imageId: number) => {
     const index = filteredAndSortedImages.findIndex(img => img.id === imageId);
@@ -376,6 +397,13 @@ const GalleryPage = () => {
     }
 
     setSelectedImageIndex(newIndex);
+  };
+
+  const handleImageUpdate = () => {
+    // Only refresh if we're not in the viewer to avoid unnecessary re-fetching
+    if (!isViewerOpen) {
+      fetchImages();
+    }
   };
 
   // Filter management functions
@@ -507,7 +535,7 @@ const GalleryPage = () => {
                 {layoutRows.map((row, rowIndex) => (
                   <div
                     key={rowIndex}
-                    ref={rowIndex === layoutRows.length - 1 ? lastRowElementRef : null}
+                    ref={rowIndex === layoutRows.length - 1 && !isViewerOpen ? lastRowElementRef : null}
                     className="flex mb-1 justify-start"
                     style={{ height: `${row.maxHeight}px` }}
                   >
@@ -552,6 +580,7 @@ const GalleryPage = () => {
           currentIndex={selectedImageIndex}
           onClose={handleCloseViewer}
           onNavigate={handleNavigate}
+          onImageUpdate={handleImageUpdate}
         />
       )}
     </div>

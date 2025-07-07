@@ -503,3 +503,72 @@ func isImageFile(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp" || ext == ".gif"
 }
+
+// Image tag management functions
+func UpdateImageTags(db *sql.DB, imageID int64, tags []string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Remove all existing tags for this image
+	_, err = tx.Exec("DELETE FROM image_tags WHERE image_id = ?", imageID)
+	if err != nil {
+		return err
+	}
+
+	// Add new tags
+	if len(tags) > 0 {
+		err = linkImageManyToMany(tx, imageID, tags, "tags", "image_tags", "tag_id")
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func AddImageTags(db *sql.DB, imageID int64, tags []string) error {
+	if len(tags) == 0 {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = linkImageManyToMany(tx, imageID, tags, "tags", "image_tags", "tag_id")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func RemoveImageTags(db *sql.DB, imageID int64, tags []string) error {
+	if len(tags) == 0 {
+		return nil
+	}
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(tags))
+	args := make([]interface{}, len(tags)+1)
+	args[0] = imageID
+
+	for i, tag := range tags {
+		placeholders[i] = "?"
+		args[i+1] = tag
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM image_tags 
+		WHERE image_id = ? AND tag_id IN (
+			SELECT id FROM tags WHERE name IN (%s)
+		)`, strings.Join(placeholders, ","))
+
+	_, err := db.Exec(query, args...)
+	return err
+}
