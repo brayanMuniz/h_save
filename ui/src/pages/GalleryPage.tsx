@@ -5,6 +5,7 @@ import HeaderBar from "../components/HeaderBar";
 import ImageFilterSidebar from "../components/ImageFilterSidebar";
 import MobileNav from "../components/MobileNav";
 import ImageViewer from "../components/ImageViewer";
+import BatchTaggingMode from "../components/BatchTaggingMode";
 
 interface ImageWithLayout extends Image {
   displayWidth: number;
@@ -52,6 +53,11 @@ const GalleryPage = () => {
   // Image viewer state
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  // Batch tagging mode state
+  const [isBatchTaggingMode, setIsBatchTaggingMode] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
 
   const IMAGES_PER_PAGE = 200;
   const TARGET_ROW_HEIGHT = 250;
@@ -374,6 +380,13 @@ const GalleryPage = () => {
   }, [loading, hasMore, isViewerOpen]);
 
   const handleImageClick = (imageId: number) => {
+    if (isViewerOpen) return;
+    
+    if (isBatchTaggingMode) {
+      // In batch tagging mode, handle selection differently
+      return;
+    }
+    
     const index = filteredAndSortedImages.findIndex(img => img.id === imageId);
     if (index !== -1) {
       setSelectedImageIndex(index);
@@ -471,6 +484,15 @@ const GalleryPage = () => {
     setFilters(newFilters);
   }, []);
 
+  // Get available tags from all images
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    images.forEach(image => {
+      (image.tags ?? []).forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [images]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -480,8 +502,9 @@ const GalleryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex">
-      <div className="hidden md:block">
+    <div className="min-h-screen bg-gray-900">
+      {/* Fixed Sidebar */}
+      <div className={`hidden md:block fixed top-0 left-0 h-full z-30 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-80'}`}>
         <ImageFilterSidebar
           filters={filters}
           setFilters={handleSetFilters}
@@ -500,20 +523,55 @@ const GalleryPage = () => {
         />
       </div>
 
+      {/* Main Gallery Area */}
       <div
         ref={mainContentRef}
-        className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-80'}`}
+        className={`min-h-screen flex-1 transition-all duration-300 relative ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-80'}`}
       >
         <MobileNav />
         <main className="p-6">
+          {/* View Mode Toggle Overlay */}
+          <div className="absolute top-6 right-6 z-20 flex items-center rounded-lg border border-gray-600 p-0.5 bg-gray-900/80 backdrop-blur">
+            <button
+              onClick={() => setViewMode("card")}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "card"
+                ? "bg-gray-700 text-white"
+                : "text-gray-400 hover:bg-gray-800"
+                }`}
+            >
+              Card
+            </button>
+            <button
+              onClick={() => setViewMode("cover")}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "cover"
+                ? "bg-gray-700 text-white"
+                : "text-gray-400 hover:bg-gray-800"
+                }`}
+            >
+              Cover
+            </button>
+          </div>
           <HeaderBar viewMode={viewMode} setViewMode={setViewMode} />
 
+          <BatchTaggingMode
+            isActive={isBatchTaggingMode}
+            onToggle={() => setIsBatchTaggingMode(!isBatchTaggingMode)}
+            onImagesUpdated={fetchImages}
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+            availableTags={availableTags}
+            selectedImages={selectedImages}
+            onSelectedImagesChange={setSelectedImages}
+          />
+
           <div className="mb-4 text-gray-400 text-sm">
-            Showing {displayedImages.length} of {filteredAndSortedImages.length} images
+            Showing {(isBatchTaggingMode && selectedTags.length > 0
+              ? layoutRows.reduce((acc, row) => acc + row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag)))).length, 0)
+              : displayedImages.length)} of {filteredAndSortedImages.length} images
           </div>
 
           {/* Debug info */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="mb-4 text-xs text-gray-500 bg-gray-800 p-2 rounded">
               Debug: Total: {images.length}, Filtered: {filteredAndSortedImages.length},
               Displayed: {displayedImages.length}, Page: {page}, Layout Rows: {layoutRows.length}
@@ -532,35 +590,70 @@ const GalleryPage = () => {
           ) : (
             <>
               <div ref={containerRef} className="w-full">
-                {layoutRows.map((row, rowIndex) => (
-                  <div
-                    key={rowIndex}
-                    ref={rowIndex === layoutRows.length - 1 && !isViewerOpen ? lastRowElementRef : null}
-                    className="flex mb-1 justify-start"
-                    style={{ height: `${row.maxHeight}px` }}
-                  >
-                    {row.images.map((image, imageIndex) => (
-                      <button
-                        key={image.id}
-                        onClick={() => handleImageClick(image.id)}
-                        className="block hover:opacity-75 transition-opacity cursor-pointer"
-                        style={{
-                          width: `${image.displayWidth}px`,
-                          height: `${image.displayHeight}px`,
-                          marginRight: imageIndex < row.images.length - 1 ? '4px' : '0',
-                        }}
+                {(isBatchTaggingMode && selectedTags.length > 0 && layoutRows.reduce((acc, row) => acc + row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag)))).length, 0) === 0) ? (
+                  <div className="text-center py-10 text-gray-400">All images already have the selected tags.</div>
+                ) : (
+                  layoutRows.map((row, rowIndex) => {
+                    // Filter images in this row for batch mode
+                    const rowImages = isBatchTaggingMode && selectedTags.length > 0
+                      ? row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag))))
+                      : row.images;
+                    if (rowImages.length === 0) return null;
+                    return (
+                      <div
+                        key={rowIndex}
+                        ref={rowIndex === layoutRows.length - 1 && !isViewerOpen ? lastRowElementRef : null}
+                        className="flex mb-1 justify-start"
+                        style={{ height: `${row.maxHeight}px` }}
                       >
-                        <img
-                          src={image.thumbnail_url}
-                          alt={image.filename}
-                          className="w-full h-full object-cover rounded-sm"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                ))}
+                        {rowImages.map((image, imageIndex) => {
+                          const isSelected = selectedImages.has(image.id);
+                          return (
+                            <button
+                              key={image.id}
+                              onClick={() => {
+                                if (isBatchTaggingMode) {
+                                  const newSelected = new Set(selectedImages);
+                                  if (newSelected.has(image.id)) {
+                                    newSelected.delete(image.id);
+                                  } else {
+                                    newSelected.add(image.id);
+                                  }
+                                  setSelectedImages(newSelected);
+                                } else {
+                                  handleImageClick(image.id);
+                                }
+                              }}
+                              className={`block hover:opacity-75 transition-all cursor-pointer relative ${
+                                isBatchTaggingMode && isSelected
+                                  ? 'ring-4 ring-blue-500 ring-opacity-75 opacity-90'
+                                  : ''
+                              }`}
+                              style={{
+                                width: `${image.displayWidth}px`,
+                                height: `${image.displayHeight}px`,
+                                marginRight: imageIndex < rowImages.length - 1 ? '4px' : '0',
+                              }}
+                            >
+                              <img
+                                src={image.thumbnail_url}
+                                alt={image.filename}
+                                className="w-full h-full object-cover rounded-sm"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                              {isBatchTaggingMode && isSelected && (
+                                <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                                  ✓
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {hasMore && (

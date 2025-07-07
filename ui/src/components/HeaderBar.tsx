@@ -75,28 +75,6 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
           </select>
         </div>
       )}
-
-      {/* Right Side: View Mode Toggle */}
-      <div className="flex items-center rounded-lg border border-gray-600 p-0.5">
-        <button
-          onClick={() => setViewMode("card")}
-          className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "card"
-            ? "bg-gray-700 text-white"
-            : "text-gray-400 hover:bg-gray-800"
-            }`}
-        >
-          Card
-        </button>
-        <button
-          onClick={() => setViewMode("cover")}
-          className={`px-3 py-1 text-sm rounded-md transition-colors ${viewMode === "cover"
-            ? "bg-gray-700 text-white"
-            : "text-gray-400 hover:bg-gray-800"
-            }`}
-        >
-          Cover
-        </button>
-      </div>
     </div>
   );
 };

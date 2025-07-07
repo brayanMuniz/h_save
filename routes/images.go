@@ -361,3 +361,43 @@ func RemoveImageTags(c *gin.Context, database *sql.DB) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Image tags removed successfully"})
 }
+
+// Batch update image tags
+func BatchUpdateImageTags(c *gin.Context, database *sql.DB) {
+	var req struct {
+		ImageIDs []int64  `json:"image_ids"`
+		Tags     []string `json:"tags"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if len(req.ImageIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image IDs provided"})
+		return
+	}
+
+	if len(req.Tags) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No tags provided"})
+		return
+	}
+
+	// Update each image with the new tags
+	updatedCount := 0
+	for _, imageID := range req.ImageIDs {
+		if err := db.AddImageTags(database, imageID, req.Tags); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to update image %d: %v", imageID, err),
+			})
+			return
+		}
+		updatedCount++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       fmt.Sprintf("Successfully updated %d images with tags", updatedCount),
+		"updated_count": updatedCount,
+	})
+}

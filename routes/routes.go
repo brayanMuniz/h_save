@@ -150,6 +150,11 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			images.DELETE("/:id/tags", func(ctx *gin.Context) {
 				RemoveImageTags(ctx, database)
 			})
+
+			// BATCH IMAGE TAG MANAGEMENT ROUTES
+			images.POST("/batch/tags", func(ctx *gin.Context) {
+				BatchUpdateImageTags(ctx, database)
+			})
 		}
 
 		// USER PROFILE ROUTES
