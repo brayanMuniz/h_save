@@ -401,3 +401,367 @@ func BatchUpdateImageTags(c *gin.Context, database *sql.DB) {
 		"updated_count": updatedCount,
 	})
 }
+
+// Image artist management handlers
+func AddImageArtists(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Artists []string `json:"artists"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.AddImageArtists(database, imageID, req.Artists); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add image artists"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image artists added successfully"})
+}
+
+func RemoveImageArtists(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Artists []string `json:"artists"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.RemoveImageArtists(database, imageID, req.Artists); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove image artists"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image artists removed successfully"})
+}
+
+// Image character management handlers
+func AddImageCharacters(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Characters []string `json:"characters"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.AddImageCharacters(database, imageID, req.Characters); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add image characters"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image characters added successfully"})
+}
+
+func RemoveImageCharacters(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Characters []string `json:"characters"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.RemoveImageCharacters(database, imageID, req.Characters); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove image characters"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image characters removed successfully"})
+}
+
+// Image parody management handlers
+func AddImageParodies(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Parodies []string `json:"parodies"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.AddImageParodies(database, imageID, req.Parodies); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add image parodies"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image parodies added successfully"})
+}
+
+func RemoveImageParodies(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Parodies []string `json:"parodies"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.RemoveImageParodies(database, imageID, req.Parodies); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove image parodies"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image parodies removed successfully"})
+}
+
+// Image group management handlers
+func AddImageGroups(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Groups []string `json:"groups"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.AddImageGroups(database, imageID, req.Groups); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add image groups"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image groups added successfully"})
+}
+
+func RemoveImageGroups(c *gin.Context, database *sql.DB) {
+	id := c.Param("id")
+	imageID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	var req struct {
+		Groups []string `json:"groups"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if err := db.RemoveImageGroups(database, imageID, req.Groups); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove image groups"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image groups removed successfully"})
+}
+
+// Batch update image artists
+func BatchUpdateImageArtists(c *gin.Context, database *sql.DB) {
+	var req struct {
+		ImageIDs []int64  `json:"image_ids"`
+		Artists  []string `json:"artists"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if len(req.ImageIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image IDs provided"})
+		return
+	}
+
+	if len(req.Artists) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No artists provided"})
+		return
+	}
+
+	// Update each image with the new artists
+	updatedCount := 0
+	for _, imageID := range req.ImageIDs {
+		if err := db.AddImageArtists(database, imageID, req.Artists); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to update image %d: %v", imageID, err),
+			})
+			return
+		}
+		updatedCount++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       fmt.Sprintf("Successfully updated %d images with artists", updatedCount),
+		"updated_count": updatedCount,
+	})
+}
+
+// Batch update image characters
+func BatchUpdateImageCharacters(c *gin.Context, database *sql.DB) {
+	var req struct {
+		ImageIDs   []int64  `json:"image_ids"`
+		Characters []string `json:"characters"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if len(req.ImageIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image IDs provided"})
+		return
+	}
+
+	if len(req.Characters) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No characters provided"})
+		return
+	}
+
+	// Update each image with the new characters
+	updatedCount := 0
+	for _, imageID := range req.ImageIDs {
+		if err := db.AddImageCharacters(database, imageID, req.Characters); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to update image %d: %v", imageID, err),
+			})
+			return
+		}
+		updatedCount++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       fmt.Sprintf("Successfully updated %d images with characters", updatedCount),
+		"updated_count": updatedCount,
+	})
+}
+
+// Batch update image parodies
+func BatchUpdateImageParodies(c *gin.Context, database *sql.DB) {
+	var req struct {
+		ImageIDs []int64  `json:"image_ids"`
+		Parodies []string `json:"parodies"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if len(req.ImageIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image IDs provided"})
+		return
+	}
+
+	if len(req.Parodies) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No parodies provided"})
+		return
+	}
+
+	// Update each image with the new parodies
+	updatedCount := 0
+	for _, imageID := range req.ImageIDs {
+		if err := db.AddImageParodies(database, imageID, req.Parodies); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to update image %d: %v", imageID, err),
+			})
+			return
+		}
+		updatedCount++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       fmt.Sprintf("Successfully updated %d images with parodies", updatedCount),
+		"updated_count": updatedCount,
+	})
+}
+
+// Batch update image groups
+func BatchUpdateImageGroups(c *gin.Context, database *sql.DB) {
+	var req struct {
+		ImageIDs []int64  `json:"image_ids"`
+		Groups   []string `json:"groups"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	if len(req.ImageIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No image IDs provided"})
+		return
+	}
+
+	if len(req.Groups) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No groups provided"})
+		return
+	}
+
+	// Update each image with the new groups
+	updatedCount := 0
+	for _, imageID := range req.ImageIDs {
+		if err := db.AddImageGroups(database, imageID, req.Groups); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to update image %d: %v", imageID, err),
+			})
+			return
+		}
+		updatedCount++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       fmt.Sprintf("Successfully updated %d images with groups", updatedCount),
+		"updated_count": updatedCount,
+	})
+}

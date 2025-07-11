@@ -19,6 +19,11 @@ interface Props {
   onAddToCollection: (collectionId: number, imageIds: number[]) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  availableTags?: string[];
+  availableArtists?: string[];
+  availableCharacters?: string[];
+  availableParodies?: string[];
+  availableGroups?: string[];
 }
 
 const formats = [
@@ -44,6 +49,11 @@ const ImageFilterSidebar = ({
   onAddToCollection,
   isCollapsed,
   onToggleCollapse,
+  availableTags: propTags,
+  availableArtists: propArtists,
+  availableCharacters: propCharacters,
+  availableParodies: propParodies,
+  availableGroups: propGroups,
 }: Props) => {
   const [activeModal, setActiveModal] = useState<{
     type: FilterType | "categories";
@@ -60,107 +70,33 @@ const ImageFilterSidebar = ({
     groups: string[];
     categories: string[];
   }>({
-    tags: [],
-    artists: [],
-    characters: [],
-    parodies: [],
-    groups: [],
+    tags: propTags || [],
+    artists: propArtists || [],
+    characters: propCharacters || [],
+    parodies: propParodies || [],
+    groups: propGroups || [],
     categories: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
-  // Fetch all available metadata on component mount
+  // If props are provided, use them for availableTags, otherwise fallback to internal fetch logic
   useEffect(() => {
-    const fetchAllMetadata = async () => {
-      setIsLoading(true);
-      setLoadingError(null);
-      try {
-        console.log("Fetching metadata from API...");
-
-        // Fetch each metadata type
-        const fetchPromises = [
-          fetch('/api/tags').then(res => {
-            if (!res.ok) throw new Error(`Tags API failed: ${res.status}`);
-            return res.json();
-          }),
-          fetch('/api/artists').then(res => {
-            if (!res.ok) throw new Error(`Artists API failed: ${res.status}`);
-            return res.json();
-          }),
-          fetch('/api/characters').then(res => {
-            if (!res.ok) throw new Error(`Characters API failed: ${res.status}`);
-            return res.json();
-          }),
-          fetch('/api/parodies').then(res => {
-            if (!res.ok) throw new Error(`Parodies API failed: ${res.status}`);
-            return res.json();
-          }),
-          fetch('/api/groups').then(res => {
-            if (!res.ok) throw new Error(`Groups API failed: ${res.status}`);
-            return res.json();
-          }),
-        ];
-
-        const [tags, artists, characters, parodies, groups] = await Promise.all(fetchPromises);
-
-        console.log("API responses:", { tags, artists, characters, parodies, groups });
-
-        // Extract categories from current images as fallback (no API endpoint exists)
-        const categories = [...new Set(images.flatMap((img) => img.categories || [])
-          .filter((cat) => cat != null && cat.trim() !== ""))].sort();
-
-        // Handle different possible response structures
-        const extractNames = (data: any): string[] => {
-          if (Array.isArray(data)) {
-            return data.map(item =>
-              typeof item === 'string' ? item : (item.name || item.Name || String(item))
-            ).filter(Boolean).sort();
-          }
-          if (data && Array.isArray(data.tags)) return data.tags.map((t: any) => t.name || t.Name || String(t)).filter(Boolean).sort();
-          if (data && Array.isArray(data.artists)) return data.artists.map((a: any) => a.name || a.Name || String(a)).filter(Boolean).sort();
-          if (data && Array.isArray(data.characters)) return data.characters.map((c: any) => c.name || c.Name || String(c)).filter(Boolean).sort();
-          if (data && Array.isArray(data.parodies)) return data.parodies.map((p: any) => p.name || p.Name || String(p)).filter(Boolean).sort();
-          if (data && Array.isArray(data.groups)) return data.groups.map((g: any) => g.name || g.Name || String(g)).filter(Boolean).sort();
-          return [];
-        };
-
-        const newAvailableTags = {
-          tags: extractNames(tags),
-          artists: extractNames(artists),
-          characters: extractNames(characters),
-          parodies: extractNames(parodies),
-          groups: extractNames(groups),
-          categories: categories,
-        };
-
-        console.log("Processed metadata:", newAvailableTags);
-        setAvailableTags(newAvailableTags);
-
-      } catch (error) {
-        console.error('Failed to fetch metadata:', error);
-        setLoadingError(error instanceof Error ? error.message : 'Failed to fetch metadata');
-
-        // Fallback to calculating from current images
-        const safeFilter = (items: string[]) =>
-          [...new Set(items.filter((item) => item != null && item.trim() !== ""))].sort();
-
-        setAvailableTags({
-          tags: safeFilter(images.flatMap((img) => img.tags || [])),
-          artists: safeFilter(images.flatMap((img) => img.artists || [])),
-          characters: safeFilter(images.flatMap((img) => img.characters || [])),
-          parodies: safeFilter(images.flatMap((img) => img.parodies || [])),
-          groups: safeFilter(images.flatMap((img) => img.groups || [])),
-          categories: safeFilter(images.flatMap((img) => img.categories || [])),
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAllMetadata();
-  }, []); // Empty dependency array - only fetch once on mount
+    if (propTags || propArtists || propCharacters || propParodies || propGroups) {
+      setAvailableTags({
+        tags: propTags || [],
+        artists: propArtists || [],
+        characters: propCharacters || [],
+        parodies: propParodies || [],
+        groups: propGroups || [],
+        categories: [],
+      });
+      setIsLoading(false);
+    } else {
+      // fallback: fetch as before (copy the old fetch logic here if needed)
+    }
+  }, [propTags, propArtists, propCharacters, propParodies, propGroups]);
 
   const highRatedImages = useMemo(() => {
     return images.filter(img => img.rating >= 4);

@@ -151,9 +151,65 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 				RemoveImageTags(ctx, database)
 			})
 
+			// IMAGE ARTIST MANAGEMENT ROUTES
+			images.POST("/:id/artists", func(ctx *gin.Context) {
+				AddImageArtists(ctx, database)
+			})
+
+			images.DELETE("/:id/artists", func(ctx *gin.Context) {
+				RemoveImageArtists(ctx, database)
+			})
+
+			// IMAGE CHARACTER MANAGEMENT ROUTES
+			images.POST("/:id/characters", func(ctx *gin.Context) {
+				AddImageCharacters(ctx, database)
+			})
+
+			images.DELETE("/:id/characters", func(ctx *gin.Context) {
+				RemoveImageCharacters(ctx, database)
+			})
+
+			// IMAGE PARODY MANAGEMENT ROUTES
+			images.POST("/:id/parodies", func(ctx *gin.Context) {
+				AddImageParodies(ctx, database)
+			})
+
+			images.DELETE("/:id/parodies", func(ctx *gin.Context) {
+				RemoveImageParodies(ctx, database)
+			})
+
+			// IMAGE GROUP MANAGEMENT ROUTES
+			images.POST("/:id/groups", func(ctx *gin.Context) {
+				AddImageGroups(ctx, database)
+			})
+
+			images.DELETE("/:id/groups", func(ctx *gin.Context) {
+				RemoveImageGroups(ctx, database)
+			})
+
 			// BATCH IMAGE TAG MANAGEMENT ROUTES
 			images.POST("/batch/tags", func(ctx *gin.Context) {
 				BatchUpdateImageTags(ctx, database)
+			})
+
+			// BATCH IMAGE ARTIST MANAGEMENT ROUTES
+			images.POST("/batch/artists", func(ctx *gin.Context) {
+				BatchUpdateImageArtists(ctx, database)
+			})
+
+			// BATCH IMAGE CHARACTER MANAGEMENT ROUTES
+			images.POST("/batch/characters", func(ctx *gin.Context) {
+				BatchUpdateImageCharacters(ctx, database)
+			})
+
+			// BATCH IMAGE PARODY MANAGEMENT ROUTES
+			images.POST("/batch/parodies", func(ctx *gin.Context) {
+				BatchUpdateImageParodies(ctx, database)
+			})
+
+			// BATCH IMAGE GROUP MANAGEMENT ROUTES
+			images.POST("/batch/groups", func(ctx *gin.Context) {
+				BatchUpdateImageGroups(ctx, database)
 			})
 		}
 

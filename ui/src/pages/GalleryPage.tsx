@@ -57,7 +57,18 @@ const GalleryPage = () => {
   // Batch tagging mode state
   const [isBatchTaggingMode, setIsBatchTaggingMode] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
+  const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
+  const [selectedParodies, setSelectedParodies] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
+
+  // Global entity lists
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [allArtists, setAllArtists] = useState<string[]>([]);
+  const [allCharacters, setAllCharacters] = useState<string[]>([]);
+  const [allParodies, setAllParodies] = useState<string[]>([]);
+  const [allGroups, setAllGroups] = useState<string[]>([]);
 
   const IMAGES_PER_PAGE = 200;
   const TARGET_ROW_HEIGHT = 250;
@@ -156,6 +167,40 @@ const GalleryPage = () => {
       setCollections([]);
     }
   };
+
+  // Fetch all entities once on mount
+  useEffect(() => {
+    const fetchEntities = async () => {
+      try {
+        const [tagsRes, artistsRes, charactersRes, parodiesRes, groupsRes] = await Promise.all([
+          fetch('/api/tags'),
+          fetch('/api/artists'),
+          fetch('/api/characters'),
+          fetch('/api/parodies'),
+          fetch('/api/groups'),
+        ]);
+        const [tagsData, artistsData, charactersData, parodiesData, groupsData] = await Promise.all([
+          tagsRes.json(),
+          artistsRes.json(),
+          charactersRes.json(),
+          parodiesRes.json(),
+          groupsRes.json(),
+        ]);
+        setAllTags((tagsData.tags || tagsData).map((t: any) => t.name || t.Name || t).filter(Boolean).sort());
+        setAllArtists((artistsData.artists || artistsData).map((a: any) => a.name || a.Name || a).filter(Boolean).sort());
+        setAllCharacters((charactersData.characters || charactersData).map((c: any) => c.name || c.Name || c).filter(Boolean).sort());
+        setAllParodies((parodiesData.parodies || parodiesData).map((p: any) => p.name || p.Name || p).filter(Boolean).sort());
+        setAllGroups((groupsData.groups || groupsData).map((g: any) => g.name || g.Name || g).filter(Boolean).sort());
+      } catch (err) {
+        setAllTags([]);
+        setAllArtists([]);
+        setAllCharacters([]);
+        setAllParodies([]);
+        setAllGroups([]);
+      }
+    };
+    fetchEntities();
+  }, []);
 
   useEffect(() => {
     fetchImages();
@@ -484,15 +529,6 @@ const GalleryPage = () => {
     setFilters(newFilters);
   }, []);
 
-  // Get available tags from all images
-  const availableTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    images.forEach(image => {
-      (image.tags ?? []).forEach(tag => tagSet.add(tag));
-    });
-    return Array.from(tagSet).sort();
-  }, [images]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -520,6 +556,11 @@ const GalleryPage = () => {
           onAddToCollection={handleAddToCollection}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          availableTags={allTags}
+          availableArtists={allArtists}
+          availableCharacters={allCharacters}
+          availableParodies={allParodies}
+          availableGroups={allGroups}
         />
       </div>
 
@@ -559,14 +600,36 @@ const GalleryPage = () => {
             onImagesUpdated={fetchImages}
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
-            availableTags={availableTags}
+            selectedArtists={selectedArtists}
+            onArtistsChange={setSelectedArtists}
+            selectedCharacters={selectedCharacters}
+            onCharactersChange={setSelectedCharacters}
+            selectedParodies={selectedParodies}
+            onParodiesChange={setSelectedParodies}
+            selectedGroups={selectedGroups}
+            onGroupsChange={setSelectedGroups}
+            availableTags={allTags}
+            availableArtists={allArtists}
+            availableCharacters={allCharacters}
+            availableParodies={allParodies}
+            availableGroups={allGroups}
             selectedImages={selectedImages}
             onSelectedImagesChange={setSelectedImages}
           />
 
           <div className="mb-4 text-gray-400 text-sm">
-            Showing {(isBatchTaggingMode && selectedTags.length > 0
-              ? layoutRows.reduce((acc, row) => acc + row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag)))).length, 0)
+            Showing {(isBatchTaggingMode && (selectedTags.length > 0 || selectedArtists.length > 0 || selectedCharacters.length > 0 || selectedParodies.length > 0 || selectedGroups.length > 0)
+              ? layoutRows.reduce((acc, row) => acc + row.images.filter(img => {
+                  // Check if image already has all selected entities
+                  const hasAllTags = selectedTags.length === 0 || selectedTags.every(tag => (img.tags ?? []).includes(tag));
+                  const hasAllArtists = selectedArtists.length === 0 || selectedArtists.every(artist => (img.artists ?? []).includes(artist));
+                  const hasAllCharacters = selectedCharacters.length === 0 || selectedCharacters.every(character => (img.characters ?? []).includes(character));
+                  const hasAllParodies = selectedParodies.length === 0 || selectedParodies.every(parody => (img.parodies ?? []).includes(parody));
+                  const hasAllGroups = selectedGroups.length === 0 || selectedGroups.every(group => (img.groups ?? []).includes(group));
+                  
+                  // Show image if it doesn't have all selected entities
+                  return !(hasAllTags && hasAllArtists && hasAllCharacters && hasAllParodies && hasAllGroups);
+                }).length, 0)
               : displayedImages.length)} of {filteredAndSortedImages.length} images
           </div>
 
@@ -590,13 +653,33 @@ const GalleryPage = () => {
           ) : (
             <>
               <div ref={containerRef} className="w-full">
-                {(isBatchTaggingMode && selectedTags.length > 0 && layoutRows.reduce((acc, row) => acc + row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag)))).length, 0) === 0) ? (
-                  <div className="text-center py-10 text-gray-400">All images already have the selected tags.</div>
+                {(isBatchTaggingMode && (selectedTags.length > 0 || selectedArtists.length > 0 || selectedCharacters.length > 0 || selectedParodies.length > 0 || selectedGroups.length > 0) && layoutRows.reduce((acc, row) => acc + row.images.filter(img => {
+                    // Check if image already has all selected entities
+                    const hasAllTags = selectedTags.length === 0 || selectedTags.every(tag => (img.tags ?? []).includes(tag));
+                    const hasAllArtists = selectedArtists.length === 0 || selectedArtists.every(artist => (img.artists ?? []).includes(artist));
+                    const hasAllCharacters = selectedCharacters.length === 0 || selectedCharacters.every(character => (img.characters ?? []).includes(character));
+                    const hasAllParodies = selectedParodies.length === 0 || selectedParodies.every(parody => (img.parodies ?? []).includes(parody));
+                    const hasAllGroups = selectedGroups.length === 0 || selectedGroups.every(group => (img.groups ?? []).includes(group));
+                    
+                    // Show image if it doesn't have all selected entities
+                    return !(hasAllTags && hasAllArtists && hasAllCharacters && hasAllParodies && hasAllGroups);
+                  }).length, 0) === 0) ? (
+                  <div className="text-center py-10 text-gray-400">All images already have the selected entities.</div>
                 ) : (
                   layoutRows.map((row, rowIndex) => {
                     // Filter images in this row for batch mode
-                    const rowImages = isBatchTaggingMode && selectedTags.length > 0
-                      ? row.images.filter(img => !(selectedTags.every(tag => (img.tags ?? []).includes(tag))))
+                    const rowImages = isBatchTaggingMode && (selectedTags.length > 0 || selectedArtists.length > 0 || selectedCharacters.length > 0 || selectedParodies.length > 0 || selectedGroups.length > 0)
+                      ? row.images.filter(img => {
+                          // Check if image already has all selected entities
+                          const hasAllTags = selectedTags.length === 0 || selectedTags.every(tag => (img.tags ?? []).includes(tag));
+                          const hasAllArtists = selectedArtists.length === 0 || selectedArtists.every(artist => (img.artists ?? []).includes(artist));
+                          const hasAllCharacters = selectedCharacters.length === 0 || selectedCharacters.every(character => (img.characters ?? []).includes(character));
+                          const hasAllParodies = selectedParodies.length === 0 || selectedParodies.every(parody => (img.parodies ?? []).includes(parody));
+                          const hasAllGroups = selectedGroups.length === 0 || selectedGroups.every(group => (img.groups ?? []).includes(group));
+                          
+                          // Show image if it doesn't have all selected entities
+                          return !(hasAllTags && hasAllArtists && hasAllCharacters && hasAllParodies && hasAllGroups);
+                        })
                       : row.images;
                     if (rowImages.length === 0) return null;
                     return (

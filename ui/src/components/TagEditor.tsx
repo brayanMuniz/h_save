@@ -10,7 +10,16 @@ interface EntityEditorProps {
 }
 
 const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onUpdate, entityType = 'tag' }) => {
-  const [entities, setEntities] = useState<string[]>(image[entityType + 's'] || []);
+  const getEntities = (): string[] => {
+    switch (entityType) {
+      case 'tag': return image.tags || [];
+      case 'character': return image.characters || [];
+      case 'parody': return image.parodies || [];
+      default: return [];
+    }
+  };
+
+  const [entities, setEntities] = useState<string[]>(getEntities());
   const [newEntity, setNewEntity] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [allEntities, setAllEntities] = useState<string[]>([]);
@@ -18,8 +27,8 @@ const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onU
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setEntities(image[entityType + 's'] || []);
-  }, [image.id, image[entityType + 's'], entityType]);
+    setEntities(getEntities());
+  }, [image.id, entityType]);
 
   // Fetch all entities when modal opens
   useEffect(() => {
@@ -170,7 +179,7 @@ const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onU
           {/* Dropdown suggestions */}
           {showDropdown && filteredSuggestions.length > 0 && (
             <div className="absolute left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded shadow-lg z-80 max-h-40 overflow-y-auto">
-              {filteredSuggestions.map((suggestion, idx) => (
+              {filteredSuggestions.map((suggestion) => (
                 <div
                   key={suggestion}
                   className="px-3 py-2 text-white hover:bg-blue-700 cursor-pointer text-sm"

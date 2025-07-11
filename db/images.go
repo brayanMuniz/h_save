@@ -572,3 +572,183 @@ func RemoveImageTags(db *sql.DB, imageID int64, tags []string) error {
 	_, err := db.Exec(query, args...)
 	return err
 }
+
+// Image artist management functions
+func AddImageArtists(db *sql.DB, imageID int64, artists []string) error {
+	if len(artists) == 0 {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = linkImageManyToMany(tx, imageID, artists, "artists", "image_artists", "artist_id")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func RemoveImageArtists(db *sql.DB, imageID int64, artists []string) error {
+	if len(artists) == 0 {
+		return nil
+	}
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(artists))
+	args := make([]interface{}, len(artists)+1)
+	args[0] = imageID
+
+	for i, artist := range artists {
+		placeholders[i] = "?"
+		args[i+1] = artist
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM image_artists 
+		WHERE image_id = ? AND artist_id IN (
+			SELECT id FROM artists WHERE name IN (%s)
+		)`, strings.Join(placeholders, ","))
+
+	_, err := db.Exec(query, args...)
+	return err
+}
+
+// Image character management functions
+func AddImageCharacters(db *sql.DB, imageID int64, characters []string) error {
+	if len(characters) == 0 {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = linkImageManyToMany(tx, imageID, characters, "characters", "image_characters", "character_id")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func RemoveImageCharacters(db *sql.DB, imageID int64, characters []string) error {
+	if len(characters) == 0 {
+		return nil
+	}
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(characters))
+	args := make([]interface{}, len(characters)+1)
+	args[0] = imageID
+
+	for i, character := range characters {
+		placeholders[i] = "?"
+		args[i+1] = character
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM image_characters 
+		WHERE image_id = ? AND character_id IN (
+			SELECT id FROM characters WHERE name IN (%s)
+		)`, strings.Join(placeholders, ","))
+
+	_, err := db.Exec(query, args...)
+	return err
+}
+
+// Image parody management functions
+func AddImageParodies(db *sql.DB, imageID int64, parodies []string) error {
+	if len(parodies) == 0 {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = linkImageManyToMany(tx, imageID, parodies, "parodies", "image_parodies", "parody_id")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func RemoveImageParodies(db *sql.DB, imageID int64, parodies []string) error {
+	if len(parodies) == 0 {
+		return nil
+	}
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(parodies))
+	args := make([]interface{}, len(parodies)+1)
+	args[0] = imageID
+
+	for i, parody := range parodies {
+		placeholders[i] = "?"
+		args[i+1] = parody
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM image_parodies 
+		WHERE image_id = ? AND parody_id IN (
+			SELECT id FROM parodies WHERE name IN (%s)
+		)`, strings.Join(placeholders, ","))
+
+	_, err := db.Exec(query, args...)
+	return err
+}
+
+// Image group management functions
+func AddImageGroups(db *sql.DB, imageID int64, groups []string) error {
+	if len(groups) == 0 {
+		return nil
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = linkImageManyToMany(tx, imageID, groups, "groups", "image_groups", "group_id")
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func RemoveImageGroups(db *sql.DB, imageID int64, groups []string) error {
+	if len(groups) == 0 {
+		return nil
+	}
+
+	// Create placeholders for the IN clause
+	placeholders := make([]string, len(groups))
+	args := make([]interface{}, len(groups)+1)
+	args[0] = imageID
+
+	for i, group := range groups {
+		placeholders[i] = "?"
+		args[i+1] = group
+	}
+
+	query := fmt.Sprintf(`
+		DELETE FROM image_groups 
+		WHERE image_id = ? AND group_id IN (
+			SELECT id FROM groups WHERE name IN (%s)
+		)`, strings.Join(placeholders, ","))
+
+	_, err := db.Exec(query, args...)
+	return err
+}
