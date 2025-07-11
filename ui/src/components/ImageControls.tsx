@@ -38,9 +38,25 @@ interface ImageControlsProps {
   onUITimerReset?: () => void;
   isTagEditorOpen: boolean;
   setIsTagEditorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  availableTags?: string[];
+  availableArtists?: string[];
+  availableCharacters?: string[];
+  availableParodies?: string[];
+  availableGroups?: string[];
 }
 
-const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate, onUITimerReset, isTagEditorOpen, setIsTagEditorOpen }) => {
+const ImageControls: React.FC<ImageControlsProps> = ({
+  image,
+  onUpdate,
+  onUITimerReset,
+  isTagEditorOpen,
+  setIsTagEditorOpen,
+  availableTags,
+  availableArtists,
+  availableCharacters,
+  availableParodies,
+  availableGroups
+}) => {
   const [oCount, setOCount] = useState(image.o_count);
   const [rating, setRating] = useState(image.rating);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -305,6 +321,11 @@ const ImageControls: React.FC<ImageControlsProps> = ({ image, onUpdate, onUITime
       isOpen={isTagEditorOpen}
       onClose={closeTagEditor}
       onUpdate={onUpdate}
+      availableTags={availableTags}
+      availableArtists={availableArtists}
+      availableCharacters={availableCharacters}
+      availableParodies={availableParodies}
+      availableGroups={availableGroups}
     />
     </>
   );

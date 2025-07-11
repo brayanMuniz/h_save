@@ -6,15 +6,28 @@ interface EntityEditorProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
-  entityType?: 'tag' | 'character' | 'parody';
+  entityType?: 'tag' | 'artist' | 'character' | 'parody' | 'group';
+  availableTags?: string[];
+  availableArtists?: string[];
+  availableCharacters?: string[];
+  availableParodies?: string[];
+  availableGroups?: string[];
 }
 
-const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onUpdate, entityType = 'tag' }) => {
+const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onUpdate, entityType = 'tag',
+  availableTags,
+  availableArtists,
+  availableCharacters,
+  availableParodies,
+  availableGroups,
+}) => {
   const getEntities = (): string[] => {
     switch (entityType) {
       case 'tag': return image.tags || [];
+      case 'artist': return image.artists || [];
       case 'character': return image.characters || [];
       case 'parody': return image.parodies || [];
+      case 'group': return image.groups || [];
       default: return [];
     }
   };
@@ -30,9 +43,22 @@ const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onU
     setEntities(getEntities());
   }, [image.id, entityType]);
 
-  // Fetch all entities when modal opens
+  // Use global entity lists if provided, otherwise fallback to fetch
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    let list: string[] | undefined;
+    switch (entityType) {
+      case 'tag': list = availableTags; break;
+      case 'artist': list = availableArtists; break;
+      case 'character': list = availableCharacters; break;
+      case 'parody': list = availableParodies; break;
+      case 'group': list = availableGroups; break;
+      default: list = undefined;
+    }
+    if (list !== undefined) {
+      setAllEntities(list);
+    } else {
+      // fallback: fetch from API
       fetch(`/api/${entityType}s`)
         .then(res => res.json())
         .then(data => {
@@ -44,7 +70,7 @@ const EntityEditor: React.FC<EntityEditorProps> = ({ image, isOpen, onClose, onU
         })
         .catch(() => setAllEntities([]));
     }
-  }, [isOpen, entityType]);
+  }, [isOpen, entityType, availableTags, availableArtists, availableCharacters, availableParodies, availableGroups]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {

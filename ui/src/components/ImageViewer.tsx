@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import type { Image } from '../types';
 import ImageControls from './ImageControls';
-import EntityEditor from './EntityEditor';
+import EntityEditor from './TagEditor';
 
 interface ImageViewerProps {
   images: Image[];
@@ -9,6 +9,11 @@ interface ImageViewerProps {
   onClose: () => void;
   onNavigate: (direction: 'prev' | 'next') => void;
   onImageUpdate?: () => void;
+  availableTags?: string[];
+  availableArtists?: string[];
+  availableCharacters?: string[];
+  availableParodies?: string[];
+  availableGroups?: string[];
 }
 
 const ImageViewer: React.FC<ImageViewerProps> = ({
@@ -17,6 +22,11 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   onClose,
   onNavigate,
   onImageUpdate,
+  availableTags,
+  availableArtists,
+  availableCharacters,
+  availableParodies,
+  availableGroups,
 }) => {
   const [showUI, setShowUI] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -25,6 +35,9 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   const hideUITimer = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastInteractionTime = useRef<number>(Date.now());
+
+  // State for which entity type to edit
+  const [entityType, setEntityType] = useState<'tag' | 'artist' | 'character' | 'parody' | 'group'>('tag');
 
   const currentImage = images[currentIndex];
 
@@ -335,6 +348,11 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
               onUITimerReset={resetUITimer}
               isTagEditorOpen={isTagEditorOpen}
               setIsTagEditorOpen={setIsTagEditorOpen}
+              availableTags={availableTags}
+              availableArtists={availableArtists}
+              availableCharacters={availableCharacters}
+              availableParodies={availableParodies}
+              availableGroups={availableGroups}
             />
           </div>
         </>
@@ -350,14 +368,36 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
         </div>
       )}
 
-      {/* Tag Editor Modal */}
-      <EntityEditor
-        image={currentImage}
-        isOpen={isTagEditorOpen}
-        onClose={() => setIsTagEditorOpen(false)}
-        onUpdate={onImageUpdate}
-        entityType="tag"
-      />
+      {/* Entity Editor Modal with tab bar */}
+      {isTagEditorOpen && (
+        <div className="fixed inset-0 z-80 flex items-center justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            <div className="flex justify-center mb-2 gap-2">
+              {['tag', 'artist', 'character', 'parody', 'group'].map(type => (
+                <button
+                  key={type}
+                  className={`px-3 py-1 rounded ${entityType === type ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+                  onClick={() => setEntityType(type as any)}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+            <EntityEditor
+              image={currentImage}
+              isOpen={isTagEditorOpen}
+              onClose={() => setIsTagEditorOpen(false)}
+              onUpdate={onImageUpdate}
+              entityType={entityType}
+              availableTags={availableTags}
+              availableArtists={availableArtists}
+              availableCharacters={availableCharacters}
+              availableParodies={availableParodies}
+              availableGroups={availableGroups}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

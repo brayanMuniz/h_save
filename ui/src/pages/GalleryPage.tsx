@@ -231,9 +231,6 @@ const GalleryPage = () => {
 
   // Filter and sort images
   const filteredAndSortedImages = useMemo(() => {
-    console.log("Filtering images. Total images:", images.length);
-    console.log("Current filters:", filters);
-
     const filtered = images.filter((image) => {
       // Search filter
       if (filters.search && !image.filename.toLowerCase().includes(filters.search.toLowerCase())) {
@@ -288,8 +285,6 @@ const GalleryPage = () => {
       return true;
     });
 
-    console.log("Filtered images count:", filtered.length);
-
     let sorted;
     if (sortBy === "random") {
       sorted = [...filtered].sort(() => Math.random() - 0.5);
@@ -311,7 +306,6 @@ const GalleryPage = () => {
       });
     }
 
-    console.log("Final sorted images count:", sorted.length);
     return sorted;
   }, [images, filters, sortBy]);
 
@@ -390,20 +384,15 @@ const GalleryPage = () => {
 
   // Reset page when filters or sorting changes
   useEffect(() => {
-    console.log("Filters or sorting changed, resetting page to 1");
     setPage(1);
   }, [filters, sortBy]);
 
   // Update displayed images when filtered images change
   useEffect(() => {
-    console.log("Updating displayed images. Filtered count:", filteredAndSortedImages.length, "Page:", page);
-
     const startIndex = 0;
     const endIndex = page * IMAGES_PER_PAGE;
     const newDisplayed = filteredAndSortedImages.slice(startIndex, endIndex);
     const newDisplayedWithLayout = imagesWithLayout.slice(startIndex, endIndex);
-
-    console.log("Setting displayed images count:", newDisplayed.length);
 
     setDisplayedImages(newDisplayed);
     setLayoutRows(packImagesIntoRows(newDisplayedWithLayout));
@@ -525,7 +514,6 @@ const GalleryPage = () => {
 
   // Custom setFilters wrapper that ensures page reset
   const handleSetFilters = useCallback((newFilters: ImageBrowseFilters) => {
-    console.log("Setting new filters:", newFilters);
     setFilters(newFilters);
   }, []);
 
@@ -757,6 +745,11 @@ const GalleryPage = () => {
           onClose={handleCloseViewer}
           onNavigate={handleNavigate}
           onImageUpdate={handleImageUpdate}
+          availableTags={allTags}
+          availableArtists={allArtists}
+          availableCharacters={allCharacters}
+          availableParodies={allParodies}
+          availableGroups={allGroups}
         />
       )}
     </div>
