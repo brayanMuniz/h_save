@@ -356,8 +356,33 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
   };
 
   const handleImageUpdate = () => {
-    // Refresh the page data
-    window.location.reload();
+    // Only refresh if we're not in the viewer to avoid unnecessary re-fetching
+    if (!isViewerOpen && entityName) {
+      // Refetch the entity data to get updated image information
+      const fetchData = async () => {
+        try {
+          const url = `${apiEndpointPrefix}/0?name=${encodeURIComponent(entityName)}`;
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || `HTTP ${response.status}`);
+          }
+
+          const responseData = await response.json();
+          const normalizedData: EntityPageResponse = {
+            details: responseData[detailsResponseKey],
+            doujinshiList: responseData.doujinshiList,
+            imagesList: responseData.imagesList || [],
+          };
+          setData(normalizedData);
+          setImages(responseData.imagesList || []);
+        } catch (err) {
+          console.error('Failed to refresh entity data:', err);
+        }
+      };
+      fetchData();
+    }
   };
 
   const getLanguageFlag = (languages: string[]): React.ReactNode => {

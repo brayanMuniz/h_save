@@ -18,6 +18,7 @@ interface Entity {
 interface EntityFilters {
   showFavoritesOnly: boolean;
   minDoujinCount: string;
+  minImageCount: string;
   minOCount: string;
   minRating: string;
 }
@@ -51,6 +52,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
   const [filters, setFilters] = useState<EntityFilters>({
     showFavoritesOnly: false,
     minDoujinCount: "",
+    minImageCount: "",
     minOCount: "",
     minRating: "0",
   });
@@ -149,6 +151,11 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
       if (!isNaN(min))
         processed = processed.filter((e) => e.doujinCount >= min);
     }
+    if (filters.minImageCount) {
+      const min = parseInt(filters.minImageCount, 10);
+      if (!isNaN(min))
+        processed = processed.filter((e) => (typeof e.imageCount === 'number' ? e.imageCount : 0) >= min);
+    }
     if (filters.minOCount) {
       const min = parseInt(filters.minOCount, 10);
       if (!isNaN(min))
@@ -227,7 +234,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
           </h1>
 
           <div className="bg-gray-800 p-4 rounded-lg mb-6 shadow">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-end">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -249,7 +256,7 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                   htmlFor="minDoujinCount"
                   className="block text-sm font-medium text-gray-300 mb-1"
                 >
-                  Min Works
+                  Min Doujinshi
                 </label>
                 <input
                   type="number"
@@ -258,6 +265,23 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                   value={filters.minDoujinCount}
                   onChange={handleFilterChange}
                   placeholder="e.g., 5"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-sm focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="minImageCount"
+                  className="block text-sm font-medium text-gray-300 mb-1"
+                >
+                  Min Images
+                </label>
+                <input
+                  type="number"
+                  id="minImageCount"
+                  name="minImageCount"
+                  value={filters.minImageCount}
+                  onChange={handleFilterChange}
+                  placeholder="e.g., 10"
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-sm focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
@@ -316,10 +340,9 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-sm focus:ring-indigo-500 focus:border-transparent"
                   >
                     <option value="name">Name</option>
-                    <option value="doujinCount">Works</option>
+                    <option value="doujinCount">Doujinshi</option>
                     <option value="totalOCount">Total ♥</option>
                     <option value="averageRating">Avg. Rating</option>
-
                     <option value="random">Random</option>
                   </select>
                 </div>
@@ -330,7 +353,6 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                   >
                     Order
                   </label>
-
                   <select
                     id="sortOrder"
                     name="order"
@@ -345,8 +367,6 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
                     <option value="asc">Asc</option>
                     <option value="desc">Desc</option>
                   </select>
-
-
                 </div>
               </div>
             </div>

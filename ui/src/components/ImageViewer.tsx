@@ -53,13 +53,26 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     }
   };
 
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+  };
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && document.fullscreenElement) {
+        exitFullscreen();
+      }
+    };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -273,6 +286,32 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M8 3H5a2 2 0 00-2 2v3m0 8v3a2 2 0 002 2h3m8-16h3a2 2 0 012 2v3m0 8v3a2 2 0 01-2 2h-3"
+                />
+              </svg>
+            </button>
+          )}
+          {isFullscreen && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                exitFullscreen();
+              }}
+              className="absolute top-4 left-16 md:top-6 md:left-24 bg-black/60 rounded p-2 hover:bg-black/80 transition text-white touch-manipulation"
+              style={{ zIndex: 60 }}
+              aria-label="Exit Fullscreen"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 md:h-6 md:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 21h3a2 2 0 002-2v-3m0-8V5a2 2 0 00-2-2h-3M8 21H5a2 2 0 01-2-2v-3m0-8V5a2 2 0 012-2h3"
                 />
               </svg>
             </button>
