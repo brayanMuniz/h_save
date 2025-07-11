@@ -11,6 +11,7 @@ type ArtistData struct {
 	DoujinCount   int      `json:"doujinCount"`
 	TotalOCount   int64    `json:"totalOCount"`
 	AverageRating *float64 `json:"averageRating"`
+	ImageCount    int      `json:"imageCount"`
 }
 
 func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
@@ -41,7 +42,8 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 		a.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
 		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_artist_ocount,
-		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating
+		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating,
+		COALESCE(COUNT(DISTINCT ia.image_id), 0) AS image_count
 	FROM
 		artists a
 	LEFT JOIN
@@ -57,6 +59,8 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 		) d_ocount ON d.id = d_ocount.doujinshi_id
 	LEFT JOIN
 		doujinshi_progress dp ON d.id = dp.doujinshi_id
+	LEFT JOIN
+		image_artists ia ON a.id = ia.artist_id
 	GROUP BY
 		a.id, a.name
 	ORDER BY
@@ -76,8 +80,9 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 		var doujinCount int
 		var totalOCount int64
 		var avgRating sql.NullFloat64
+		var imageCount int
 
-		if err := allRows.Scan(&artistID, &artistName, &doujinCount, &totalOCount, &avgRating); err != nil {
+		if err := allRows.Scan(&artistID, &artistName, &doujinCount, &totalOCount, &avgRating, &imageCount); err != nil {
 			return nil, err
 		}
 
@@ -95,6 +100,7 @@ func GetAllArtist(db *sql.DB) ([]ArtistData, error) {
 			DoujinCount:   doujinCount,
 			TotalOCount:   totalOCount,
 			AverageRating: avgRatingPtr,
+			ImageCount:    imageCount,
 		})
 	}
 	if err = allRows.Err(); err != nil {

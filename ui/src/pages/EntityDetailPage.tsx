@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 
 import Sidebar from "../components/SideBar";
@@ -6,12 +6,26 @@ import MobileNav from "../components/MobileNav";
 import HeaderBar from "../components/HeaderBar";
 import CoverImage from "../components/CoverImage";
 import DoujinshiCard from "../components/DoujinshiCard";
+import ImageViewer from "../components/ImageViewer";
 
 import type {
   Doujinshi,
   EntityPageResponse,
   SortState,
+  Image,
 } from "../types";
+
+interface ImageWithLayout extends Image {
+  displayWidth: number;
+  displayHeight: number;
+  aspectRatio: number;
+}
+
+interface LayoutRow {
+  images: ImageWithLayout[];
+  totalWidth: number;
+  maxHeight: number;
+}
 
 interface EntityDetailPageProps {
   entityTypeSingular: string;
@@ -47,7 +61,54 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
     order: "desc",
   });
 
+  // Separate state for images
+  const [images, setImages] = useState<Image[]>([]);
+  const [imageViewMode, setImageViewMode] = useState<"card" | "cover">("cover");
+  const [imageSort, setImageSort] = useState<SortState>({
+    key: "uploaded",
+    order: "desc",
+  });
+
+  // Masonry layout state
+  const [containerWidth, setContainerWidth] = useState(1200);
+  const [layoutRows, setLayoutRows] = useState<LayoutRow[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  const TARGET_ROW_HEIGHT = 250;
+
   const [isLinkUnlocked, setIsLinkUnlocked] = useState(false);
+
+  // Image viewer state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  // Update container width
+  const updateWidth = useCallback(() => {
+    if (mainContentRef.current) {
+      const rect = mainContentRef.current.getBoundingClientRect();
+      const availableWidth = rect.width - 48; // Account for padding
+      const newWidth = Math.max(300, availableWidth);
+
+      if (Math.abs(newWidth - containerWidth) > 10) {
+        setContainerWidth(newWidth);
+      }
+    }
+  }, [containerWidth]);
+
+  // Handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      requestAnimationFrame(updateWidth);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateWidth]);
 
   useEffect(() => {
     if (!entityName) {
@@ -75,8 +136,10 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
         const normalizedData: EntityPageResponse = {
           details: responseData[detailsResponseKey],
           doujinshiList: responseData.doujinshiList,
+          imagesList: responseData.imagesList || [],
         };
         setData(normalizedData);
+        setImages(responseData.imagesList || []);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Unknown error occurred",
@@ -153,6 +216,149 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
     return sorted;
   }, [data?.doujinshiList, sort]);
 
+  const sortedImages = useMemo(() => {
+    if (!images) return [];
+    const sorted = [...images];
+
+    if (imageSort.key === "random") {
+      // Fisher-Yates shuffle for true randomness
+      for (let i = sorted.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+      }
+    } else {
+      // Regular sorting logic
+      sorted.sort((a, b) => {
+        const order = imageSort.order === "asc" ? 1 : -1;
+        switch (imageSort.key) {
+          case "title":
+            return a.filename.localeCompare(b.filename) * order;
+          case "uploaded":
+            return (
+              (new Date(a.uploaded).getTime() -
+                new Date(b.uploaded).getTime()) *
+              order
+            );
+          case "rating":
+            return (a.rating - b.rating) * order;
+          case "oCount":
+            return (a.o_count - b.o_count) * order;
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return sorted;
+  }, [images, imageSort]);
+
+  const imagesWithLayout = useMemo(() => {
+    return sortedImages.map(image => {
+      const aspectRatio = image.width / image.height;
+      const displayHeight = TARGET_ROW_HEIGHT;
+      const displayWidth = displayHeight * aspectRatio;
+
+      return {
+        ...image,
+        aspectRatio,
+        displayWidth,
+        displayHeight
+      } as ImageWithLayout;
+    });
+  }, [sortedImages]);
+
+  // Pack images into rows
+  const packImagesIntoRows = useCallback((images: ImageWithLayout[]): LayoutRow[] => {
+    const rows: LayoutRow[] = [];
+    let currentRow: ImageWithLayout[] = [];
+    let currentRowWidth = 0;
+    const GAP_SIZE = 4;
+
+    for (const image of images) {
+      const imageWidthWithGap = image.displayWidth + (currentRow.length > 0 ? GAP_SIZE : 0);
+
+      if (currentRowWidth + imageWidthWithGap > containerWidth && currentRow.length > 0) {
+        // Scale current row to fit exactly
+        const availableWidth = containerWidth - (currentRow.length - 1) * GAP_SIZE;
+        const scaleFactor = availableWidth / currentRowWidth;
+
+        const scaledImages = currentRow.map(img => ({
+          ...img,
+          displayWidth: img.displayWidth * scaleFactor,
+          displayHeight: img.displayHeight * scaleFactor
+        }));
+
+        rows.push({
+          images: scaledImages,
+          totalWidth: containerWidth,
+          maxHeight: Math.max(...scaledImages.map(img => img.displayHeight))
+        });
+
+        // Start new row
+        currentRow = [image];
+        currentRowWidth = image.displayWidth;
+      } else {
+        currentRow.push(image);
+        currentRowWidth += imageWidthWithGap;
+      }
+    }
+
+    // Handle last row
+    if (currentRow.length > 0) {
+      const availableWidth = containerWidth - (currentRow.length - 1) * GAP_SIZE;
+      const scaleFactor = Math.min(1.2, availableWidth / currentRowWidth);
+
+      const scaledImages = currentRow.map(img => ({
+        ...img,
+        displayWidth: img.displayWidth * scaleFactor,
+        displayHeight: img.displayHeight * scaleFactor
+      }));
+
+      rows.push({
+        images: scaledImages,
+        totalWidth: Math.min(containerWidth, currentRowWidth * scaleFactor + (currentRow.length - 1) * GAP_SIZE),
+        maxHeight: Math.max(...scaledImages.map(img => img.displayHeight))
+      });
+    }
+
+    return rows;
+  }, [containerWidth]);
+
+  // Update layout when images change
+  useEffect(() => {
+    setLayoutRows(packImagesIntoRows(imagesWithLayout));
+  }, [imagesWithLayout, packImagesIntoRows]);
+
+  const handleImageClick = (imageId: number) => {
+    const index = sortedImages.findIndex(img => img.id === imageId);
+    if (index !== -1) {
+      setSelectedImageIndex(index);
+      setIsViewerOpen(true);
+    }
+  };
+
+  const handleCloseViewer = () => {
+    setIsViewerOpen(false);
+    setSelectedImageIndex(null);
+  };
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    if (selectedImageIndex === null) return;
+
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = selectedImageIndex > 0 ? selectedImageIndex - 1 : sortedImages.length - 1;
+    } else {
+      newIndex = selectedImageIndex < sortedImages.length - 1 ? selectedImageIndex + 1 : 0;
+    }
+
+    setSelectedImageIndex(newIndex);
+  };
+
+  const handleImageUpdate = () => {
+    // Refresh the page data
+    window.location.reload();
+  };
 
   const getLanguageFlag = (languages: string[]): React.ReactNode => {
     if (!languages || languages.length === 0) return <span>🌐</span>;
@@ -374,8 +580,74 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
               )}
             </div>
           )}
+          
+          {/* Images Section */}
+          {sortedImages.length > 0 && (
+            <>
+              <div className="mt-12 mb-6">
+                <h2 className="text-2xl font-bold text-gray-100 mb-4">
+                  Images ({sortedImages.length})
+                </h2>
+                <div className="sticky top-0 z-10 bg-gray-900 py-4 -mx-6 px-6 mb-4 shadow-md">
+                  <HeaderBar
+                    viewMode={imageViewMode}
+                    setViewMode={setImageViewMode}
+                    sort={imageSort}
+                    setSort={setImageSort}
+                    itemCount={sortedImages.length}
+                  />
+                </div>
+              </div>
+              <div ref={containerRef} className="w-full">
+                {layoutRows.map((row, rowIndex) => (
+                  <div
+                    key={rowIndex}
+                    className="flex mb-1 justify-start"
+                    style={{ height: `${row.maxHeight}px` }}
+                  >
+                    {row.images.map((image, imageIndex) => (
+                      <button
+                        key={image.id}
+                        onClick={() => handleImageClick(image.id)}
+                        className="block hover:opacity-75 transition-all cursor-pointer relative"
+                        style={{
+                          width: `${image.displayWidth}px`,
+                          height: `${image.displayHeight}px`,
+                          marginRight: imageIndex < row.images.length - 1 ? '4px' : '0',
+                        }}
+                      >
+                        <img
+                          src={image.thumbnail_url}
+                          alt={image.filename}
+                          className="w-full h-full object-cover rounded-sm"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </main>
       </div>
+      
+      {/* Image Viewer Modal */}
+      {isViewerOpen && selectedImageIndex !== null && (
+        <ImageViewer
+          images={sortedImages}
+          currentIndex={selectedImageIndex}
+          onClose={handleCloseViewer}
+          onNavigate={handleNavigate}
+          onImageUpdate={handleImageUpdate}
+          availableTags={[]}
+          availableArtists={[]}
+          availableCharacters={[]}
+          availableParodies={[]}
+          availableGroups={[]}
+        />
+      )}
     </div>
   );
 };

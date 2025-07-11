@@ -12,6 +12,7 @@ import (
 type CharacterPageData struct {
 	CharacterDetails *db.CharacterData    `json:"characterDetails"`
 	DoujinshiList    []DoujinshiWithThumb `json:"doujinshiList"`
+	ImagesList       []ImageWithThumb     `json:"imagesList"`
 }
 
 func GetAllCharactersHandler(c *gin.Context, database *sql.DB) {
@@ -81,9 +82,28 @@ func GetCharacterPageDataHandler(c *gin.Context, database *sql.DB) {
 		doujinshiWithThumbs = []DoujinshiWithThumb{}
 	}
 
+	// Fetch images associated with this character
+	images, err := db.GetImagesByCharacter(database, characterID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch images for character"})
+		return
+	}
+
+	var imagesWithThumbs []ImageWithThumb
+	for _, img := range images {
+		imagesWithThumbs = append(imagesWithThumbs, ImageWithThumb{
+			Image:        img,
+			ThumbnailURL: "/api/images/" + strconv.FormatInt(img.ID, 10) + "/thumbnail",
+		})
+	}
+	if imagesWithThumbs == nil {
+		imagesWithThumbs = []ImageWithThumb{}
+	}
+
 	responseData := CharacterPageData{
 		CharacterDetails: characterDetails,
 		DoujinshiList:    doujinshiWithThumbs,
+		ImagesList:       imagesWithThumbs,
 	}
 
 	c.JSON(http.StatusOK, responseData)

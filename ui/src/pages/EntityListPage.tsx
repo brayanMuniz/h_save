@@ -12,6 +12,7 @@ interface Entity {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount?: number; // Only for tags for now
 }
 
 interface EntityFilters {
@@ -70,7 +71,15 @@ const EntityListPage: React.FC<EntityListPageProps> = ({
           );
         }
         const data = await response.json();
-        setEntities(data[entityNamePlural.toLowerCase()] || []);
+        // If this is the tag list, map imageCount
+        if (entityNamePlural.toLowerCase() === 'tags') {
+          setEntities((data.tags || []).map((tag: any) => ({
+            ...tag,
+            imageCount: tag.imageCount ?? 0,
+          })));
+        } else {
+          setEntities(data[entityNamePlural.toLowerCase()] || []);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred",

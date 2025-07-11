@@ -12,6 +12,7 @@ import (
 type TagPageData struct {
 	TagDetails    *db.TagData          `json:"tagDetails"`
 	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb     `json:"imagesList"`
 }
 
 func GetAllTagsHandler(ctx *gin.Context, database *sql.DB) {
@@ -81,9 +82,28 @@ func GetTagPageDataHandler(ctx *gin.Context, database *sql.DB) {
 		doujinshiWithThumbs = []DoujinshiWithThumb{}
 	}
 
+	// Fetch images associated with this tag
+	images, err := db.GetImagesByTag(database, tagID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch images for tag"})
+		return
+	}
+
+	var imagesWithThumbs []ImageWithThumb
+	for _, img := range images {
+		imagesWithThumbs = append(imagesWithThumbs, ImageWithThumb{
+			Image:        img,
+			ThumbnailURL: "/api/images/" + strconv.FormatInt(img.ID, 10) + "/thumbnail",
+		})
+	}
+	if imagesWithThumbs == nil {
+		imagesWithThumbs = []ImageWithThumb{}
+	}
+
 	responseData := TagPageData{
 		TagDetails:    tagDetails,
 		DoujinshiList: doujinshiWithThumbs,
+		ImagesList:    imagesWithThumbs,
 	}
 
 	ctx.JSON(http.StatusOK, responseData)

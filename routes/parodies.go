@@ -13,6 +13,7 @@ import (
 type ParodyPageData struct {
 	ParodyDetails *db.ParodyData       `json:"parodyDetails"`
 	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb     `json:"imagesList"`
 }
 
 // GetAllParodiesHandler handles the request to get all parodies.
@@ -82,9 +83,28 @@ func GetParodyPageDataHandler(c *gin.Context, database *sql.DB) {
 		doujinshiWithThumbs = []DoujinshiWithThumb{}
 	}
 
+	// Fetch images associated with this parody
+	images, err := db.GetImagesByParody(database, parodyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch images for parody"})
+		return
+	}
+
+	var imagesWithThumbs []ImageWithThumb
+	for _, img := range images {
+		imagesWithThumbs = append(imagesWithThumbs, ImageWithThumb{
+			Image:        img,
+			ThumbnailURL: "/api/images/" + strconv.FormatInt(img.ID, 10) + "/thumbnail",
+		})
+	}
+	if imagesWithThumbs == nil {
+		imagesWithThumbs = []ImageWithThumb{}
+	}
+
 	responseData := ParodyPageData{
 		ParodyDetails: parodyDetails,
 		DoujinshiList: doujinshiWithThumbs,
+		ImagesList:    imagesWithThumbs,
 	}
 
 	c.JSON(http.StatusOK, responseData)

@@ -102,6 +102,7 @@ export interface Artist {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null; // Can be null if no rated doujinshi
+  imageCount: number;
 }
 
 export interface ArtistPageResponse {
@@ -116,6 +117,7 @@ export interface Tag {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 export interface TagPageResponse {
@@ -130,6 +132,7 @@ export interface Group {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 export interface GroupPageResponse {
@@ -144,6 +147,7 @@ export interface Entity {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 
@@ -162,12 +166,14 @@ export interface EntityDetail {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 // A generic shape for the API response for any entity detail page.
 export interface EntityPageResponse {
   details: EntityDetail;
   doujinshiList: Doujinshi[];
+  imagesList?: Image[];
 }
 
 export interface SortState {
@@ -182,6 +188,7 @@ export interface Character {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 export interface CharacterPageResponse {
@@ -196,6 +203,7 @@ export interface Parody {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount: number;
 }
 
 export interface ParodyPageResponse {

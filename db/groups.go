@@ -12,6 +12,7 @@ type GroupData struct {
 	DoujinCount   int      `json:"doujinCount"`
 	TotalOCount   int64    `json:"totalOCount"`
 	AverageRating *float64 `json:"averageRating"`
+	ImageCount    int      `json:"imageCount"`
 }
 
 func GetAllGroups(db *sql.DB) ([]GroupData, error) {
@@ -40,7 +41,8 @@ func GetAllGroups(db *sql.DB) ([]GroupData, error) {
 		g.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
 		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_group_ocount,
-		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating
+		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating,
+		COALESCE(COUNT(DISTINCT ig.image_id), 0) AS image_count
 	FROM
 		groups g
 	LEFT JOIN
@@ -56,6 +58,8 @@ func GetAllGroups(db *sql.DB) ([]GroupData, error) {
 		) d_ocount ON d.id = d_ocount.doujinshi_id
 	LEFT JOIN
 		doujinshi_progress dp ON d.id = dp.doujinshi_id
+	LEFT JOIN
+		image_groups ig ON g.id = ig.group_id
 	GROUP BY
 		g.id, g.name
 	ORDER BY
@@ -75,8 +79,9 @@ func GetAllGroups(db *sql.DB) ([]GroupData, error) {
 		var doujinCount int
 		var totalOCount int64
 		var avgRating sql.NullFloat64
+		var imageCount int
 
-		if err := allRows.Scan(&groupID, &groupName, &doujinCount, &totalOCount, &avgRating); err != nil {
+		if err := allRows.Scan(&groupID, &groupName, &doujinCount, &totalOCount, &avgRating, &imageCount); err != nil {
 			return nil, err
 		}
 
@@ -94,6 +99,7 @@ func GetAllGroups(db *sql.DB) ([]GroupData, error) {
 			DoujinCount:   doujinCount,
 			TotalOCount:   totalOCount,
 			AverageRating: avgRatingPtr,
+			ImageCount:    imageCount,
 		})
 	}
 	if err = allRows.Err(); err != nil {
@@ -204,4 +210,34 @@ func GetGroupIDByName(db *sql.DB, groupName string) (int64, error) {
 		return 0, err
 	}
 	return groupID, nil
+}
+
+func GetImagesByGroup(db *sql.DB, groupID int64) ([]Image, error) {
+	query := `
+		SELECT i.id, COALESCE(i.source, '') as source, COALESCE(i.external_id, '') as external_id,
+			i.filename, i.file_path, i.file_size, i.width, i.height, i.format, i.uploaded,
+			COALESCE(i.hash, '') as hash
+		FROM images i
+		JOIN image_groups ig ON i.id = ig.image_id
+		WHERE ig.group_id = ?
+		ORDER BY i.uploaded DESC
+	`
+	rows, err := db.Query(query, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []Image
+	for rows.Next() {
+		var img Image
+		if err := rows.Scan(&img.ID, &img.Source, &img.ExternalID,
+			&img.Filename, &img.FilePath, &img.FileSize, &img.Width, &img.Height,
+			&img.Format, &img.Uploaded, &img.Hash); err != nil {
+			return nil, err
+		}
+		populateImageDetails(db, &img)
+		results = append(results, img)
+	}
+	return results, nil
 }

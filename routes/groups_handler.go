@@ -13,6 +13,7 @@ import (
 type GroupPageData struct {
 	GroupDetails  *db.GroupData        `json:"groupDetails"`
 	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb     `json:"imagesList"`
 }
 
 func GetAllGroupsHandler(c *gin.Context, database *sql.DB) {
@@ -83,9 +84,28 @@ func GetGroupPageDataHandler(c *gin.Context, database *sql.DB) {
 		doujinshiWithThumbs = []DoujinshiWithThumb{}
 	}
 
+	// Fetch images associated with this group
+	images, err := db.GetImagesByGroup(database, groupID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch images for group"})
+		return
+	}
+
+	var imagesWithThumbs []ImageWithThumb
+	for _, img := range images {
+		imagesWithThumbs = append(imagesWithThumbs, ImageWithThumb{
+			Image:        img,
+			ThumbnailURL: "/api/images/" + strconv.FormatInt(img.ID, 10) + "/thumbnail",
+		})
+	}
+	if imagesWithThumbs == nil {
+		imagesWithThumbs = []ImageWithThumb{}
+	}
+
 	responseData := GroupPageData{
 		GroupDetails:  groupDetails,
 		DoujinshiList: doujinshiWithThumbs,
+		ImagesList:    imagesWithThumbs,
 	}
 
 	c.JSON(http.StatusOK, responseData)

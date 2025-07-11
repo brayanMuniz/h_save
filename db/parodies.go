@@ -11,6 +11,7 @@ type ParodyData struct {
 	DoujinCount   int      `json:"doujinCount"`
 	TotalOCount   int64    `json:"totalOCount"`
 	AverageRating *float64 `json:"averageRating"`
+	ImageCount    int      `json:"imageCount"`
 }
 
 func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
@@ -39,7 +40,8 @@ func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
 		p.name,
 		COALESCE(COUNT(DISTINCT d.id), 0) AS doujin_count,
 		COALESCE(SUM(d_ocount.total_o_for_doujin), 0) AS total_parody_ocount,
-		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating
+		AVG(CASE WHEN dp.rating IS NOT NULL AND dp.rating > 0 THEN dp.rating ELSE NULL END) AS average_rating,
+		COALESCE(COUNT(DISTINCT ip.image_id), 0) AS image_count
 	FROM
 		parodies p
 	LEFT JOIN
@@ -55,6 +57,8 @@ func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
 		) d_ocount ON d.id = d_ocount.doujinshi_id
 	LEFT JOIN
 		doujinshi_progress dp ON d.id = dp.doujinshi_id
+	LEFT JOIN
+		image_parodies ip ON p.id = ip.parody_id
 	GROUP BY
 		p.id, p.name
 	ORDER BY
@@ -74,8 +78,9 @@ func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
 		var doujinCount int
 		var totalOCount int64
 		var avgRating sql.NullFloat64
+		var imageCount int
 
-		if err := allRows.Scan(&parodyID, &parodyName, &doujinCount, &totalOCount, &avgRating); err != nil {
+		if err := allRows.Scan(&parodyID, &parodyName, &doujinCount, &totalOCount, &avgRating, &imageCount); err != nil {
 			return nil, err
 		}
 
@@ -93,6 +98,7 @@ func GetAllParodies(db *sql.DB) ([]ParodyData, error) {
 			DoujinCount:   doujinCount,
 			TotalOCount:   totalOCount,
 			AverageRating: avgRatingPtr,
+			ImageCount:    imageCount,
 		})
 	}
 	if err = allRows.Err(); err != nil {
@@ -212,4 +218,34 @@ func AddFavoriteParody(db *sql.DB, parodyID int64) error {
 func RemoveFavoriteParody(db *sql.DB, parodyID int64) error {
 	_, err := db.Exec(`DELETE FROM favorite_parodies WHERE parody_id = ?`, parodyID)
 	return err
+}
+
+func GetImagesByParody(db *sql.DB, parodyID int64) ([]Image, error) {
+	query := `
+		SELECT i.id, COALESCE(i.source, '') as source, COALESCE(i.external_id, '') as external_id,
+			i.filename, i.file_path, i.file_size, i.width, i.height, i.format, i.uploaded,
+			COALESCE(i.hash, '') as hash
+		FROM images i
+		JOIN image_parodies ip ON i.id = ip.image_id
+		WHERE ip.parody_id = ?
+		ORDER BY i.uploaded DESC
+	`
+	rows, err := db.Query(query, parodyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []Image
+	for rows.Next() {
+		var img Image
+		if err := rows.Scan(&img.ID, &img.Source, &img.ExternalID,
+			&img.Filename, &img.FilePath, &img.FileSize, &img.Width, &img.Height,
+			&img.Format, &img.Uploaded, &img.Hash); err != nil {
+			return nil, err
+		}
+		populateImageDetails(db, &img)
+		results = append(results, img)
+	}
+	return results, nil
 }

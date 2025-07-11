@@ -8,6 +8,7 @@ interface Entity {
   doujinCount: number;
   totalOCount: number;
   averageRating: number | null;
+  imageCount?: number; // Added for tags
 }
 
 interface EntityCardProps {
@@ -47,6 +48,12 @@ const EntityCard: React.FC<EntityCardProps> = ({
             <span className="font-semibold text-gray-300">Works:</span>{" "}
             {entity.doujinCount}
           </p>
+          {typeof entity.imageCount === 'number' && (
+            <p>
+              <span className="font-semibold text-gray-300">Images:</span>{" "}
+              {entity.imageCount}
+            </p>
+          )}
           <p>
             <span className="font-semibold text-gray-300">Total ♥:</span>{" "}
             {entity.totalOCount}
