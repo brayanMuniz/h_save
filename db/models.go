@@ -26,11 +26,13 @@ type Doujinshi struct {
 }
 
 type DoujinshiBookmark struct {
-	ID          int64     `json:"id"`
-	DoujinshiID int64     `json:"doujinshiId"`
-	Filename    string    `json:"filename"`
-	Name        string    `json:"name"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID           int64     `json:"id"`
+	DoujinshiID  int64     `json:"doujinshiId"`
+	Filename     string    `json:"filename"`
+	Name         string    `json:"name"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ImageID      *int64    `json:"imageId,omitempty"`
+	ThumbnailURL string    `json:"thumbnailUrl,omitempty"`
 }
 
 type DoujinshiPageO struct {

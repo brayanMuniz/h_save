@@ -11,9 +11,10 @@ import (
 
 // ParodyPageData defines the structure for the individual parody page response.
 type ParodyPageData struct {
-	ParodyDetails *db.ParodyData       `json:"parodyDetails"`
-	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
-	ImagesList    []ImageWithThumb     `json:"imagesList"`
+	ParodyDetails *db.ParodyData         `json:"parodyDetails"`
+	DoujinshiList []DoujinshiWithThumb   `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb       `json:"imagesList"`
+	BookmarksList []db.DoujinshiBookmark `json:"bookmarksList"`
 }
 
 // GetAllParodiesHandler handles the request to get all parodies.
@@ -101,10 +102,21 @@ func GetParodyPageDataHandler(c *gin.Context, database *sql.DB) {
 		imagesWithThumbs = []ImageWithThumb{}
 	}
 
+	// Fetch bookmarks for doujinshi associated with this parody
+	bookmarks, err := db.GetBookmarksByEntity(database, "parody", parodyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookmarks for parody"})
+		return
+	}
+	if bookmarks == nil {
+		bookmarks = []db.DoujinshiBookmark{}
+	}
+
 	responseData := ParodyPageData{
 		ParodyDetails: parodyDetails,
 		DoujinshiList: doujinshiWithThumbs,
 		ImagesList:    imagesWithThumbs,
+		BookmarksList: bookmarks,
 	}
 
 	c.JSON(http.StatusOK, responseData)

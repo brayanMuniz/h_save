@@ -11,9 +11,10 @@ import (
 )
 
 type ArtistPageData struct {
-	ArtistDetails *db.ArtistData       `json:"artistDetails"`
-	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
-	ImagesList    []ImageWithThumb     `json:"imagesList"`
+	ArtistDetails *db.ArtistData         `json:"artistDetails"`
+	DoujinshiList []DoujinshiWithThumb   `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb       `json:"imagesList"`
+	BookmarksList []db.DoujinshiBookmark `json:"bookmarksList"`
 }
 
 func GetAllArtist(c *gin.Context, database *sql.DB) {
@@ -98,10 +99,21 @@ func GetArtistPageDataHandler(c *gin.Context, database *sql.DB) {
 		imagesWithThumbs = []ImageWithThumb{}
 	}
 
+	// Fetch bookmarks for doujinshi associated with this artist
+	bookmarks, err := db.GetBookmarksByEntity(database, "artist", artistID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookmarks for artist"})
+		return
+	}
+	if bookmarks == nil {
+		bookmarks = []db.DoujinshiBookmark{}
+	}
+
 	responseData := ArtistPageData{
 		ArtistDetails: artistDetails,
 		DoujinshiList: doujinshiWithThumbs,
 		ImagesList:    imagesWithThumbs,
+		BookmarksList: bookmarks,
 	}
 
 	c.JSON(http.StatusOK, responseData)

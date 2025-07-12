@@ -174,6 +174,7 @@ export interface EntityPageResponse {
   details: EntityDetail;
   doujinshiList: Doujinshi[];
   imagesList?: Image[];
+  bookmarksList?: Bookmark[];
 }
 
 export interface SortState {
@@ -260,6 +261,16 @@ export interface ImageCollection {
   description: string;
   created_at: string;
   image_count?: number; // Optional, populated by backend
+}
+
+export interface Bookmark {
+  id: number;
+  doujinshiId: number;
+  filename: string;
+  name: string;
+  createdAt: string;
+  imageId?: number;
+  thumbnailUrl?: string;
 }
 
 export interface SavedImageFilter {

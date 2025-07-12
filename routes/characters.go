@@ -10,9 +10,10 @@ import (
 )
 
 type CharacterPageData struct {
-	CharacterDetails *db.CharacterData    `json:"characterDetails"`
-	DoujinshiList    []DoujinshiWithThumb `json:"doujinshiList"`
-	ImagesList       []ImageWithThumb     `json:"imagesList"`
+	CharacterDetails *db.CharacterData      `json:"characterDetails"`
+	DoujinshiList    []DoujinshiWithThumb   `json:"doujinshiList"`
+	ImagesList       []ImageWithThumb       `json:"imagesList"`
+	BookmarksList    []db.DoujinshiBookmark `json:"bookmarksList"`
 }
 
 func GetAllCharactersHandler(c *gin.Context, database *sql.DB) {
@@ -100,10 +101,21 @@ func GetCharacterPageDataHandler(c *gin.Context, database *sql.DB) {
 		imagesWithThumbs = []ImageWithThumb{}
 	}
 
+	// Fetch bookmarks for doujinshi associated with this character
+	bookmarks, err := db.GetBookmarksByEntity(database, "character", characterID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookmarks for character"})
+		return
+	}
+	if bookmarks == nil {
+		bookmarks = []db.DoujinshiBookmark{}
+	}
+
 	responseData := CharacterPageData{
 		CharacterDetails: characterDetails,
 		DoujinshiList:    doujinshiWithThumbs,
 		ImagesList:       imagesWithThumbs,
+		BookmarksList:    bookmarks,
 	}
 
 	c.JSON(http.StatusOK, responseData)

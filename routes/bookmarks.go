@@ -42,6 +42,81 @@ func ListBookmarks(ctx *gin.Context, database *sql.DB) {
 	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
 }
 
+// GetBookmarksByTag gets all bookmarks for doujinshi associated with a specific tag
+func GetBookmarksByTag(ctx *gin.Context, database *sql.DB) {
+	tagID, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	bookmarks, err := db.GetBookmarksByEntity(database, "tag", tagID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get bookmarks"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
+}
+
+// GetBookmarksByCharacter gets all bookmarks for doujinshi associated with a specific character
+func GetBookmarksByCharacter(ctx *gin.Context, database *sql.DB) {
+	characterID, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	bookmarks, err := db.GetBookmarksByEntity(database, "character", characterID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get bookmarks"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
+}
+
+// GetBookmarksByArtist gets all bookmarks for doujinshi associated with a specific artist
+func GetBookmarksByArtist(ctx *gin.Context, database *sql.DB) {
+	artistID, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	bookmarks, err := db.GetBookmarksByEntity(database, "artist", artistID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get bookmarks"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
+}
+
+// GetBookmarksByParody gets all bookmarks for doujinshi associated with a specific parody
+func GetBookmarksByParody(ctx *gin.Context, database *sql.DB) {
+	parodyID, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	bookmarks, err := db.GetBookmarksByEntity(database, "parody", parodyID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get bookmarks"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
+}
+
+// GetBookmarksByGroup gets all bookmarks for doujinshi associated with a specific group
+func GetBookmarksByGroup(ctx *gin.Context, database *sql.DB) {
+	groupID, ok := parseID(ctx, "id")
+	if !ok {
+		return
+	}
+
+	bookmarks, err := db.GetBookmarksByEntity(database, "group", groupID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get bookmarks"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"bookmarks": bookmarks})
+}
+
 func UpdateBookmark(ctx *gin.Context, database *sql.DB) {
 	_, ok := parseID(ctx, "id")
 	if !ok {

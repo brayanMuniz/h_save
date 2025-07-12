@@ -54,6 +54,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			GetArtistPageDataHandler(ctx, database)
 		})
 
+		api.GET("/artist/:id/bookmarks", func(ctx *gin.Context) {
+			GetBookmarksByArtist(ctx, database)
+		})
+
 		// TAG ROUTES
 		api.GET("/tags", func(ctx *gin.Context) {
 			GetAllTagsHandler(ctx, database)
@@ -61,6 +65,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 
 		api.GET("/tag/:id", func(ctx *gin.Context) {
 			GetTagPageDataHandler(ctx, database)
+		})
+
+		api.GET("/tag/:id/bookmarks", func(ctx *gin.Context) {
+			GetBookmarksByTag(ctx, database)
 		})
 
 		// GROUPS
@@ -72,6 +80,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			GetGroupPageDataHandler(ctx, database)
 		})
 
+		api.GET("/group/:id/bookmarks", func(ctx *gin.Context) {
+			GetBookmarksByGroup(ctx, database)
+		})
+
 		// CHARACTERS
 		api.GET("/characters", func(ctx *gin.Context) {
 			GetAllCharactersHandler(ctx, database)
@@ -81,6 +93,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 			GetCharacterPageDataHandler(ctx, database)
 		})
 
+		api.GET("/character/:id/bookmarks", func(ctx *gin.Context) {
+			GetBookmarksByCharacter(ctx, database)
+		})
+
 		// PARODY
 		api.GET("/parodies", func(ctx *gin.Context) {
 			GetAllParodiesHandler(ctx, database)
@@ -88,6 +104,10 @@ func SetupRouter(database *sql.DB) *gin.Engine {
 
 		api.GET("/parody/:id", func(ctx *gin.Context) {
 			GetParodyPageDataHandler(ctx, database)
+		})
+
+		api.GET("/parody/:id/bookmarks", func(ctx *gin.Context) {
+			GetBookmarksByParody(ctx, database)
 		})
 
 		// SYNC

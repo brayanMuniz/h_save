@@ -10,9 +10,10 @@ import (
 )
 
 type TagPageData struct {
-	TagDetails    *db.TagData          `json:"tagDetails"`
-	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
-	ImagesList    []ImageWithThumb     `json:"imagesList"`
+	TagDetails    *db.TagData            `json:"tagDetails"`
+	DoujinshiList []DoujinshiWithThumb   `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb       `json:"imagesList"`
+	BookmarksList []db.DoujinshiBookmark `json:"bookmarksList"`
 }
 
 func GetAllTagsHandler(ctx *gin.Context, database *sql.DB) {
@@ -100,10 +101,21 @@ func GetTagPageDataHandler(ctx *gin.Context, database *sql.DB) {
 		imagesWithThumbs = []ImageWithThumb{}
 	}
 
+	// Fetch bookmarks for doujinshi associated with this tag
+	bookmarks, err := db.GetBookmarksByEntity(database, "tag", tagID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookmarks for tag"})
+		return
+	}
+	if bookmarks == nil {
+		bookmarks = []db.DoujinshiBookmark{}
+	}
+
 	responseData := TagPageData{
 		TagDetails:    tagDetails,
 		DoujinshiList: doujinshiWithThumbs,
 		ImagesList:    imagesWithThumbs,
+		BookmarksList: bookmarks,
 	}
 
 	ctx.JSON(http.StatusOK, responseData)

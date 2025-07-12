@@ -11,9 +11,10 @@ import (
 )
 
 type GroupPageData struct {
-	GroupDetails  *db.GroupData        `json:"groupDetails"`
-	DoujinshiList []DoujinshiWithThumb `json:"doujinshiList"`
-	ImagesList    []ImageWithThumb     `json:"imagesList"`
+	GroupDetails  *db.GroupData          `json:"groupDetails"`
+	DoujinshiList []DoujinshiWithThumb   `json:"doujinshiList"`
+	ImagesList    []ImageWithThumb       `json:"imagesList"`
+	BookmarksList []db.DoujinshiBookmark `json:"bookmarksList"`
 }
 
 func GetAllGroupsHandler(c *gin.Context, database *sql.DB) {
@@ -102,10 +103,21 @@ func GetGroupPageDataHandler(c *gin.Context, database *sql.DB) {
 		imagesWithThumbs = []ImageWithThumb{}
 	}
 
+	// Fetch bookmarks for doujinshi associated with this group
+	bookmarks, err := db.GetBookmarksByEntity(database, "group", groupID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookmarks for group"})
+		return
+	}
+	if bookmarks == nil {
+		bookmarks = []db.DoujinshiBookmark{}
+	}
+
 	responseData := GroupPageData{
 		GroupDetails:  groupDetails,
 		DoujinshiList: doujinshiWithThumbs,
 		ImagesList:    imagesWithThumbs,
+		BookmarksList: bookmarks,
 	}
 
 	c.JSON(http.StatusOK, responseData)

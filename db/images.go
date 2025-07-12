@@ -752,3 +752,21 @@ func RemoveImageGroups(db *sql.DB, imageID int64, groups []string) error {
 	_, err := db.Exec(query, args...)
 	return err
 }
+
+func GetImageByFilePath(db *sql.DB, filePath string) (Image, error) {
+	var img Image
+	err := db.QueryRow(`
+		SELECT i.id, COALESCE(i.source, '') as source, COALESCE(i.external_id, '') as external_id,
+			i.filename, i.file_path, i.file_size, i.width, i.height, i.format, i.uploaded,
+			COALESCE(i.hash, '') as hash
+		FROM images i WHERE i.file_path = ?`, filePath,
+	).Scan(&img.ID, &img.Source, &img.ExternalID, &img.Filename, &img.FilePath,
+		&img.FileSize, &img.Width, &img.Height, &img.Format, &img.Uploaded, &img.Hash)
+
+	if err != nil {
+		return img, err
+	}
+
+	populateImageDetails(db, &img)
+	return img, nil
+}

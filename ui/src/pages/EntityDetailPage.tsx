@@ -7,6 +7,7 @@ import HeaderBar from "../components/HeaderBar";
 import CoverImage from "../components/CoverImage";
 import DoujinshiCard from "../components/DoujinshiCard";
 import ImageViewer from "../components/ImageViewer";
+import BookmarkCard from "../components/BookmarkCard";
 
 import type {
   Doujinshi,
@@ -137,6 +138,7 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
           details: responseData[detailsResponseKey],
           doujinshiList: responseData.doujinshiList,
           imagesList: responseData.imagesList || [],
+          bookmarksList: responseData.bookmarksList || [],
         };
         setData(normalizedData);
         setImages(responseData.imagesList || []);
@@ -604,6 +606,35 @@ const EntityDetailPage: React.FC<EntityDetailPageProps> = ({
                 ),
               )}
             </div>
+          )}
+          
+          {/* Bookmarks Section */}
+          {data?.bookmarksList && data.bookmarksList.length > 0 && (
+            <>
+              <div className="mt-12 mb-6">
+                <h2 className="text-2xl font-bold text-gray-100 mb-4">
+                  Bookmarks ({data.bookmarksList.length})
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {data.bookmarksList.map((bookmark) => {
+                  // Find doujinshi info for this bookmark
+                  const doujinshi = data.doujinshiList.find((d) => d.id === bookmark.doujinshiId);
+                  const doujinshiTitle = doujinshi?.title || "";
+                  const thumbnailUrl = doujinshi?.thumbnail_url || "/api/doujinshi/" + bookmark.doujinshiId + "/thumbnail";
+                  const linkUrl = `/doujinshi/${bookmark.doujinshiId}/page/${bookmark.filename}`;
+                  return (
+                    <BookmarkCard
+                      key={`${bookmark.doujinshiId}-${bookmark.filename}`}
+                      bookmark={bookmark}
+                      doujinshiTitle={doujinshiTitle}
+                      thumbnailUrl={thumbnailUrl}
+                      linkUrl={linkUrl}
+                    />
+                  );
+                })}
+              </div>
+            </>
           )}
           
           {/* Images Section */}
